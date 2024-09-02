@@ -1,54 +1,24 @@
-# Node.js
-node_modules/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
 # Logs
 logs
 *.log
-pids
-*.pid
-*.seed
-*.pid.lock
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
 
-# Vite
+node_modules
 dist
 dist-ssr
 *.local
 
-# Coverage
-coverage/
-
-build/
-
-# Optional npm cache directory
-.npm
-
-# Optional eslint cache
-.eslintcache
-
-# Optional REPL history
-.node_repl_history
-
-# dotenv environment variables file
-.env
-
-# macOS
-.DS_Store
-
 # Editor directories and files
-.vscode/
-.idea/
-*.sublime-project
-*.sublime-workspace
-
-public/3d/AMAN/
-public/3d/ESA/
-public/3d/PCL/
-public/3d/PCL/
-public/3d/estatua.glb
-
-public/street_view/IMG/*.webp
-public/street_view/IMG/*.jpg
-public/street_view/METADATA/*.json
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
