@@ -17,7 +17,7 @@ declare global {
   }
 }
 
-function MapSig() {
+function Map3D() {
   const { setCesium } = useMain();
   const Cesium = window?.Cesium as any;
   const [tilesetSetups] = useState([
@@ -158,4 +158,4 @@ function MapSig() {
   return <Map id="map-3d"></Map>;
 }
 
-export default memo(MapSig);
+export default memo(Map3D);

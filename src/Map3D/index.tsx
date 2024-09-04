@@ -1,7 +1,7 @@
 import { lazy } from "react";
 import { RouteObject, Navigate } from "react-router-dom";
 
-let MapSig = lazy(() => import("./Map.tsx"));
+let Map3D = lazy(() => import("./Map.tsx"));
 
 const routes: RouteObject = {
   path: "/",
@@ -12,7 +12,7 @@ const routes: RouteObject = {
     },
     {
       path: "map-3d",
-      element: <MapSig />,
+      element: <Map3D />,
     },
   ],
 };
