@@ -8,6 +8,7 @@ const Background = styled("div")({
   left: 0,
   top: 0,
   position: "absolute",
+  zIndex: 10000,
 });
 
 export default function Loading() {

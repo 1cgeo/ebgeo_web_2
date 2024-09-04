@@ -22,3 +22,14 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+#CUSTOM
+public/3d/AMAN/
+public/3d/ESA/
+public/3d/PCL/
+public/3d/PCL/
+public/3d/estatua.glb
+
+public/street_view/IMG/*.webp
+public/street_view/IMG/*.jpg
+public/street_view/METADATA/*.json

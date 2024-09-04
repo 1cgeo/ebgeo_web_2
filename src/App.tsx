@@ -1,27 +1,49 @@
-import * as React from "react";
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
+import ThemeConfig from "./theme";
+import MainContextProvider from "./contexts/MainContext";
 import Loading from "./components/Loading";
-import routeMapSig from "./MapSig";
+import { useLayout } from "./layout";
+import Drawer from "./layout/Drawer";
+import routeMapSIG from "./MapSIG";
+import routeMap3D from "./Map3D";
+
+const LayoutSIG = useLayout(Drawer);
+const Layout3D = useLayout(Drawer);
 
 const router = createBrowserRouter([
   {
     path: "/",
-    //element: <Layout/>,
-    children: [routeMapSig],
+    children: [
+      {
+        element: <LayoutSIG />,
+        ...routeMapSIG,
+      },
+      {
+        element: <Layout3D />,
+        ...routeMap3D,
+      },
+    ],
   },
 ]);
 
 export default function App() {
-  const [isLoading, setLoading] = useState<boolean>(true);
+  const [isLoading, setLoading] = useState<boolean>(false);
 
   useEffect(() => {
     setTimeout(() => setLoading(false), 5000);
   }, []);
 
-  if (isLoading) {
-    return <Loading />;
-  }
-
-  return <RouterProvider router={router} />;
+  return (
+    <>
+      {isLoading && <Loading />}
+      <MainContextProvider>
+        <ThemeConfig>
+          <Suspense fallback={<Loading />}>
+            <RouterProvider router={router} />
+          </Suspense>
+        </ThemeConfig>
+      </MainContextProvider>
+    </>
+  );
 }
