@@ -3,8 +3,8 @@ import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import ThemeConfig from "./theme";
 import MainContextProvider from "./contexts/MainContext";
 import Loading from "./components/Loading";
-import { useLayout } from "./layout";
-import Drawer from "./layout/Drawer";
+import { useLayout } from "./layouts";
+import Drawer from "./layouts/Drawer";
 import routeMapSIG from "./MapSIG";
 import routeMap3D from "./Map3D";
 
