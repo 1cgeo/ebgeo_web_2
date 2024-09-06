@@ -1,7 +1,7 @@
 import { useEffect, memo } from "react";
 import styled from "styled-components";
 import baseMapStyles from "./baseMapStyles";
-import { ResetNorth } from "./tools";
+import { ResetNorth, VectorTileInfoControl } from "./tools";
 import { useMain } from "../contexts/MainContext";
 import RightSideToolBar from "./RightSideToolBar";
 
@@ -57,7 +57,7 @@ function MapSig() {
       <RightSideToolBar
         tools={[
           (pos) => <ResetNorth key={"ResetNorth"} pos={pos} />,
-          (pos) => <ResetNorth key={"ResetNorthTest"} pos={pos} />, //exemplo nova tool
+          (pos) => <VectorTileInfoControl key="VectorTileInfo" pos={pos} />,
         ]}
       />
     </Map>
