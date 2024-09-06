@@ -7,7 +7,7 @@ type Props = {
 };
 
 const ResetNorth: FC<Props> = ({ pos }) => {
-  const { mapLibre: map } = useMain();
+  const { map } = useMain();
 
   const [active, setActive] = useState<boolean>(false);
 
