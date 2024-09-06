@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback, FC } from "react";
 import Tool from "./Tool";
 import { useMain } from "../../contexts/MainContext";
+import { usePanel } from '../../contexts/PanelContext';
 import VectorTileInfoPanel from "./VectorTileInfoPanel";
 
 type Props = {
@@ -20,10 +21,10 @@ type GenericMapGeoJSONFeature = {
 };
   
 const VectorTileInfoControl: FC<Props> = ({ pos }) => {
-  const { mapLibre: map } = useMain();
+  const { map: map } = useMain();
+  const { openPanel, setOpenPanel } = usePanel();
   const [active, setActive] = useState<boolean>(false);
   const [selectedFeature, setSelectedFeature] = useState<GenericMapGeoJSONFeature | null>(null);
-  const [showPanel, setShowPanel] = useState<boolean>(false);
 
   useEffect(() => {
     if (!map) return;
@@ -43,29 +44,38 @@ const VectorTileInfoControl: FC<Props> = ({ pos }) => {
         });
 
         setSelectedFeature(features[0]);
-      } else {
-        setSelectedFeature(null);
       }
-      setShowPanel(true);
+      setOpenPanel('vectorTileInfo');
     };
 
-    map.on('click', handleMapClick);
+    if (active) {
+      map.on('click', handleMapClick);
+      map.getCanvas().style.cursor = 'help';
+    } else {
+      map.off('click', handleMapClick);
+      map.getCanvas().style.cursor = '';
+      setOpenPanel(null);
+      setSelectedFeature(null);
+    }
 
     return () => {
       map.off('click', handleMapClick);
+      map.getCanvas().style.cursor = '';
     };
-  }, [map, active]);
+  }, [map, active, setOpenPanel]);
 
   const toggleActive = useCallback(() => {
     setActive((prev) => !prev);
-    if (map) {
-      map.getCanvas().style.cursor = active ? '' : 'help';
+    if (!active) {
+      setOpenPanel(null);
+      setSelectedFeature(null);
     }
-  }, [map, active]);
+  }, [active, setOpenPanel]);
 
   const handleClosePanel = () => {
-    setShowPanel(false);
+    setOpenPanel(null);
     setSelectedFeature(null);
+    setActive(false);
   };
 
   return (
@@ -77,7 +87,7 @@ const VectorTileInfoControl: FC<Props> = ({ pos }) => {
         pos={pos}
         onClick={toggleActive}
       />
-      {showPanel && (
+      {openPanel === 'vectorTileInfo' && (
         <VectorTileInfoPanel 
           feature={selectedFeature} 
           onClose={handleClosePanel}
