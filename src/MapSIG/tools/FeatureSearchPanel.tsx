@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import { FC } from 'react';
 import { Box, Typography, List, ListItem, ListItemText, Button } from '@mui/material';
 
 interface FeatureSearchPanelProps {
