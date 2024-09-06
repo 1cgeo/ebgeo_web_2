@@ -1,10 +1,12 @@
 import { useEffect, memo } from "react";
 import styled from "styled-components";
 import baseMapStyles from "./baseMapStyles";
-import { ResetNorth, VectorTileInfoControl, FeatureSearchControl } from "./tools";
+import { ResetNorth, VectorTileInfoControl, FeatureSearchControl, TextControl } from "./tools";
 import { useMain } from "../contexts/MainContext";
 import RightSideToolBar from "./RightSideToolBar";
 import { PanelProvider } from '../contexts/PanelContext';
+import { MapProvider, getCurrentMapFeatures, useMapStore } from '../contexts/MapFeaturesContext';
+import SaveLoadControl from './SaveLoadControl';
 
 const MapContainer = styled.div`
   position: relative;
@@ -19,8 +21,9 @@ declare global {
   }
 }
 
-function MapSig() {
-  const { setMap, setMapLibregl } = useMain();
+function MapContent() {
+  const { setMap, setMapLibregl, map } = useMain();
+  const { state } = useMapStore();
 
   const maplibregl = window?.maplibregl as any;
 
@@ -52,18 +55,79 @@ function MapSig() {
     };
   }, [maplibregl]);
 
+  useEffect(() => {
+    if (!map || !state) return;
+
+    const handleStyleData = () => {
+      const features = getCurrentMapFeatures(state);
+
+      if (!map.getSource('texts')) {
+        map.addSource('texts', {
+          type: 'geojson',
+          data: {
+            type: 'FeatureCollection',
+            features: features.texts
+          }
+        });
+      }
+
+      if (!map.getLayer('text-layer')) {
+        map.addLayer({
+          id: 'text-layer',
+          type: 'symbol',
+          source: 'texts',
+          layout: {
+            'text-field': ['get', 'text'],
+            'text-size': ['get', 'size'],
+            'text-justify': ['get', 'justify'],
+            'text-anchor': 'center',
+            'text-rotate': ['get', 'rotation'],
+            'text-ignore-placement': true,
+            "text-font": ["Noto Sans Regular"]
+          },
+          paint: {
+            'text-color': ['get', 'color'],
+            'text-halo-color': ['get', 'backgroundColor'],
+            'text-halo-width': 2
+          }
+        });
+      }
+
+    };
+
+    map.on('styledata', handleStyleData);
+    map.on('load', handleStyleData);
+
+    return () => {
+      map.off('styledata', handleStyleData);
+      map.off('load', handleStyleData);
+    };
+  }, [map, state]);
+
   return (
-    <PanelProvider>
+    <>
+      <SaveLoadControl />
       <FeatureSearchControl />
       <MapContainer id="map-sig">
-          <RightSideToolBar
-            tools={[
-              (pos) => <ResetNorth key={"ResetNorth"} pos={pos} />,
-              (pos) => <VectorTileInfoControl key="VectorTileInfo" pos={pos} />,
-            ]}
-          />
+        <RightSideToolBar
+          tools={[
+            (pos) => <ResetNorth key={"ResetNorth"} pos={pos} />,
+            (pos) => <VectorTileInfoControl key="VectorTileInfo" pos={pos} />,
+            (pos) => <TextControl key="TextControl" pos={pos} />,
+          ]}
+        />
       </MapContainer>
-    </PanelProvider>
+    </>
+  );
+}
+
+function MapSig() {
+  return (
+    <MapProvider>
+      <PanelProvider>
+        <MapContent />
+      </PanelProvider>
+    </MapProvider>
   );
 }
 

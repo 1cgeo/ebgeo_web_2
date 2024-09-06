@@ -1,6 +1,6 @@
 import React, { createContext, useState, useContext } from 'react';
 
-type PanelType = 'featureSearch' | 'vectorTileInfo' | null;
+type PanelType = 'featureSearch' | 'vectorTileInfo' | 'textAttributes' | null;
 
 interface PanelContextType {
   openPanel: PanelType;
