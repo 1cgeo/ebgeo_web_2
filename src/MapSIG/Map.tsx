@@ -1,18 +1,17 @@
 import { useEffect, memo } from "react";
 import styled from "styled-components";
 import baseMapStyles from "./baseMapStyles";
-import { ResetNorth, VectorTileInfoControl } from "./tools";
+import { ResetNorth, VectorTileInfoControl, FeatureSearchControl } from "./tools";
 import { useMain } from "../contexts/MainContext";
 import RightSideToolBar from "./RightSideToolBar";
+import { PanelProvider } from '../contexts/PanelContext';
 
-const Map = styled("div")({
-  position: "relative",
-  width: "100%",
-  top: 0,
-  left: 0,
-  height: "100vh",
-  cursor: "default",
-});
+const MapContainer = styled.div`
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  cursor: default;
+`;
 
 declare global {
   interface Window {
@@ -21,7 +20,7 @@ declare global {
 }
 
 function MapSig() {
-  const { setMapLibre } = useMain();
+  const { setMap, setMapLibregl } = useMain();
 
   const maplibregl = window?.maplibregl as any;
 
@@ -44,23 +43,27 @@ function MapSig() {
 
     map.setMaxBounds(bounds);
 
-    setMapLibre(map);
+    setMap(map);
+    setMapLibregl(maplibregl)
 
     return () => {
-      setMapLibre(null);
+      setMap(null);
       map.remove();
     };
   }, [maplibregl]);
 
   return (
-    <Map id="map-sig">
-      <RightSideToolBar
-        tools={[
-          (pos) => <ResetNorth key={"ResetNorth"} pos={pos} />,
-          (pos) => <VectorTileInfoControl key="VectorTileInfo" pos={pos} />,
-        ]}
-      />
-    </Map>
+    <PanelProvider>
+      <FeatureSearchControl />
+      <MapContainer id="map-sig">
+          <RightSideToolBar
+            tools={[
+              (pos) => <ResetNorth key={"ResetNorth"} pos={pos} />,
+              (pos) => <VectorTileInfoControl key="VectorTileInfo" pos={pos} />,
+            ]}
+          />
+      </MapContainer>
+    </PanelProvider>
   );
 }
 
