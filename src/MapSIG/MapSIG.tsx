@@ -1,12 +1,11 @@
 import { useEffect, memo } from "react";
 import styled from "styled-components";
 import baseMapStyles from "./baseMapStyles";
-import { ResetNorth, VectorTileInfoControl, FeatureSearchControl, TextControl } from "./tools";
+import { ResetNorth, VectorTileInfoControl, FeatureSearchControl, TextControl, SaveLoadControl } from "./tools";
 import { useMain } from "../contexts/MainContext";
 import RightSideToolBar from "./RightSideToolBar";
-import { PanelProvider } from '../contexts/PanelContext';
-import { MapProvider, getCurrentMapFeatures, useMapStore } from '../contexts/MapFeaturesContext';
-import SaveLoadControl from './SaveLoadControl';
+import { PanelProvider } from './contexts/PanelContext';
+import { MapProvider, getCurrentMapFeatures, useMapStore } from './contexts/MapFeaturesContext';
 
 const MapContainer = styled.div`
   position: relative;

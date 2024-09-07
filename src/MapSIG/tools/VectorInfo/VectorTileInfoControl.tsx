@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback, FC } from "react";
-import Tool from "./Tool";
-import { useMain } from "../../contexts/MainContext";
+import Tool from "../Tool";
+import { useMain } from "../../../contexts/MainContext";
 import { usePanel } from '../../contexts/PanelContext';
 import VectorTileInfoPanel from "./VectorTileInfoPanel";
 

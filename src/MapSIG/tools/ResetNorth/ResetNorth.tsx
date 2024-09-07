@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback, FC } from "react";
-import Tool from "./Tool";
-import { useMain } from "../../contexts/MainContext";
+import Tool from "../Tool";
+import { useMain } from "../../../contexts/MainContext";
 
 type Props = {
   pos: { right?: number; top?: number; left?: number; bottom?: number };

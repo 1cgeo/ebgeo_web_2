@@ -1,8 +1,8 @@
 import { useEffect, useState, FC } from 'react';
-import { useMain } from '../../contexts/MainContext';
+import { useMain } from '../../../contexts/MainContext';
 import { usePanel } from '../../contexts/PanelContext';
 import { useMapStore, addFeature, removeFeature } from '../../contexts/MapFeaturesContext';
-import Tool from './Tool';
+import Tool from '../Tool';
 import TextAttributesPanel from './TextAttributesPanel';
 
 type Props = {

@@ -1,7 +1,7 @@
 import { lazy } from "react";
 import { RouteObject, Navigate } from "react-router-dom";
 
-let MapSig = lazy(() => import("./Map.tsx"));
+let MapSig = lazy(() => import("./MapSIG.tsx"));
 
 const routes: RouteObject = {
   path: "/",

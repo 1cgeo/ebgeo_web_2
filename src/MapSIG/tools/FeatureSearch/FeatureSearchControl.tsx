@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
-import { useMain } from '../../contexts/MainContext';
+import { useMain } from '../../../contexts/MainContext';
 import { usePanel } from '../../contexts/PanelContext';
 import FeatureSearchPanel from './FeatureSearchPanel';
 import styled from 'styled-components';
