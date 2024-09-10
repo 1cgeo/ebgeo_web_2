@@ -191,9 +191,9 @@ const FeatureSearchControl: React.FC = () => {
       />
       {showSuggestions && suggestions.length > 0 && (
         <SuggestionsList>
-          {suggestions.map((suggestion, index) => (
+          {suggestions.map((suggestion) => (
             <SuggestionItem
-              key={index}
+              key={suggestion.nome}
               onMouseDown={(e) => e.preventDefault()} // Prevent onBlur from firing before click
               onClick={() => handleSuggestionClick(suggestion)}
             >

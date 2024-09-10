@@ -38,22 +38,25 @@ const TextAttributesPanel: React.FC<TextAttributesPanelProps> = ({
     setLocalFeatures(features);
   }, [features]);
 
-  const handleChange = (property: keyof TextFeature['properties'], value: any) => {
-    const updatedFeatures = localFeatures.map(feature => ({
-      ...feature,
-      properties: { ...feature.properties, [property]: value }
-    }));
-    setLocalFeatures(updatedFeatures);
-  };
+  const handleChange = useCallback(
+    (property: keyof TextFeature["properties"], value: any) => {
+      const updatedFeatures = localFeatures.map((feature) => ({
+        ...feature,
+        properties: { ...feature.properties, [property]: value },
+      }));
+      setLocalFeatures(updatedFeatures);
+    },
+    [localFeatures]
+  );
 
-  const handleSave = () => {
+  const handleSave = useCallback(() => {
     updateFeatures(localFeatures);
     onClose();
-  };
+  }, [localFeatures]);
 
-  const handleDelete = () => {
+  const handleDelete = useCallback(() => {
     deleteFeatures(localFeatures);
-  };
+  }, [localFeatures]);
 
   // Use the first feature for single-selection properties, or default values if no features
   const currentProperties = localFeatures[0]?.properties || {

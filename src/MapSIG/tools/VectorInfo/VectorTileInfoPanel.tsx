@@ -30,6 +30,32 @@ const VectorTileInfoPanel: FC<VectorTileInfoPanelProps> = ({ feature, onClose })
 
   const displayProperties = getDisplayProperties();
 
+  const TitleText = () => {
+    if (!feature) return "Informação da Feição";
+    return `Atributos ${feature.source?.replace(
+      /_10k|_25k|_50k|_100k|_250k/g,
+      ""
+    )}:`;
+  };
+
+  const FeatureList = () => {
+    if (!feature) {
+      return <Typography>Nenhuma feição encontrada neste local.</Typography>;
+    }
+    if (displayProperties.length > 0) {
+      return (
+        <List dense>
+          {displayProperties.map(({ key, value }) => (
+            <ListItem key={key}>
+              <ListItemText primary={`${key}: ${value}`} />
+            </ListItem>
+          ))}
+        </List>
+      );
+    }
+    return <Typography>Feição sem atributos</Typography>;
+  };
+
   return (
     <Box
       sx={{
@@ -45,25 +71,9 @@ const VectorTileInfoPanel: FC<VectorTileInfoPanelProps> = ({ feature, onClose })
       }}
     >
       <Typography variant="h6" gutterBottom>
-        {feature 
-          ? `Atributos ${feature.source?.replace(/_10k|_25k|_50k|_100k|_250k/g, '')}:`
-          : 'Informação da Feição'}
+        {TitleText()}
       </Typography>
-      {feature ? (
-        displayProperties.length > 0 ? (
-          <List dense>
-            {displayProperties.map(({ key, value }) => (
-              <ListItem key={key}>
-                <ListItemText primary={`${key}: ${value}`} />
-              </ListItem>
-            ))}
-          </List>
-        ) : (
-          <Typography>Feição sem atributos</Typography>
-        )
-      ) : (
-        <Typography>Nenhuma feição encontrada neste local.</Typography>
-      )}
+      {FeatureList()}
       <Button variant="contained" onClick={onClose} sx={{ mt: 2 }}>
         Fechar
       </Button>
