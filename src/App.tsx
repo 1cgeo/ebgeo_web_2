@@ -7,6 +7,7 @@ import { useLayout } from "./layouts";
 import Drawer from "./layouts/Drawer";
 import routeMapSIG from "./MapSIG";
 import routeMap3D from "./Map3D";
+import "./App.css";
 
 const LayoutSIG = useLayout(Drawer);
 const Layout3D = useLayout(Drawer);

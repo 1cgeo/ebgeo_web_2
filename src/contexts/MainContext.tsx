@@ -9,6 +9,8 @@ interface Context {
   setCesium: (map: any) => void;
   maplibregl: any;
   setMapLibregl: (map: any) => void;
+  cesiumMap: any;
+  setCesiumMap: (map: any) => void;
 }
 
 interface Props {
@@ -21,13 +23,16 @@ const MainContext = createContext<Context>({
   cesium: null,
   setCesium: () => {},
   maplibregl: null,
-  setMapLibregl: () => {}
+  setMapLibregl: () => {},
+  cesiumMap: null,
+  setCesiumMap: () => {},
 });
 
 const MainContextProvider: FC<Props> = ({ children }) => {
   const [map, setMap] = useState<any>(null);
-  const [cesium, setCesium] = useState<any>(null);
   const [maplibregl, setMapLibregl] = useState<any>(null);
+  const [cesium, setCesium] = useState<any>(null);
+  const [cesiumMap, setCesiumMap] = useState<any>(null);
 
   return (
     <MainContext.Provider
@@ -37,7 +42,9 @@ const MainContextProvider: FC<Props> = ({ children }) => {
         cesium,
         setCesium,
         maplibregl,
-        setMapLibregl
+        setMapLibregl,
+        cesiumMap,
+        setCesiumMap,
       }}
     >
       {children}

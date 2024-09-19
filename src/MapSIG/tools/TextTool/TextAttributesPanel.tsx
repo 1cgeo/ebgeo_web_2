@@ -1,20 +1,28 @@
-import React, { useState, useEffect } from 'react';
-import { Box, Typography, Slider, Button, TextField, Select, MenuItem } from '@mui/material';
+import React, { useState, useEffect, useCallback } from "react";
+import {
+  Box,
+  Typography,
+  Slider,
+  Button,
+  TextField,
+  Select,
+  MenuItem,
+} from "@mui/material";
 
 interface TextFeature {
   id: string;
-  type: 'Feature';
+  type: "Feature";
   properties: {
     text: string;
     size: number;
     color: string;
     backgroundColor: string;
     rotation: number;
-    justify: 'left' | 'center' | 'right';
+    justify: "left" | "center" | "right";
     source: string;
   };
   geometry: {
-    type: 'Point';
+    type: "Point";
     coordinates: [number, number];
   };
 }
@@ -30,7 +38,7 @@ const TextAttributesPanel: React.FC<TextAttributesPanelProps> = ({
   features,
   updateFeatures,
   deleteFeatures,
-  onClose
+  onClose,
 }) => {
   const [localFeatures, setLocalFeatures] = useState<TextFeature[]>([]);
 
@@ -60,23 +68,23 @@ const TextAttributesPanel: React.FC<TextAttributesPanelProps> = ({
 
   // Use the first feature for single-selection properties, or default values if no features
   const currentProperties = localFeatures[0]?.properties || {
-    text: '',
+    text: "",
     size: 16,
-    color: '#000000',
-    backgroundColor: '#ffffff',
+    color: "#000000",
+    backgroundColor: "#ffffff",
     rotation: 0,
-    justify: 'center' as const
+    justify: "center" as const,
   };
 
   return (
     <Box
       sx={{
-        position: 'fixed',
+        position: "fixed",
         bottom: 10,
         right: 10,
         width: 300,
-        bgcolor: 'background.paper',
-        border: '1px solid grey',
+        bgcolor: "background.paper",
+        border: "1px solid grey",
         borderRadius: 1,
         p: 2,
         zIndex: 1002,
@@ -85,7 +93,7 @@ const TextAttributesPanel: React.FC<TextAttributesPanelProps> = ({
       <Typography variant="h6" gutterBottom>
         Text Properties
       </Typography>
-      
+
       {localFeatures.length === 1 && (
         <TextField
           fullWidth
@@ -93,7 +101,7 @@ const TextAttributesPanel: React.FC<TextAttributesPanelProps> = ({
           rows={3}
           label="Text"
           value={currentProperties.text}
-          onChange={(e) => handleChange('text', e.target.value)}
+          onChange={(e) => handleChange("text", e.target.value)}
           margin="normal"
         />
       )}
@@ -101,7 +109,7 @@ const TextAttributesPanel: React.FC<TextAttributesPanelProps> = ({
       <Typography gutterBottom>Size</Typography>
       <Slider
         value={currentProperties.size}
-        onChange={(_, value) => handleChange('size', value as number)}
+        onChange={(_, value) => handleChange("size", value as number)}
         min={1}
         max={100}
         step={1}
@@ -112,7 +120,7 @@ const TextAttributesPanel: React.FC<TextAttributesPanelProps> = ({
         type="color"
         label="Color"
         value={currentProperties.color}
-        onChange={(e) => handleChange('color', e.target.value)}
+        onChange={(e) => handleChange("color", e.target.value)}
         margin="normal"
       />
 
@@ -121,14 +129,14 @@ const TextAttributesPanel: React.FC<TextAttributesPanelProps> = ({
         type="color"
         label="Background Color"
         value={currentProperties.backgroundColor}
-        onChange={(e) => handleChange('backgroundColor', e.target.value)}
+        onChange={(e) => handleChange("backgroundColor", e.target.value)}
         margin="normal"
       />
 
       <Typography gutterBottom>Rotation</Typography>
       <Slider
         value={currentProperties.rotation}
-        onChange={(_, value) => handleChange('rotation', value as number)}
+        onChange={(_, value) => handleChange("rotation", value as number)}
         min={-180}
         max={180}
         step={1}
@@ -137,14 +145,16 @@ const TextAttributesPanel: React.FC<TextAttributesPanelProps> = ({
       <Select
         fullWidth
         value={currentProperties.justify}
-        onChange={(e) => handleChange('justify', e.target.value as 'left' | 'center' | 'right')}
+        onChange={(e) =>
+          handleChange("justify", e.target.value as "left" | "center" | "right")
+        }
       >
         <MenuItem value="left">Left</MenuItem>
         <MenuItem value="center">Center</MenuItem>
         <MenuItem value="right">Right</MenuItem>
       </Select>
 
-      <Box sx={{ mt: 2, display: 'flex', justifyContent: 'space-between' }}>
+      <Box sx={{ mt: 2, display: "flex", justifyContent: "space-between" }}>
         <Button variant="contained" onClick={handleSave}>
           Save
         </Button>

@@ -1,7 +1,7 @@
 import { FC, useCallback, useEffect, useState } from "react";
+import CssBaseline from "@mui/material/CssBaseline";
 import { styled } from "@mui/material/styles";
 import Box from "@mui/material/Box";
-import CssBaseline from "@mui/material/CssBaseline";
 import MuiAppBar from "@mui/material/AppBar";
 import Toolbar from "@mui/material/Toolbar";
 import IconButton from "@mui/material/IconButton";

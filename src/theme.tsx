@@ -1,5 +1,5 @@
 import { FC, ReactNode, useMemo } from "react";
-import { CssBaseline } from "@mui/material";
+import CssBaseline from "@mui/material/CssBaseline";
 import {
   ThemeProvider,
   createTheme,

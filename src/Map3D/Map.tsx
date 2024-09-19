@@ -1,9 +1,15 @@
 import { useEffect, memo, useState } from "react";
 import styled from "styled-components";
 import { useMain } from "../contexts/MainContext";
+import { useMapTools } from "./contexts/MapTools";
+import RightSideToolBar from "./RightSideToolBar";
+import { Area, Distance, Clean, Viewshed } from "./tools";
+import useMeasure from "./hooks/useMeasure";
+import useViewshed from "./hooks/useViewshed";
 
 const Map = styled("div")({
   position: "relative",
+  overflow: "hidden",
   width: "100%",
   top: 0,
   left: 0,
@@ -18,7 +24,10 @@ declare global {
 }
 
 function Map3D() {
-  const { setCesium } = useMain();
+  const { setCesium, setCesiumMap } = useMain();
+  const { setup: setupMeasure } = useMeasure();
+  const { setup: setupViewshed } = useViewshed();
+  const { setCesiumMeasure, setCesiumViewshed } = useMapTools();
   const Cesium = window?.Cesium as any;
   const [tilesetSetups] = useState([
     {
@@ -150,12 +159,35 @@ function Map3D() {
     }
 
     setCesium(Cesium);
+    setCesiumMap(map);
+
+    let measure = setupMeasure(Cesium, map);
+    setCesiumMeasure(measure);
+
+    let viewshed = setupViewshed(Cesium, map);
+    setCesiumViewshed(viewshed);
+
     return () => {
       setCesium(null);
+      setCesiumMap(null);
+      setCesiumMeasure(null);
+      setCesiumViewshed(null);
     };
   }, [Cesium]);
 
-  return <Map id="map-3d"></Map>;
+  return (
+    <Map id="map-3d">
+      <RightSideToolBar
+        start={125}
+        tools={[
+          (pos) => <Clean key={"Clear"} pos={pos} />,
+          (pos) => <Area key={"Area"} pos={pos} />,
+          (pos) => <Distance key={"Distance"} pos={pos} />,
+          (pos) => <Viewshed key={"Viewshed"} pos={pos} />,
+        ]}
+      />
+    </Map>
+  );
 }
 
 export default memo(Map3D);
