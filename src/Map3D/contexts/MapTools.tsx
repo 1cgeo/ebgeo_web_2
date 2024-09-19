@@ -1,6 +1,5 @@
 import React from "react";
 import { createContext, useContext, FC } from "react";
-import { useState } from "react";
 
 interface Context {
   cesiumMeasure: any;
