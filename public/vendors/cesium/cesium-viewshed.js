@@ -3212,8 +3212,8 @@ const ViewShead3D_FS =
           )),
           (this["calback"] = _0x2bdd01["calback"]),
           this["cameraPosition"] && this["viewPosition"]
-            ? (this["_addToScene"](), this["calback"] && this["calback"]())
-            : this["_bindMourseEvent"]());
+            ? "" /* (this["_addToScene"](), this["calback"] && this["calback"]()) */
+            : "") /* this["_bindMourseEvent"]() */;
     }
     return (
       _0x10b9e7["nfReG"](_0x2de5fe, _0x4602f6, [
