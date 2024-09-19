@@ -8,8 +8,11 @@ import IconButton from "@mui/material/IconButton";
 import useMediaQuery from "@mui/material/useMediaQuery";
 import { useTheme } from "@mui/material/styles";
 import Typography from "@mui/material/Typography";
-import { List, ListItem } from "@mui/material";
+import { List, ListItem, ListItemIcon } from "@mui/material";
 import { useLocation, useNavigate } from "react-router-dom";
+
+import MapIcon from '@mui/icons-material/Map';
+import Terrain from '@mui/icons-material/Terrain';
 
 const Main = styled("main", {
   shouldForwardProp: (prop) => prop !== "openDrawer",
@@ -30,40 +33,51 @@ const AppBar = styled(MuiAppBar)(({ theme }) => ({
 }));
 
 const StyledListItem = styled(ListItem)(() => ({
-  width: "60px",
   flexDirection: "row",
-  justifyContent: "center",
-  borderRadius: "3px",
-  cursor: "pointer",
+  justifyContent: "flex-start",
+  alignItems: "center",
+  borderRadius: "20px",
+  cursor: "pointer"
+}));
+
+const NavButtonContainer = styled(Box)(({ theme }) => ({
+  backgroundColor: "#274726",
+  borderRadius: "20px",
+  padding: theme.spacing(0.5),
+  display: "flex",
+  alignItems: "center",
+  height: '50px'
 }));
 
 type NavButtonProps = {
   key: string;
   item: {
     path: string;
-    image: string;
+    label: string;
+    icon: React.ReactElement;
     isSelected: boolean;
   };
   onClick: () => void;
 };
+
 const NavButton: FC<NavButtonProps> = ({ item, onClick }) => {
   return (
     <StyledListItem
       sx={{
-        backgroundColor: item.isSelected ? "#508D4E" : "",
+        backgroundColor: item.isSelected ? "#508D4E" : "#274726",
+        color: "white",
         "&:hover": {
-          backgroundColor: item.isSelected ? "" : "#B4E380",
+          backgroundColor: "#508D4E",
         },
       }}
       onClick={onClick}
     >
-      <Box
-        component="img"
-        src={item.image}
-        sx={{
-          width: "40px",
-        }}
-      />
+      <ListItemIcon sx={{ color: "white", minWidth: 40 }}>
+        {item.icon}
+      </ListItemIcon>
+      <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
+        {item.label}
+      </Typography>
     </StyledListItem>
   );
 };
@@ -82,11 +96,13 @@ const AppDrawer: FC<Props> = ({ children }) => {
   const [navButtons] = useState([
     {
       path: "map-sig",
-      image: "/images/icon-sig.svg",
+      label: "SIG",
+      icon: <MapIcon />,
     },
     {
       path: "map-3d",
-      image: "/images/icon-3d.svg",
+      label: "3D",
+      icon: <Terrain />,
     },
   ]);
 
@@ -151,13 +167,13 @@ const AppDrawer: FC<Props> = ({ children }) => {
               </Typography>
             </IconButton>
           </Box>
-          <Box sx={{ width: "100%" }}>
+          <NavButtonContainer>
             <List
               sx={{
                 display: "flex",
                 flexDirection: "row",
                 justifyContent: "center",
-                gap: 1,
+                gap: 1
               }}
             >
               {navButtons.map((item) => (
@@ -171,7 +187,7 @@ const AppDrawer: FC<Props> = ({ children }) => {
                 />
               ))}
             </List>
-          </Box>
+          </NavButtonContainer>
           <Box sx={{ width: "100%" }}></Box>
         </Toolbar>
       </AppBar>
