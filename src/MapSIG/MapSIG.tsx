@@ -1,11 +1,12 @@
 import { useEffect, memo } from "react";
 import styled from "styled-components";
-import baseMapStyles from "./baseMapStyles";
+import topoBaseMapStyles from "./tools/BaseMapToggle/topoBaseMapStyles";
 import { ResetNorth, VectorTileInfoControl, FeatureSearchControl, TextControl, SaveLoadControl } from "./tools";
 import { useMain } from "../contexts/MainContext";
 import RightSideToolBar from "./RightSideToolBar";
 import { PanelProvider } from './contexts/PanelContext';
 import { MapProvider, getCurrentMapFeatures, useMapStore } from './contexts/MapFeaturesContext';
+import BaseMapToggleControl from "./tools/BaseMapToggle/BaseMapToggleControl";
 
 const MapContainer = styled.div`
   position: relative;
@@ -31,7 +32,7 @@ function MapContent() {
 
     const map = new maplibregl.Map({
       container: "map-sig",
-      style: baseMapStyles,
+      style: topoBaseMapStyles,
       attributionControl: false,
       minZoom: 11,
       maxZoom: 17.9,
@@ -105,9 +106,9 @@ function MapContent() {
 
   return (
     <>
-      <SaveLoadControl />
-      <FeatureSearchControl />
       <MapContainer id="map-sig">
+        <SaveLoadControl />
+        <FeatureSearchControl />
         <RightSideToolBar
           tools={[
             (pos) => <ResetNorth key={"ResetNorth"} pos={pos} />,
@@ -115,6 +116,7 @@ function MapContent() {
             (pos) => <TextControl key="TextControl" pos={pos} />,
           ]}
         />
+        <BaseMapToggleControl />
       </MapContainer>
     </>
   );
