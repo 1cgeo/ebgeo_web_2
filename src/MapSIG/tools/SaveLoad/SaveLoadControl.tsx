@@ -10,7 +10,7 @@ interface SaveData {
 }
 
 const SaveLoadControl: React.FC = () => {
-    const { state, dispatch } = useMapStore();
+    const { state, addMap, setCurrentMap } = useMapStore();
 
     const saveToFile = () => {
         const allData: SaveData = {
@@ -45,16 +45,14 @@ const SaveLoadControl: React.FC = () => {
 
                     // Update the store with loaded data
                     Object.keys(data.maps).forEach(key => {
-                        dispatch({
-                            type: 'ADD_MAP', mapName: key, mapData: {
-                                ...data.maps[key],
-                                undoStack: [],
-                                redoStack: []
-                            }
+                        addMap(key, {
+                            ...data.maps[key],
+                            undoStack: [],
+                            redoStack: []
                         });
                     });
 
-                    dispatch({ type: 'SET_CURRENT_MAP', mapName: data.currentMap });
+                    setCurrentMap(data.currentMap);
                 }
             };
             reader.readAsText(file);

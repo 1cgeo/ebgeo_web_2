@@ -1,11 +1,11 @@
-import { useEffect, memo } from "react";
+import { useEffect, memo, useCallback } from "react";
 import styled from "styled-components";
 import topoBaseMapStyles from "./tools/BaseMapToggle/topoBaseMapStyles";
 import { ResetNorth, VectorTileInfoControl, FeatureSearchControl, TextControl, SaveLoadControl } from "./tools";
 import { useMain } from "../contexts/MainContext";
 import RightSideToolBar from "./RightSideToolBar";
-import { PanelProvider } from './contexts/PanelContext';
-import { MapProvider, getCurrentMapFeatures, useMapStore } from './contexts/MapFeaturesContext';
+import PanelProvider from './contexts/PanelContext';
+import { MapProvider, useMapStore, getLayerType, getLayerPaint, getLayerLayout } from './contexts/MapFeaturesContext';
 import BaseMapToggleControl from "./tools/BaseMapToggle/BaseMapToggleControl";
 
 const MapContainer = styled.div`
@@ -27,10 +27,10 @@ function MapContent() {
 
   const maplibregl = window?.maplibregl as any;
 
-  useEffect(() => {
+  const initializeMap = useCallback(() => {
     if (!maplibregl) return;
 
-    const map = new maplibregl.Map({
+    const newMap = new maplibregl.Map({
       container: "map-sig",
       style: topoBaseMapStyles,
       attributionControl: false,
@@ -44,55 +44,59 @@ function MapContent() {
       [-43.92333, -21.30216],
     ];
 
-    map.setMaxBounds(bounds);
+    newMap.setMaxBounds(bounds);
 
-    setMap(map);
-    setMapLibregl(maplibregl)
+    setMap(newMap);
+    setMapLibregl(maplibregl);
 
+    return newMap;
+  }, [maplibregl, setMap, setMapLibregl]);
+
+  useEffect(() => {
+    const map = initializeMap();
     return () => {
-      setMap(null);
-      map.remove();
+      if (map) {
+        setMap(null);
+        map.remove();
+      }
     };
-  }, [maplibregl]);
+  }, [initializeMap, setMap]);
 
   useEffect(() => {
     if (!map || !state) return;
 
     const handleStyleData = () => {
-      const features = getCurrentMapFeatures(state);
+      const features = state.maps[state.currentMap].features;
 
-      if (!map.getSource('texts')) {
-        map.addSource('texts', {
-          type: 'geojson',
-          data: {
+      Object.entries(features).forEach(([featureType, featureList]) => {
+        const sourceId = `${featureType}-source`;
+        const layerId = `${featureType}-layer`;
+
+        if (!map.getSource(sourceId)) {
+          map.addSource(sourceId, {
+            type: 'geojson',
+            data: {
+              type: 'FeatureCollection',
+              features: featureList
+            }
+          });
+        } else {
+          const source = map.getSource(sourceId);
+          source.setData({
             type: 'FeatureCollection',
-            features: features.texts
-          }
-        });
-      }
+            features: featureList
+          });
+        }
 
-      if (!map.getLayer('text-layer')) {
-        map.addLayer({
-          id: 'text-layer',
-          type: 'symbol',
-          source: 'texts',
-          layout: {
-            'text-field': ['get', 'text'],
-            'text-size': ['get', 'size'],
-            'text-justify': ['get', 'justify'],
-            'text-anchor': 'center',
-            'text-rotate': ['get', 'rotation'],
-            'text-ignore-placement': true,
-            "text-font": ["Noto Sans Regular"]
-          },
-          paint: {
-            'text-color': ['get', 'color'],
-            'text-halo-color': ['get', 'backgroundColor'],
-            'text-halo-width': 2
-          }
-        });
-      }
-
+        if (!map.getLayer(layerId)) {
+          map.addLayer({
+            id: layerId,
+            type: getLayerType(featureType as any),
+            source: sourceId,
+            paint: getLayerPaint(featureType as any),
+            layout: getLayerLayout(featureType as any)
+          });        }
+      });
     };
 
     map.on('styledata', handleStyleData);

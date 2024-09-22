@@ -1,28 +1,36 @@
-import React, { createContext, useState, useContext } from 'react';
+import * as React from "react";
+import { createContext, useContext, FC } from "react";
+import { useState } from "react";
 
 type PanelType = 'featureSearch' | 'vectorTileInfo' | 'textAttributes' | null;
 
-interface PanelContextType {
+interface Panel_Context {
   openPanel: PanelType;
   setOpenPanel: (panel: PanelType) => void;
 }
 
-const PanelContext = createContext<PanelContextType | undefined>(undefined);
+interface Props {
+  children: React.ReactNode;
+}
 
-export const PanelProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+const PanelContext = createContext<Panel_Context>({
+  openPanel: null,
+  setOpenPanel: () => {},
+});
+
+const PanelProvider: FC<Props> = ({ children }) => {
   const [openPanel, setOpenPanel] = useState<PanelType>(null);
 
+  const context = {
+    openPanel,
+    setOpenPanel,
+  };
+
   return (
-    <PanelContext.Provider value={{ openPanel, setOpenPanel }}>
-      {children}
-    </PanelContext.Provider>
+    <PanelContext.Provider value={context}>{children}</PanelContext.Provider>
   );
 };
 
-export const usePanel = () => {
-  const context = useContext(PanelContext);
-  if (context === undefined) {
-    throw new Error('usePanel must be used within a PanelProvider');
-  }
-  return context;
-};
+export default PanelProvider;
+
+export const usePanel = () => useContext(PanelContext);
