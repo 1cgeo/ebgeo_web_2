@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Modal, Box, TextField, Grid, Card, CardContent, CardMedia, Typography, Button } from '@mui/material';
+import { Modal, Box, TextField, Grid, Card, CardContent, CardMedia, Typography, Button, Chip } from '@mui/material';
 import config from '../config';
 
-interface Model3D {
+interface Tiles3D {
   id: string;
   name: string;
   description: string;
@@ -13,16 +13,34 @@ interface Model3D {
   height: number;
   heightOffset: number;
   maximumScreenSpaceError: number;
+  type: 'Tiles 3D';
 }
+
+interface Modelos3D {
+  id: string;
+  name: string;
+  description: string;
+  thumbnail: string;
+  url: string;
+  lon: number;
+  lat: number;
+  height: number;
+  heading: number;
+  pitch: number;
+  roll: number;
+  type: 'Modelos 3D';
+}
+
+type CatalogItem = Tiles3D | Modelos3D;
 
 interface Model3DCatalogProps {
   open: boolean;
   onClose: () => void;
-  onAddModel: (model: Model3D) => void;
+  onAddModel: (model: CatalogItem) => void;
 }
 
 const Model3DCatalog: React.FC<Model3DCatalogProps> = ({ open, onClose, onAddModel }) => {
-  const [models, setModels] = useState<Model3D[]>([]);
+  const [models, setModels] = useState<CatalogItem[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
@@ -106,6 +124,7 @@ const Model3DCatalog: React.FC<Model3DCatalogProps> = ({ open, onClose, onAddMod
                   <Typography variant="body2" color="text.secondary" noWrap>
                     {model.description}
                   </Typography>
+                  <Chip label={model.type} color={model.type === 'Tiles 3D' ? 'primary' : 'secondary'} size="small" sx={{ mt: 1, mb: 1 }} />
                   <Button size="small" onClick={() => { onAddModel(model); onClose(); }}>
                     Adicionar ao mapa
                   </Button>
