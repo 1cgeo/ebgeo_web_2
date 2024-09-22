@@ -33,3 +33,6 @@ public/3d/estatua.glb
 public/street_view/IMG/*.webp
 public/street_view/IMG/*.jpg
 public/street_view/METADATA/*.json
+
+.env.production
+.env

@@ -1,23 +1,23 @@
-import { useState, FC, useCallback } from "react";
+import { FC, useCallback } from "react";
 import Tool from "./Tool";
-import { useMapTools } from "../contexts/MapTools";
+import { useMapTools } from "../contexts/Map3DTools";
 
 type Props = {
   pos: { right?: number; top?: number; left?: number; bottom?: number };
 };
 
 const Area: FC<Props> = ({ pos }) => {
-  const { setActiveTool } = useMapTools();
-  const [active] = useState<boolean>(true);
+  const { setActiveTool, activeTool } = useMapTools();
 
   const handleTool = useCallback(() => {
-    setActiveTool("area");
-  }, []);
+    setActiveTool(activeTool === "area" ? null : "area");
+  }, [activeTool, setActiveTool]);
 
   return (
     <Tool
       image="/images/icon-area.svg"
-      active={active}
+      active={true}
+      inUse={activeTool === "area"}
       pos={pos}
       onClick={handleTool}
     />

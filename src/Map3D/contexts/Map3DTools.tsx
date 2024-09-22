@@ -1,12 +1,13 @@
 import React from "react";
-import { createContext, useContext, FC } from "react";
+import { createContext, useContext, FC, useState  } from "react";
 
 interface Context {
   cesiumMeasure: any;
   setCesiumMeasure: (measure: any) => void;
   cesiumViewshed: any;
   setCesiumViewshed: (viewshed: any) => void;
-  setActiveTool: (toolName: string) => void;
+  setActiveTool: (toolName: string | null) => void;
+  activeTool: string | null;
 }
 
 interface Props {
@@ -19,15 +20,18 @@ const MapToolsContext = createContext<Context>({
   cesiumViewshed: null,
   setCesiumViewshed: () => {},
   setActiveTool: () => {},
+  activeTool: null
 });
 
 const MapToolsProvider: FC<Props> = ({ children }) => {
+  const [activeTool, setActiveToolState] = useState<string | null>(null);
   var cesiumMeasure: any = null;
   const setCesiumMeasure = (measure: any) => (cesiumMeasure = measure);
   var cesiumViewshed: any = null;
   const setCesiumViewshed = (viewshed: any) => (cesiumViewshed = viewshed);
 
-  const setActiveTool = (toolName: string) => {
+  const setActiveTool = (toolName: string | null) => {
+    setActiveToolState(toolName);
     deactiveTools();
     clearDrawing();
     switch (toolName) {
@@ -39,6 +43,10 @@ const MapToolsProvider: FC<Props> = ({ children }) => {
         return cesiumMeasure.setActiveMeasure("distance");
       case "viewshed":
         return cesiumViewshed.setActive(true);
+      case "identify":
+        return;
+      case null:
+        return;
       default:
         throw new Error("Not Found Tool");
     }
@@ -62,6 +70,7 @@ const MapToolsProvider: FC<Props> = ({ children }) => {
         cesiumViewshed,
         setCesiumViewshed,
         setActiveTool,
+        activeTool
       }}
     >
       {children}

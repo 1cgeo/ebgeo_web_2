@@ -1,9 +1,9 @@
 import { useEffect, memo, useState } from "react";
 import styled from "styled-components";
 import { useMain } from "../contexts/MainContext";
-import { useMapTools } from "./contexts/MapTools";
+import { useMapTools } from "./contexts/Map3DTools";
 import RightSideToolBar from "./RightSideToolBar";
-import { Area, Distance, Clean, Viewshed } from "./tools";
+import { Area, Distance, Clean, Viewshed, Identify  } from "./tools";
 import useMeasure from "./hooks/useMeasure";
 import useViewshed from "./hooks/useViewshed";
 
@@ -184,6 +184,7 @@ function Map3D() {
           (pos) => <Area key={"Area"} pos={pos} />,
           (pos) => <Distance key={"Distance"} pos={pos} />,
           (pos) => <Viewshed key={"Viewshed"} pos={pos} />,
+          (pos) => <Identify key={"Identify"} pos={pos} />,
         ]}
       />
     </Map>

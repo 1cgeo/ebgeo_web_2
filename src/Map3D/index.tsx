@@ -1,8 +1,8 @@
 import { lazy } from "react";
 import { RouteObject, Navigate } from "react-router-dom";
-import MapToolsProvider from "./contexts/MapTools";
+import MapToolsProvider from "./contexts/Map3DTools.tsx";
 
-let Map3D = lazy(() => import("./Map.tsx"));
+let Map3D = lazy(() => import("./Map3D.tsx"));
 
 const routes: RouteObject = {
   path: "/",

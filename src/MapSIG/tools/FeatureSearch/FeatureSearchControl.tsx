@@ -3,6 +3,7 @@ import { useMain } from '../../../contexts/MainContext';
 import { usePanel } from '../../contexts/PanelContext';
 import FeatureSearchPanel from './FeatureSearchPanel';
 import styled from 'styled-components';
+import config from '../../../config';
 
 type Suggestion = {
   tipo: string;
@@ -75,8 +76,6 @@ const FeatureSearchControl: React.FC = () => {
   const [showSuggestions, setShowSuggestions] = useState<boolean>(false);
   const suggestionTimeoutRef = useRef<number | null>(null);
 
-  const apiUrl = 'http://localhost:3000/busca';
-
   useEffect(() => {
     return () => {
       if (marker) {
@@ -99,7 +98,7 @@ const FeatureSearchControl: React.FC = () => {
 
       try {
         const center = map.getCenter();
-        const response = await fetch(`${apiUrl}?q=${encodeURIComponent(query)}&lat=${center.lat}&lon=${center.lng}`);
+        const response = await fetch(`${config.endpoints.featureSearch}?q=${encodeURIComponent(query)}&lat=${center.lat}&lon=${center.lng}`);
         const data = await response.json();
         setSuggestions(data);
       } catch (error) {

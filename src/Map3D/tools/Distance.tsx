@@ -1,27 +1,27 @@
-import { useState, FC, useCallback } from "react";
+import { FC, useCallback } from "react";
 import Tool from "./Tool";
-import { useMapTools } from "../contexts/MapTools";
+import { useMapTools } from "../contexts/Map3DTools";
 
 type Props = {
   pos: { right?: number; top?: number; left?: number; bottom?: number };
 };
 
-const Area: FC<Props> = ({ pos }) => {
-  const { setActiveTool } = useMapTools();
-  const [active] = useState<boolean>(true);
+const Distance: FC<Props> = ({ pos }) => {
+  const { setActiveTool, activeTool } = useMapTools();
 
   const handleTool = useCallback(() => {
-    setActiveTool("distance");
-  }, []);
+    setActiveTool(activeTool === "distance" ? null : "distance");
+  }, [activeTool, setActiveTool]);
 
   return (
     <Tool
       image="/images/icon-distance.svg"
-      active={active}
+      active={true}
+      inUse={activeTool === "distance"}
       pos={pos}
       onClick={handleTool}
     />
   );
 };
 
-export default Area;
+export default Distance;

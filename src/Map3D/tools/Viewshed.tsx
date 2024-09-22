@@ -1,27 +1,27 @@
-import { FC, useCallback, useState } from "react";
+import { FC, useCallback } from "react";
 import Tool from "./Tool";
-import { useMapTools } from "../contexts/MapTools";
+import { useMapTools } from "../contexts/Map3DTools";
 
 type Props = {
   pos: { right?: number; top?: number; left?: number; bottom?: number };
 };
 
-const Area: FC<Props> = ({ pos }) => {
-  const { setActiveTool } = useMapTools();
-  const [active] = useState<boolean>(true);
+const Viewshed: FC<Props> = ({ pos }) => {
+  const { setActiveTool, activeTool } = useMapTools();
 
   const handleTool = useCallback(() => {
-    setActiveTool("viewshed");
-  }, []);
+    setActiveTool(activeTool === "viewshed" ? null : "viewshed");
+  }, [activeTool, setActiveTool]);
 
   return (
     <Tool
       image="/images/icon-viewshed.svg"
-      active={active}
+      active={true}
+      inUse={activeTool === "viewshed"}
       pos={pos}
       onClick={handleTool}
     />
   );
 };
 
-export default Area;
+export default Viewshed;
