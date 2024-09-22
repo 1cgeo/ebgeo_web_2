@@ -1,4 +1,4 @@
-import { useEffect, memo, useState } from "react";
+import { useEffect, memo } from "react";
 import styled from "styled-components";
 import { useMain } from "../contexts/MainContext";
 import { useMapTools } from "./contexts/Map3DTools";
@@ -6,6 +6,7 @@ import RightSideToolBar from "./RightSideToolBar";
 import { Area, Distance, Clean, Viewshed, Identify  } from "./tools";
 import useMeasure from "./hooks/useMeasure";
 import useViewshed from "./hooks/useViewshed";
+import Model3DLayerList from "./Model3DLayerList";
 
 const Map = styled("div")({
   position: "relative",
@@ -29,88 +30,6 @@ function Map3D() {
   const { setup: setupViewshed } = useViewshed();
   const { setCesiumMeasure, setCesiumViewshed } = useMapTools();
   const Cesium = window?.Cesium as any;
-  const [tilesetSetups] = useState([
-    {
-      url: "/3d/AMAN/tileset.json",
-
-      heightOffset: 50, //-360 para elipsoide 40 para terreno,
-      id: "AMAN",
-      default: true,
-      locate: {
-        lat: -22.455921,
-        lon: -44.449655,
-        height: 2200,
-      },
-    },
-    {
-      url: "/3d/ESA/tileset.json",
-      heightOffset: 75,
-      id: "ESA",
-      locate: {
-        lon: -45.25666459926732,
-        lat: -21.703613735103637,
-        height: 1500,
-      },
-    },
-    {
-      url: "/3d/PCL/tileset.json",
-      heightOffset: 35,
-      id: "PCL",
-      locate: {
-        lon: -44.47332385414955,
-        lat: -22.43976556982974,
-        height: 1000,
-      },
-    },
-  ]);
-
-  const load3dTileset = (Cesium: any, map: any, tilesetSetup: any) => {
-    var tileset = new Cesium.Cesium3DTileset({
-      url: tilesetSetup.url,
-      maximumScreenSpaceError: 0,
-      maximumMemoryUsage: 0,
-    });
-    map.scene.primitives.add(tileset);
-
-    tileset.readyPromise
-      .then(function (tileset: any) {
-        const heightOffset = tilesetSetup.heightOffset;
-        const boundingSphere = tileset.boundingSphere;
-        const cartographic = Cesium.Cartographic.fromCartesian(
-          boundingSphere.center
-        );
-        const surface = Cesium.Cartesian3.fromRadians(
-          cartographic.longitude,
-          cartographic.latitude,
-          0.0
-        );
-        const offset = Cesium.Cartesian3.fromRadians(
-          cartographic.longitude,
-          cartographic.latitude,
-          heightOffset
-        );
-        const translation = Cesium.Cartesian3.subtract(
-          offset,
-          surface,
-          new Cesium.Cartesian3()
-        );
-        tileset.modelMatrix = Cesium.Matrix4.fromTranslation(translation);
-        if (tilesetSetup.default) {
-          // map.flyTo(tileset, {
-          //     offset: new Cesium.HeadingPitchRange(0, Cesium.Math.toRadians(-60), 0)
-          // });
-          const { lat, lon, height } = tilesetSetup.locate;
-          map.camera.flyTo({
-            destination: Cesium.Cartesian3.fromDegrees(lon, lat, height),
-          });
-        }
-      })
-      .otherwise(function (error: any) {
-        // Handle loading errors here
-        console.error("Error loading tileset:", error);
-      });
-    return tileset;
-  };
 
   useEffect(() => {
     if (!Cesium) return;
@@ -154,10 +73,6 @@ function Map3D() {
     const hpr = new Cesium.HeadingPitchRoll(heading, pitch, roll);
     Cesium.Transforms.headingPitchRollQuaternion(position, hpr);
 
-    for (let tilesetSetup of tilesetSetups) {
-      load3dTileset(Cesium, map, tilesetSetup);
-    }
-
     setCesium(Cesium);
     setCesiumMap(map);
 
@@ -187,6 +102,7 @@ function Map3D() {
           (pos) => <Identify key={"Identify"} pos={pos} />,
         ]}
       />
+      <Model3DLayerList />
     </Map>
   );
 }

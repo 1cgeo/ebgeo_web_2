@@ -1,6 +1,7 @@
 import { FC } from "react";
 import { Box } from "@mui/material";
 import styled from "styled-components";
+import Model3DCatalogButton from "./Model3DCatalogButton";
 
 const Background = styled(Box)({
   backgroundColor: "white",
@@ -26,12 +27,13 @@ export default ({ tools, start = 0 }: Props) => {
   return (
     <Background
       sx={{
-        height: `${tools.length * 55}px`,
+        height: `${(tools.length + 1) * 55}px`,
       }}
     >
+      <Model3DCatalogButton pos={{ top: start }} />
       {tools.map((tool: FC, index) => {
         const pos = {
-          top: start + index * 70,
+          top: start + (index + 1) * 70,
           right: 10,
         };
 
