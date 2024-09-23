@@ -59,7 +59,7 @@ function saveToFile(content, filename) {
 
 function main() {
     const targetDir = process.argv[2] || process.cwd();
-    const outputFile = 'lista_arquivos.txt';
+    const outputFile = 'estrutra_pastas.txt';
     const ig = readGitignore(targetDir);
     const result = listFiles(targetDir, targetDir, 0, ig);
     
