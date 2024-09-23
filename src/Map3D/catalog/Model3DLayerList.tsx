@@ -1,10 +1,10 @@
 import React from 'react';
 import { Box, List, ListItem, ListItemText, IconButton } from '@mui/material';
 import { ZoomIn, Delete } from '@mui/icons-material';
-import { useMapTools } from './contexts/Map3DTools';
+import { useMapTools } from '../contexts/Map3DTools';
 
 const Model3DLayerList: React.FC = () => {
-  const { models3D, zoomToModel, removeModel3D } = useMapTools();
+  const { models, zoomToModel, removeModel } = useMapTools();
 
   return (
     <Box
@@ -22,7 +22,7 @@ const Model3DLayerList: React.FC = () => {
       }}
     >
       <List>
-        {models3D.map((model) => (
+        {models.map((model) => (
           <ListItem
             key={model.id}
             secondaryAction={
@@ -30,7 +30,7 @@ const Model3DLayerList: React.FC = () => {
                 <IconButton edge="end" aria-label="zoom" onClick={() => zoomToModel(model.id)}>
                   <ZoomIn />
                 </IconButton>
-                <IconButton edge="end" aria-label="delete" onClick={() => removeModel3D(model.id)}>
+                <IconButton edge="end" aria-label="delete" onClick={() => removeModel(model.id)}>
                   <Delete />
                 </IconButton>
               </>

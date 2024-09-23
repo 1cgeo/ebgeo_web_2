@@ -10,8 +10,8 @@ const Clean: FC<Props> = ({ pos }) => {
   const { setActiveTool, activeTool } = useMapTools();
 
   const handleTool = useCallback(() => {
-    setActiveTool("clean");
-  }, [setActiveTool]);
+      setActiveTool(activeTool === "clean" ? null : "clean");
+  }, [activeTool, setActiveTool]);
 
   return (
     <Tool

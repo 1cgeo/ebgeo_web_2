@@ -1,37 +1,8 @@
 import React from "react";
 import { createContext, useContext, FC, useState  } from "react";
 import { useMain } from "../../contexts/MainContext";
+import { Tiles3D, Modelos3D, CatalogItem } from "../catalog/modelTypes";
 
-interface Tiles3D {
-  id: string;
-  name: string;
-  description: string;
-  thumbnail: string;
-  url: string;
-  lon: number;
-  lat: number;
-  height: number;
-  heightOffset: number;
-  maximumScreenSpaceError: number;
-  type: 'Tiles 3D';
-}
-
-interface Modelos3D {
-  id: string;
-  name: string;
-  description: string;
-  thumbnail: string;
-  url: string;
-  lon: number;
-  lat: number;
-  height: number;
-  heading: number;
-  pitch: number;
-  roll: number;
-  type: 'Modelos 3D';
-}
-
-type CatalogItem = Tiles3D | Modelos3D;
 interface Context {
   cesiumMeasure: any;
   setCesiumMeasure: (measure: any) => void;
@@ -43,6 +14,7 @@ interface Context {
   removeModel: (modelId: string) => void;
   zoomToModel: (modelId: string) => void;
   models: CatalogItem[];
+  areToolsEnabled: boolean;
 }
 
 interface Props {
@@ -60,12 +32,14 @@ const MapToolsContext = createContext<Context>({
   removeModel: () => {},
   zoomToModel: () => {},
   models: [],
+  areToolsEnabled: false,
 });
 
 const MapToolsProvider: FC<Props> = ({ children }) => {
   const { cesiumMap, cesium } = useMain();
   const [activeTool, setActiveToolState] = useState<string | null>(null);
   const [models, setModels] = useState<CatalogItem[]>([]);
+  const [areToolsEnabled, setAreToolsEnabled] = useState(false);
   var cesiumMeasure: any = null;
   const setCesiumMeasure = (measure: any) => (cesiumMeasure = measure);
   var cesiumViewshed: any = null;
@@ -151,7 +125,11 @@ const MapToolsProvider: FC<Props> = ({ children }) => {
   };
 
   const addModel = (model: CatalogItem) => {
-    setModels((prevModels) => [...prevModels, model]);
+    setModels((prevModels) => {
+      const newModels = [...prevModels, model];
+      setAreToolsEnabled(newModels.length > 0);
+      return newModels;
+    });
     
     if (model.type === 'Tiles 3D') {
       addTiles3D(model);
@@ -161,8 +139,12 @@ const MapToolsProvider: FC<Props> = ({ children }) => {
   };
 
   const removeModel = (modelId: string) => {
-    setModels((prevModels) => prevModels.filter((model) => model.id !== modelId));
-    
+    setModels((prevModels) => {
+      const newModels = prevModels.filter((model) => model.id !== modelId);
+      setAreToolsEnabled(newModels.length > 0);
+      return newModels;
+    });
+
     if ((cesiumMap as any).modelTilesets && (cesiumMap as any).modelTilesets[modelId]) {
       cesiumMap.scene.primitives.remove((cesiumMap as any).modelTilesets[modelId]);
       delete (cesiumMap as any).modelTilesets[modelId];
@@ -196,6 +178,7 @@ const MapToolsProvider: FC<Props> = ({ children }) => {
         removeModel,
         zoomToModel,
         models,
+        areToolsEnabled,
       }}
     >
       {children}

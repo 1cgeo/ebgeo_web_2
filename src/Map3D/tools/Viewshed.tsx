@@ -7,17 +7,20 @@ type Props = {
 };
 
 const Viewshed: FC<Props> = ({ pos }) => {
-  const { setActiveTool, activeTool } = useMapTools();
+  const { setActiveTool, activeTool, areToolsEnabled } = useMapTools();
 
   const handleTool = useCallback(() => {
-    setActiveTool(activeTool === "viewshed" ? null : "viewshed");
-  }, [activeTool, setActiveTool]);
+    if (areToolsEnabled) {
+      setActiveTool(activeTool === "viewshed" ? null : "viewshed");
+    }
+  }, [activeTool, setActiveTool, areToolsEnabled]);
 
   return (
     <Tool
       image="/images/icon-viewshed.svg"
       active={true}
       inUse={activeTool === "viewshed"}
+      disabled={!areToolsEnabled}
       pos={pos}
       onClick={handleTool}
     />

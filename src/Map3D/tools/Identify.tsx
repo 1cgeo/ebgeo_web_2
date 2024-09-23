@@ -41,12 +41,14 @@ interface FeatureInfo {
 
 const Identify: FC<Props> = ({ pos }) => {
   const { cesium, cesiumMap } = useMain();
-  const { setActiveTool, activeTool } = useMapTools();
+  const { setActiveTool, activeTool, areToolsEnabled } = useMapTools();
   const [featureInfo, setFeatureInfo] = useState<FeatureInfo | null>(null);
 
   const handleTool = useCallback(() => {
-    setActiveTool(activeTool === "identify" ? null : "identify");
-  }, [activeTool, setActiveTool]);
+    if (areToolsEnabled) {
+      setActiveTool(activeTool === "identify" ? null : "identify");
+    }
+  }, [activeTool, setActiveTool, areToolsEnabled]);
 
   const fetchFeatureInfo = useCallback(async (lon: number, lat: number, z: number) => {
     try {
@@ -103,6 +105,7 @@ const Identify: FC<Props> = ({ pos }) => {
         image="/images/information_circle.svg"
         active={true}
         inUse={activeTool === "identify"}
+        disabled={!areToolsEnabled}
         pos={pos}
         onClick={handleTool}
       />

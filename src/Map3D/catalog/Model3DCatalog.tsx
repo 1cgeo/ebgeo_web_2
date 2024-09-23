@@ -1,37 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Modal, Box, TextField, Grid, Card, CardContent, CardMedia, Typography, Button, Chip } from '@mui/material';
-import config from '../config';
-
-interface Tiles3D {
-  id: string;
-  name: string;
-  description: string;
-  thumbnail: string;
-  url: string;
-  lon: number;
-  lat: number;
-  height: number;
-  heightOffset: number;
-  maximumScreenSpaceError: number;
-  type: 'Tiles 3D';
-}
-
-interface Modelos3D {
-  id: string;
-  name: string;
-  description: string;
-  thumbnail: string;
-  url: string;
-  lon: number;
-  lat: number;
-  height: number;
-  heading: number;
-  pitch: number;
-  roll: number;
-  type: 'Modelos 3D';
-}
-
-type CatalogItem = Tiles3D | Modelos3D;
+import { Modal, Box, TextField, Card, CardContent, CardMedia, Typography, Button, Chip } from '@mui/material';
+import Grid from '@mui/material/Grid2';
+import config from '../../config';
+import { CatalogItem } from './modelTypes';
 
 interface Model3DCatalogProps {
   open: boolean;
@@ -109,7 +80,7 @@ const Model3DCatalog: React.FC<Model3DCatalogProps> = ({ open, onClose, onAddMod
         </Box>
         <Grid container spacing={2}>
           {models.map((model) => (
-            <Grid item xs={12} sm={6} md={4} key={model.id}>
+            <Grid size={{ xs: 12, sm: 6, md: 4 }} key={model.id}>
               <Card>
                 <CardMedia
                   component="img"
@@ -125,6 +96,9 @@ const Model3DCatalog: React.FC<Model3DCatalogProps> = ({ open, onClose, onAddMod
                     {model.description}
                   </Typography>
                   <Chip label={model.type} color={model.type === 'Tiles 3D' ? 'primary' : 'secondary'} size="small" sx={{ mt: 1, mb: 1 }} />
+                  <Typography variant="caption" display="block">
+                    Criado em: {new Date(model.data_criacao).toLocaleDateString()}
+                  </Typography>
                   <Button size="small" onClick={() => { onAddModel(model); onClose(); }}>
                     Adicionar ao mapa
                   </Button>

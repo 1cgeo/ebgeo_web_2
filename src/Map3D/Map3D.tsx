@@ -1,4 +1,4 @@
-import { useEffect, memo } from "react";
+import { useEffect, memo, useState } from "react";
 import styled from "styled-components";
 import { useMain } from "../contexts/MainContext";
 import { useMapTools } from "./contexts/Map3DTools";
@@ -6,7 +6,9 @@ import RightSideToolBar from "./RightSideToolBar";
 import { Area, Distance, Clean, Viewshed, Identify  } from "./tools";
 import useMeasure from "./hooks/useMeasure";
 import useViewshed from "./hooks/useViewshed";
-import Model3DLayerList from "./Model3DLayerList";
+import Model3DLayerList from "./catalog/Model3DLayerList";
+import LoadModelsButton from "./catalog/LoadModelsButton";
+import Model3DCatalog from "./catalog/Model3DCatalog";
 
 const Map = styled("div")({
   position: "relative",
@@ -28,8 +30,9 @@ function Map3D() {
   const { setCesium, setCesiumMap } = useMain();
   const { setup: setupMeasure } = useMeasure();
   const { setup: setupViewshed } = useViewshed();
-  const { setCesiumMeasure, setCesiumViewshed } = useMapTools();
+  const { setCesiumMeasure, setCesiumViewshed, models, addModel } = useMapTools();
   const Cesium = window?.Cesium as any;
+  const [isCatalogOpen, setIsCatalogOpen] = useState(false);
 
   useEffect(() => {
     if (!Cesium) return;
@@ -90,8 +93,24 @@ function Map3D() {
     };
   }, [Cesium]);
 
+  const handleOpenCatalog = () => {
+    setIsCatalogOpen(true);
+  };
+
+  const handleCloseCatalog = () => {
+    setIsCatalogOpen(false);
+  };
+
+  const handleAddModel = (model: any) => {
+    addModel(model);
+    setIsCatalogOpen(false);
+  };
+
   return (
     <Map id="map-3d">
+      {models.length === 0 && (
+          <LoadModelsButton onClick={handleOpenCatalog} />
+      )}
       <RightSideToolBar
         start={125}
         tools={[
@@ -101,8 +120,14 @@ function Map3D() {
           (pos) => <Viewshed key={"Viewshed"} pos={pos} />,
           (pos) => <Identify key={"Identify"} pos={pos} />,
         ]}
+        onAddModel={handleAddModel}
       />
       <Model3DLayerList />
+      <Model3DCatalog
+        open={isCatalogOpen}
+        onClose={handleCloseCatalog}
+        onAddModel={handleAddModel}
+      />
     </Map>
   );
 }

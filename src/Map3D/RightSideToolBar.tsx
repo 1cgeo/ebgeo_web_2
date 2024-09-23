@@ -1,7 +1,7 @@
 import { FC } from "react";
 import { Box } from "@mui/material";
 import styled from "styled-components";
-import Model3DCatalogButton from "./Model3DCatalogButton";
+import Model3DCatalogButton from "./catalog/Model3DCatalogButton";
 
 const Background = styled(Box)({
   backgroundColor: "white",
@@ -21,16 +21,17 @@ const Background = styled(Box)({
 type Props = {
   tools: Array<FC>;
   start: number;
+  onAddModel: (model: any) => void;
 };
 
-export default ({ tools, start = 0 }: Props) => {
+export default ({ tools, start = 0, onAddModel }: Props) => {
   return (
     <Background
       sx={{
         height: `${(tools.length + 1) * 55}px`,
       }}
     >
-      <Model3DCatalogButton pos={{ top: start }} />
+      <Model3DCatalogButton pos={{ top: start }} onAddModel={onAddModel} />
       {tools.map((tool: FC, index) => {
         const pos = {
           top: start + (index + 1) * 70,

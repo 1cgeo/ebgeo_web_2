@@ -7,17 +7,20 @@ type Props = {
 };
 
 const Area: FC<Props> = ({ pos }) => {
-  const { setActiveTool, activeTool } = useMapTools();
+  const { setActiveTool, activeTool, areToolsEnabled } = useMapTools();
 
   const handleTool = useCallback(() => {
-    setActiveTool(activeTool === "area" ? null : "area");
-  }, [activeTool, setActiveTool]);
+    if (areToolsEnabled) {
+      setActiveTool(activeTool === "area" ? null : "area");
+    }
+  }, [activeTool, setActiveTool, areToolsEnabled]);
 
   return (
     <Tool
       image="/images/icon-area.svg"
       active={true}
       inUse={activeTool === "area"}
+      disabled={!areToolsEnabled}
       pos={pos}
       onClick={handleTool}
     />

@@ -7,17 +7,20 @@ type Props = {
 };
 
 const Distance: FC<Props> = ({ pos }) => {
-  const { setActiveTool, activeTool } = useMapTools();
+  const { setActiveTool, activeTool, areToolsEnabled } = useMapTools();
 
   const handleTool = useCallback(() => {
-    setActiveTool(activeTool === "distance" ? null : "distance");
-  }, [activeTool, setActiveTool]);
+    if (areToolsEnabled) {
+      setActiveTool(activeTool === "distance" ? null : "distance");
+    }
+  }, [activeTool, setActiveTool, areToolsEnabled]);
 
   return (
     <Tool
       image="/images/icon-distance.svg"
       active={true}
       inUse={activeTool === "distance"}
+      disabled={!areToolsEnabled}
       pos={pos}
       onClick={handleTool}
     />
