@@ -8,6 +8,7 @@ import useMeasure from "./hooks/useMeasure";
 import useViewshed from "./hooks/useViewshed";
 import Model3DLayerList from "./catalog/Model3DLayerList";
 import Model3DCatalogButton from "./catalog/Model3DCatalogButton";
+import config from '../config';
 
 const Map = styled("div")({
   position: "relative",
@@ -57,6 +58,13 @@ function Map3D() {
       animation: false,
       timeline: false,
       fullscreenButton: false,
+      imageryProvider: new Cesium.UrlTemplateImageryProvider({
+        url: `${config.endpoints.cesiumImagery}`,
+        credit : 'Diretoria de Serviço Geográfico - Exército Brasileiro'
+      }),
+      terrainProvider: new Cesium.CesiumTerrainProvider({
+          url: `${config.endpoints.cesiumTerrain}`
+      }),
     });
     map.scene.globe.baseColor = Cesium.Color.BLACK;
     map.scene.skyAtmosphere.show = true;

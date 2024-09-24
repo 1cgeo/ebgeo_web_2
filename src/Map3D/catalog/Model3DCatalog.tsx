@@ -124,38 +124,3 @@ const Model3DCatalog: React.FC<Model3DCatalogProps> = ({ open, onClose, onAddMod
 };
 
 export default Model3DCatalog;
-
-const tilesetSetups = [ //Dado inicial
-  {
-    url: "/3d/AMAN/tileset.json",
-
-    heightOffset: 50, //-360 para elipsoide 40 para terreno,
-    id: "AMAN",
-    default: true,
-    locate: {
-      lat: -22.455921,
-      lon: -44.449655,
-      height: 2200,
-    },
-  },
-  {
-    url: "/3d/ESA/tileset.json",
-    heightOffset: 75,
-    id: "ESA",
-    locate: {
-      lon: -45.25666459926732,
-      lat: -21.703613735103637,
-      height: 1500,
-    },
-  },
-  {
-    url: "/3d/PCL/tileset.json",
-    heightOffset: 35,
-    id: "PCL",
-    locate: {
-      lon: -44.47332385414955,
-      lat: -22.43976556982974,
-      height: 1000,
-    },
-  },
-]
