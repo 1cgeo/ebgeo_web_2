@@ -59,7 +59,7 @@ const VectorTileInfoPanel: FC<VectorTileInfoPanelProps> = ({ feature, onClose })
   return (
     <Box
       sx={{
-        position: 'absolute',
+        position: 'fixed',
         bottom: 10,
         right: 10,
         width: 300,

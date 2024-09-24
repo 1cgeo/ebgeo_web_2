@@ -1,12 +1,30 @@
 import { FC } from "react";
+import { Box } from "@mui/material";
+import styled from "styled-components";
 
-export default ({ tools }: { tools: Array<FC> }) => {
-  return tools.map((tool: FC, index) => {
-    const pos = {
-      top: 90 + index * 70,
-      right: 10,
-    };
+const ToolbarContainer = styled(Box)`
+  position: absolute;
+  top: 90px;
+  right: 10px;
+  background-color: white;
+  border-radius: 4px;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  z-index: 1000;
+  opacity: 0.9;
+`;
 
-    return tool(pos);
-  });
+const RightSideToolBar: FC<{ tools: Array<FC> }> = ({ tools }) => {
+  return (
+    <ToolbarContainer>
+      {tools.map((Tool, index) => (
+        <Tool key={index} />
+      ))}
+    </ToolbarContainer>
+  );
 };
+
+export default RightSideToolBar;

@@ -112,12 +112,12 @@ function MapContent() {
     <>
       <MapContainer id="map-sig">
         <SaveLoadControl />
-        <FeatureSearchControl />
         <RightSideToolBar
           tools={[
-            (pos) => <ResetNorth key={"ResetNorth"} pos={pos} />,
-            (pos) => <VectorTileInfoControl key="VectorTileInfo" pos={pos} />,
-            (pos) => <TextControl key="TextControl" pos={pos} />,
+            () => <FeatureSearchControl key={"FeatureSearchControl"}/>,
+            () => <ResetNorth key={"ResetNorth"}/>,
+            () => <VectorTileInfoControl key="VectorTileInfo"/>,
+            () => <TextControl key="TextControl"/>,
           ]}
         />
         <BaseMapToggleControl />

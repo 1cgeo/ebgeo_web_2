@@ -4,6 +4,7 @@ import { usePanel } from '../../contexts/PanelContext';
 import FeatureSearchPanel from './FeatureSearchPanel';
 import styled from 'styled-components';
 import config from '../../../config';
+import Tool from '../Tool';
 
 type Suggestion = {
   tipo: string;
@@ -25,15 +26,16 @@ type GenericMarker = {
   remove: () => void;
 };
 
-const SearchContainer = styled.div`
+const SearchContainer = styled.div<{ $isVisible: boolean }>`
   position: absolute;
-  top: 90px;
+  top: 5px;
   right: 60px;
   z-index: 1000;
   background-color: white;
   padding: 5px;
   border-radius: 4px;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  display: ${props => props.$isVisible ? 'block' : 'none'};
 `;
 
 const SearchInput = styled.input`
@@ -74,6 +76,7 @@ const FeatureSearchControl: React.FC = () => {
   const [selectedFeature, setSelectedFeature] = useState<Suggestion | null>(null);
   const [marker, setMarker] = useState<GenericMarker | null>(null);
   const [showSuggestions, setShowSuggestions] = useState<boolean>(false);
+  const [isSearchVisible, setIsSearchVisible] = useState<boolean>(false);
   const suggestionTimeoutRef = useRef<number | null>(null);
 
   useEffect(() => {
@@ -178,36 +181,59 @@ const FeatureSearchControl: React.FC = () => {
     }
   }, [suggestions]);
 
+  const toggleSearch = useCallback(() => {
+    
+    setIsSearchVisible(prev => !prev);
+  }, []);
+
+  useEffect(() => {
+    if (isSearchVisible) {
+      // Focus the input when search becomes visible
+      const inputElement = document.querySelector('input[type="text"]') as HTMLInputElement;
+      if (inputElement) {
+        inputElement.focus();
+      }
+    }
+  }, [isSearchVisible]);
+
   return (
-    <SearchContainer>
-      <SearchInput
-        type="text"
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
-        onBlur={handleInputBlur}
-        onFocus={handleInputFocus}
-        placeholder="Busque por nome"
+    <>
+      <Tool
+        image="/images/search-globe.svg"
+        active={true}
+        inUse={isSearchVisible}
+        onClick={toggleSearch}
       />
-      {showSuggestions && suggestions.length > 0 && (
-        <SuggestionsList>
-          {suggestions.map((suggestion) => (
-            <SuggestionItem
-              key={suggestion.nome}
-              onMouseDown={(e) => e.preventDefault()} // Prevent onBlur from firing before click
-              onClick={() => handleSuggestionClick(suggestion)}
-            >
-              <strong>{suggestion.tipo}:</strong> {suggestion.nome} ({suggestion.municipio}, {suggestion.estado})
-            </SuggestionItem>
-          ))}
-        </SuggestionsList>
-      )}
+      <SearchContainer $isVisible={isSearchVisible}>
+        <SearchInput
+          type="text"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          onBlur={handleInputBlur}
+          onFocus={handleInputFocus}
+          placeholder="Busque por nome"
+        />
+        {showSuggestions && suggestions.length > 0 && (
+          <SuggestionsList>
+            {suggestions.map((suggestion) => (
+              <SuggestionItem
+                key={suggestion.nome}
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => handleSuggestionClick(suggestion)}
+              >
+                <strong>{suggestion.tipo}:</strong> {suggestion.nome} ({suggestion.municipio}, {suggestion.estado})
+              </SuggestionItem>
+            ))}
+          </SuggestionsList>
+        )}
+      </SearchContainer>
       {openPanel === 'featureSearch' && selectedFeature && (
         <FeatureSearchPanel 
           feature={selectedFeature} 
           onClose={handleClosePanel}
         />
       )}
-    </SearchContainer>
+    </>
   );
 };
 

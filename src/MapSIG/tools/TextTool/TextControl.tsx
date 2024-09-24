@@ -5,10 +5,6 @@ import { useMapStore } from '../../contexts/MapFeaturesContext';
 import Tool from '../Tool';
 import TextAttributesPanel from './TextAttributesPanel';
 
-type Props = {
-  pos: { right?: number; top?: number; left?: number; bottom?: number };
-};
-
 type GenericMapMouseEvent = {
     lngLat: { lng: number; lat: number };
 };
@@ -41,7 +37,7 @@ const DEFAULT_PROPERTIES = {
     source: 'text'
 };
 
-const TextControl: FC<Props> = ({ pos }) => {
+const TextControl: FC = () => {
     const { map } = useMain();
     const { openPanel, setOpenPanel } = usePanel();
     const { addFeature, updateFeature, removeFeature } = useMapStore();
@@ -110,7 +106,6 @@ const TextControl: FC<Props> = ({ pos }) => {
           image="/images/icon_text_black.svg"
           active={true}
           inUse={active}
-          pos={pos}
           onClick={handleToolClick}
         />
         {openPanel === 'textAttributes' && (

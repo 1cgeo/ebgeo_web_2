@@ -4,10 +4,6 @@ import { useMain } from "../../../contexts/MainContext";
 import { usePanel } from '../../contexts/PanelContext';
 import VectorTileInfoPanel from "./VectorTileInfoPanel";
 
-type Props = {
-  pos: { right?: number; top?: number; left?: number; bottom?: number };
-};
-
 type GenericMapMouseEvent = {
     point: { x: number; y: number };
   };
@@ -20,7 +16,7 @@ type GenericMapGeoJSONFeature = {
     properties: Record<string, any>;
 };
   
-const VectorTileInfoControl: FC<Props> = ({ pos }) => {
+const VectorTileInfoControl: FC = () => {
   const { map: map } = useMain();
   const { openPanel, setOpenPanel } = usePanel();
   const [active, setActive] = useState<boolean>(false);
@@ -84,7 +80,6 @@ const VectorTileInfoControl: FC<Props> = ({ pos }) => {
         image="/images/icon_info_black.svg"
         active={true}
         inUse={active}
-        pos={pos}
         onClick={toggleActive}
       />
       {openPanel === 'vectorTileInfo' && (
