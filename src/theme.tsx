@@ -44,7 +44,7 @@ const ThemeConfig: FC<Props> = ({ children }) => {
         },
       },
       typography: {
-        fontFamily: "'Time New Roman';",
+        fontFamily: "'Roboto', 'Helvetica', 'Arial', sans-serif",
       },
     }),
     []

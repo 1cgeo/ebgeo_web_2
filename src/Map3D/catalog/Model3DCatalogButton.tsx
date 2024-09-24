@@ -55,6 +55,7 @@ const Model3DCatalogButton: React.FC = () => {
         open={open}
         onClose={handleClose}
         onAddModel={handleAddModelAndClose}
+        loadedModels={models}
       />
     </>
   );

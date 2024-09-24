@@ -97,6 +97,9 @@ const MapToolsProvider: FC<Props> = ({ children }) => {
       const offset = cesium.Cartesian3.fromRadians(cartographic.longitude, cartographic.latitude, model.heightOffset);
       const translation = cesium.Cartesian3.subtract(offset, surface, new cesium.Cartesian3());
       tileset.modelMatrix = cesium.Matrix4.fromTranslation(translation);
+      cesiumMap.camera.flyTo({
+          destination: cesium.Cartesian3.fromDegrees(model.lon, model.lat, model.height),
+      });
     });
 
     (cesiumMap as any).modelTilesets = (cesiumMap as any).modelTilesets || {};

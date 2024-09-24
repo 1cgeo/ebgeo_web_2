@@ -1,14 +1,10 @@
 import React from 'react';
-import { Box, List, ListItem, ListItemText, IconButton } from '@mui/material';
-import { ZoomIn, Delete } from '@mui/icons-material';
+import { Box, List, ListItem, ListItemText, IconButton, Avatar } from '@mui/material';
+import { ZoomIn, Close } from '@mui/icons-material';
 import { useMapTools } from '../contexts/Map3DTools';
 
 const Model3DLayerList: React.FC = () => {
   const { models, zoomToModel, removeModel } = useMapTools();
-
-  if (models.length === 0) {
-    return null;
-  }
 
   return (
     <Box
@@ -21,26 +17,48 @@ const Model3DLayerList: React.FC = () => {
         overflowY: 'auto',
         backgroundColor: 'white',
         borderRadius: 1,
-        boxShadow: 1,
+        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
         zIndex: 1000,
       }}
     >
-      <List>
+      <List disablePadding>
         {models.map((model) => (
           <ListItem
             key={model.id}
-            secondaryAction={
-              <>
-                <IconButton edge="end" aria-label="zoom" onClick={() => zoomToModel(model.id)}>
-                  <ZoomIn />
-                </IconButton>
-                <IconButton edge="end" aria-label="delete" onClick={() => removeModel(model.id)}>
-                  <Delete />
-                </IconButton>
-              </>
-            }
+            disableGutters
+            sx={{
+              py: 0.5,
+              px: 1,
+              '&:hover': { backgroundColor: 'rgba(0, 0, 0, 0.04)' },
+            }}
           >
-            <ListItemText primary={model.name} />
+            <Avatar 
+              src={model.thumbnail} 
+              variant="rounded" 
+              sx={{ width: 32, height: 32, mr: 1 }}
+            />
+            <ListItemText 
+              primary={model.name} 
+              primaryTypographyProps={{ 
+                noWrap: true, 
+                fontSize: '0.875rem',
+                fontWeight: 'medium'
+              }}
+            />
+            <IconButton 
+              size="small" 
+              onClick={() => zoomToModel(model.id)}
+              sx={{ ml: 0.5 }}
+            >
+              <ZoomIn fontSize="small" />
+            </IconButton>
+            <IconButton 
+              size="small" 
+              onClick={() => removeModel(model.id)}
+              sx={{ ml: 0.5 }}
+            >
+              <Close fontSize="small" />
+            </IconButton>
           </ListItem>
         ))}
       </List>

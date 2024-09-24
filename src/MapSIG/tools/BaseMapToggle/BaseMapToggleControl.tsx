@@ -10,7 +10,7 @@ const ToggleButton = styled.div<{ $isOrtho: boolean }>`
   left: 20px;
   width: 80px;
   height: 80px;
-  background-image: url(${props => props.$isOrtho ? '/images/imagem_orto.png' : '/images/imagem_topo.png'});
+  background-image: url(${props => props.$isOrtho ? '/images/imagem_topo.png' : '/images/imagem_orto.png'});
   background-size: cover;
   cursor: pointer;
   border-radius: 4px;
