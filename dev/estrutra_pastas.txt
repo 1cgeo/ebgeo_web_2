@@ -13,7 +13,6 @@ layouts/
 main.tsx
 Map3D/
 -catalog/
---LoadModelsButton.tsx
 --Model3DCatalog.tsx
 --Model3DCatalogButton.tsx
 --Model3DLayerList.tsx

@@ -5,10 +5,6 @@ import { useMapTools } from "../contexts/Map3DTools";
 import styled from "styled-components";
 import config from '../../config';
 
-type Props = {
-  pos: { right?: number; top?: number; left?: number; bottom?: number };
-};
-
 const FeatureInfoPanel = styled.div`
   position: absolute;
   bottom: 10px;
@@ -39,7 +35,7 @@ interface FeatureInfo {
   altitude_topo: number;
 }
 
-const Identify: FC<Props> = ({ pos }) => {
+const Identify: FC = () => {
   const { cesium, cesiumMap } = useMain();
   const { setActiveTool, activeTool, areToolsEnabled } = useMapTools();
   const [featureInfo, setFeatureInfo] = useState<FeatureInfo | null>(null);
@@ -106,7 +102,6 @@ const Identify: FC<Props> = ({ pos }) => {
         active={true}
         inUse={activeTool === "identify"}
         disabled={!areToolsEnabled}
-        pos={pos}
         onClick={handleTool}
       />
       {featureInfo && (

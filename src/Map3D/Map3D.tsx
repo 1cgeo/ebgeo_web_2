@@ -1,4 +1,4 @@
-import { useEffect, memo, useState } from "react";
+import { useEffect, memo } from "react";
 import styled from "styled-components";
 import { useMain } from "../contexts/MainContext";
 import { useMapTools } from "./contexts/Map3DTools";
@@ -7,8 +7,7 @@ import { Area, Distance, Clean, Viewshed, Identify  } from "./tools";
 import useMeasure from "./hooks/useMeasure";
 import useViewshed from "./hooks/useViewshed";
 import Model3DLayerList from "./catalog/Model3DLayerList";
-import LoadModelsButton from "./catalog/LoadModelsButton";
-import Model3DCatalog from "./catalog/Model3DCatalog";
+import Model3DCatalogButton from "./catalog/Model3DCatalogButton";
 
 const Map = styled("div")({
   position: "relative",
@@ -30,9 +29,8 @@ function Map3D() {
   const { setCesium, setCesiumMap } = useMain();
   const { setup: setupMeasure } = useMeasure();
   const { setup: setupViewshed } = useViewshed();
-  const { setCesiumMeasure, setCesiumViewshed, models, addModel } = useMapTools();
+  const { setCesiumMeasure, setCesiumViewshed } = useMapTools();
   const Cesium = window?.Cesium as any;
-  const [isCatalogOpen, setIsCatalogOpen] = useState(false);
 
   useEffect(() => {
     if (!Cesium) return;
@@ -93,41 +91,19 @@ function Map3D() {
     };
   }, [Cesium]);
 
-  const handleOpenCatalog = () => {
-    setIsCatalogOpen(true);
-  };
-
-  const handleCloseCatalog = () => {
-    setIsCatalogOpen(false);
-  };
-
-  const handleAddModel = (model: any) => {
-    addModel(model);
-    setIsCatalogOpen(false);
-  };
-
   return (
     <Map id="map-3d">
-      {models.length === 0 && (
-          <LoadModelsButton onClick={handleOpenCatalog} />
-      )}
       <RightSideToolBar
-        start={125}
         tools={[
-          (pos) => <Clean key={"Clear"} pos={pos} />,
-          (pos) => <Area key={"Area"} pos={pos} />,
-          (pos) => <Distance key={"Distance"} pos={pos} />,
-          (pos) => <Viewshed key={"Viewshed"} pos={pos} />,
-          (pos) => <Identify key={"Identify"} pos={pos} />,
+          () => <Model3DCatalogButton key={"Catalog"} />,
+          () => <Clean key={"Clear"} />,
+          () => <Area key={"Area"} />,
+          () => <Distance key={"Distance"} />,
+          () => <Viewshed key={"Viewshed"} />,
+          () => <Identify key={"Identify"} />,
         ]}
-        onAddModel={handleAddModel}
       />
       <Model3DLayerList />
-      <Model3DCatalog
-        open={isCatalogOpen}
-        onClose={handleCloseCatalog}
-        onAddModel={handleAddModel}
-      />
     </Map>
   );
 }

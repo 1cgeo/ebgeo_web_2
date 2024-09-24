@@ -7,9 +7,9 @@ interface StyledIconButtonProps {
 }
 
 const StyledIconButton = styled(IconButton)<StyledIconButtonProps>`
-  width: 40px;
-  height: 40px;
-  padding: 8px;
+  width: 32px;
+  height: 32px;
+  padding: 4px;
   background-color: ${props => props.$inUse ? '#e0e0e0' : 'transparent'};
   &:hover {
     background-color: #f0f0f0;

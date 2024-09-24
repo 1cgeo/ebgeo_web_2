@@ -2,23 +2,21 @@ import { useCallback, FC } from "react";
 import Tool from "./Tool";
 import { useMapTools } from "../contexts/Map3DTools";
 
-type Props = {
-  pos: { right?: number; top?: number; left?: number; bottom?: number };
-};
-
-const Clean: FC<Props> = ({ pos }) => {
-  const { setActiveTool, activeTool } = useMapTools();
+const Clean: FC = () => {
+  const { setActiveTool, activeTool, areToolsEnabled } = useMapTools();
 
   const handleTool = useCallback(() => {
+    if (areToolsEnabled) {
       setActiveTool(activeTool === "clean" ? null : "clean");
-  }, [activeTool, setActiveTool]);
+    }
+  }, [activeTool, setActiveTool, areToolsEnabled]);
 
   return (
     <Tool
       image="/images/icon-clear.svg"
       active={true}
       inUse={activeTool === "clean"}
-      pos={pos}
+      disabled={!areToolsEnabled}
       onClick={handleTool}
     />
   );

@@ -6,6 +6,10 @@ import { useMapTools } from '../contexts/Map3DTools';
 const Model3DLayerList: React.FC = () => {
   const { models, zoomToModel, removeModel } = useMapTools();
 
+  if (models.length === 0) {
+    return null;
+  }
+
   return (
     <Box
       sx={{

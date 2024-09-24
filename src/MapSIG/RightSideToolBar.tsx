@@ -11,7 +11,7 @@ const ToolbarContainer = styled(Box)`
   padding: 8px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 4px;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
   z-index: 1000;
   opacity: 0.9;

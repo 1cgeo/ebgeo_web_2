@@ -2,11 +2,7 @@ import { FC, useCallback } from "react";
 import Tool from "./Tool";
 import { useMapTools } from "../contexts/Map3DTools";
 
-type Props = {
-  pos: { right?: number; top?: number; left?: number; bottom?: number };
-};
-
-const Viewshed: FC<Props> = ({ pos }) => {
+const Viewshed: FC = () => {
   const { setActiveTool, activeTool, areToolsEnabled } = useMapTools();
 
   const handleTool = useCallback(() => {
@@ -21,7 +17,6 @@ const Viewshed: FC<Props> = ({ pos }) => {
       active={true}
       inUse={activeTool === "viewshed"}
       disabled={!areToolsEnabled}
-      pos={pos}
       onClick={handleTool}
     />
   );
