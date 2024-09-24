@@ -25,28 +25,33 @@ const Main = styled("main", {
 }));
 
 const AppBar = styled(MuiAppBar)(({ theme }) => ({
-  backgroundColor: "white",
+  backgroundColor: theme.palette.primary.main,
   transition: theme.transitions.create(["margin", "width"], {
     easing: theme.transitions.easing.sharp,
     duration: theme.transitions.duration.leavingScreen,
   }),
 }));
 
-const StyledListItem = styled(ListItem)(() => ({
+const StyledListItem = styled(ListItem)(({ theme }) => ({
   flexDirection: "row",
-  justifyContent: "flex-start",
+  justifyContent: "center",
   alignItems: "center",
   borderRadius: "20px",
-  cursor: "pointer"
+  cursor: "pointer",
+  padding: theme.spacing(0.5, 1),
+  minWidth: '80px',
+  '& .MuiListItemIcon-root': {
+    minWidth: '30px', // Reduz o espaço do ícone
+  },
 }));
 
 const NavButtonContainer = styled(Box)(({ theme }) => ({
-  backgroundColor: "#274726",
+  backgroundColor: theme.palette.ebgeo.dark,
   borderRadius: "20px",
   padding: theme.spacing(0.5),
   display: "flex",
   alignItems: "center",
-  height: '50px'
+  height: '40px'
 }));
 
 type NavButtonProps = {
@@ -61,18 +66,20 @@ type NavButtonProps = {
 };
 
 const NavButton: FC<NavButtonProps> = ({ item, onClick }) => {
+  const theme = useTheme();
+
   return (
     <StyledListItem
       sx={{
-        backgroundColor: item.isSelected ? "#508D4E" : "#274726",
-        color: "white",
+        backgroundColor: item.isSelected ? theme.palette.ebgeo.main : theme.palette.ebgeo.dark,
+        color: theme.palette.ebgeo.contrastText,
         "&:hover": {
-          backgroundColor: "#508D4E",
+          backgroundColor: theme.palette.ebgeo.main,
         },
       }}
       onClick={onClick}
     >
-      <ListItemIcon sx={{ color: "white", minWidth: 40 }}>
+      <ListItemIcon sx={{ color: theme.palette.ebgeo.contrastText, minWidth: 40 }}>
         {item.icon}
       </ListItemIcon>
       <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
@@ -137,6 +144,7 @@ const AppDrawer: FC<Props> = ({ children }) => {
             overflow: "auto",
             display: "flex",
             flexDirection: "row",
+            minHeight: "80px",
           }}
         >
           <Box sx={{ width: "100%" }}>
@@ -152,18 +160,19 @@ const AppDrawer: FC<Props> = ({ children }) => {
             >
               <Box
                 component="img"
-                src="/images/dsg-symbol.svg"
-                sx={{ width: isDown574 ? 40 : 50 }}
+                src="/images/dsg_symbol.svg"
+                sx={{ width: isDown574 ? 25 : 30 }}
               />
               <Typography
                 sx={{
                   fontSize: "24px",
                   fontWeight: "bold",
                   unicodeBidi: "isolate",
+                  paddingLeft: "10px"
                 }}
               >
-                <span style={{ color: "#80AF81" }}>EB</span>
-                <span style={{ color: "black" }}>GEO</span>
+                <span style={{ color: theme.palette.ebgeo.light }}>EB</span>
+                <span style={{ color: theme.palette.ebgeo.contrastText }}>GEO</span>
               </Typography>
             </IconButton>
           </Box>
