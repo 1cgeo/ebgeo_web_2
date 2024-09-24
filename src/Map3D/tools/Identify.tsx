@@ -102,6 +102,7 @@ const Identify: FC = () => {
         active={true}
         inUse={activeTool === "identify"}
         disabled={!areToolsEnabled}
+        tooltip="Identificar elementos"
         onClick={handleTool}
       />
       {featureInfo && (

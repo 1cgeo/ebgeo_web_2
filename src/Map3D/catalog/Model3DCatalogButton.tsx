@@ -48,6 +48,7 @@ const Model3DCatalogButton: React.FC = () => {
           image="/images/catalog.svg"
           active={true}
           inUse={open}
+          tooltip="Catálogo de modelos 3D"
           onClick={handleOpen}
         />
       </BlinkingWrapper>

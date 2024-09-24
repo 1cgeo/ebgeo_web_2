@@ -17,6 +17,7 @@ const Clean: FC = () => {
       active={true}
       inUse={activeTool === "clean"}
       disabled={!areToolsEnabled}
+      tooltip="Limpar medições e análises"
       onClick={handleTool}
     />
   );

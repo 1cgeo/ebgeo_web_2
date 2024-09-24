@@ -202,6 +202,7 @@ const FeatureSearchControl: React.FC = () => {
         image="/images/search-globe.svg"
         active={true}
         inUse={isSearchVisible}
+        tooltip="Buscar por nomes geográficos"
         onClick={toggleSearch}
       />
       <SearchContainer $isVisible={isSearchVisible}>

@@ -17,6 +17,7 @@ const Distance: FC = () => {
       active={true}
       inUse={activeTool === "distance"}
       disabled={!areToolsEnabled}
+      tooltip="Medir distância"
       onClick={handleTool}
     />
   );

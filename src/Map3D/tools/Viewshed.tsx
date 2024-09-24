@@ -17,6 +17,7 @@ const Viewshed: FC = () => {
       active={true}
       inUse={activeTool === "viewshed"}
       disabled={!areToolsEnabled}
+      tooltip="Analisar visibilidade"
       onClick={handleTool}
     />
   );

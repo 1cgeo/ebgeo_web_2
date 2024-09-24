@@ -80,6 +80,7 @@ const VectorTileInfoControl: FC = () => {
         image="/images/icon_info_black.svg"
         active={true}
         inUse={active}
+        tooltip="Obter informações sobre elementos do mapa"
         onClick={toggleActive}
       />
       {openPanel === 'vectorTileInfo' && (

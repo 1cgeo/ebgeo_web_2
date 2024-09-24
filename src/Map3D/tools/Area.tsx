@@ -17,6 +17,7 @@ const Area: FC = () => {
       active={true}
       inUse={activeTool === "area"}
       disabled={!areToolsEnabled}
+      tooltip="Medir área"
       onClick={handleTool}
     />
   );

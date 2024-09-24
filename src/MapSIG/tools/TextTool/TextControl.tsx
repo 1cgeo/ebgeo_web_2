@@ -106,6 +106,7 @@ const TextControl: FC = () => {
           image="/images/icon_text_black.svg"
           active={true}
           inUse={active}
+          tooltip="Adicionar texto ao mapa"
           onClick={handleToolClick}
         />
         {openPanel === 'textAttributes' && (

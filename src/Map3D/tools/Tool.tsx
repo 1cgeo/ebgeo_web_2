@@ -1,6 +1,7 @@
 import { FC } from "react";
 import { IconButton } from "@mui/material";
 import styled from "styled-components";
+import Tooltip from "@mui/material/Tooltip";
 
 interface StyledIconButtonProps {
   $inUse?: boolean;
@@ -24,9 +25,11 @@ type Props = {
   inUse?: boolean;
   disabled?: boolean;
   onClick: () => void;
+  tooltip: string;
 };
 
-const Tool: FC<Props> = ({ image, active, inUse, disabled, onClick }) => (
+const Tool: FC<Props> = ({ image, active, inUse, disabled, onClick, tooltip }) => (
+  <Tooltip title={tooltip} placement="left">
   <StyledIconButton
     onClick={onClick}
     disabled={disabled || !active}
@@ -35,6 +38,7 @@ const Tool: FC<Props> = ({ image, active, inUse, disabled, onClick }) => (
   >
     <img src={image} alt="tool icon" style={{ width: '100%', height: '100%' }} />
   </StyledIconButton>
+  </Tooltip>
 );
 
 export default Tool;

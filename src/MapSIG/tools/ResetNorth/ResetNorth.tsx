@@ -26,6 +26,7 @@ const ResetNorth: FC = () => {
     <Tool
       image="/images/icon-north-black.svg"
       active={active}
+      tooltip="Resetar orientação do mapa"
       onClick={resetNorth}
     />
   );
