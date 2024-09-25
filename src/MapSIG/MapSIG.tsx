@@ -5,6 +5,8 @@ import { ResetNorth, VectorTileInfoControl, FeatureSearchControl, TextControl, S
 import { useMain } from "../contexts/MainContext";
 import RightSideToolBar from "./RightSideToolBar";
 import PanelProvider from './contexts/PanelContext';
+import ToolProvider from './contexts/ToolContext';
+import SelectionProvider from './contexts/SelectionContext';
 import { MapProvider, useMapStore, getLayerType, getLayerPaint, getLayerLayout } from './contexts/MapFeaturesContext';
 import BaseMapToggleControl from "./tools/BaseMapToggle/BaseMapToggleControl";
 
@@ -129,9 +131,13 @@ function MapContent() {
 function MapSig() {
   return (
     <MapProvider>
+      <ToolProvider>
+      <SelectionProvider>
       <PanelProvider>
         <MapContent />
       </PanelProvider>
+      </SelectionProvider>
+      </ToolProvider>
     </MapProvider>
   );
 }

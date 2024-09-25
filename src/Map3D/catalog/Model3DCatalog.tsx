@@ -102,7 +102,7 @@ const Model3DCatalog: React.FC<Model3DCatalogProps> = ({ open, onClose, onAddMod
         borderRadius: 2,
       }}>
         <Typography variant="h4" component="h2" gutterBottom sx={{ mb: 3, color: '#315730' }}>
-          Catálogo
+        Catálogo de modelos 3D
         </Typography>
         <Box sx={{ mb: 3, position: 'relative' }}>
           <TextField

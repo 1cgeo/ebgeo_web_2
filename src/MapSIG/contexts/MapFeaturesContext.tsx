@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, ReactNode, useEffect, useRef } from 'react';
 
 // Types
-type FeatureType = 'polygons' | 'linestrings' | 'points' | 'texts' | 'images' | 'los' | 'visibility' | 'processed_los' | 'processed_visibility';
+export type FeatureType = 'polygons' | 'linestrings' | 'points' | 'texts' | 'images' | 'los' | 'visibility' | 'processed_los' | 'processed_visibility';
 type BaseLayer = 'Carta' | 'Satellite' | 'Terrain';
 
 type UndoRedoAction = 
@@ -9,9 +9,17 @@ type UndoRedoAction =
     | { type: 'REMOVE_FEATURE'; featureType: FeatureType; feature: Feature }
     | { type: 'UPDATE_FEATURE'; featureType: FeatureType; oldFeature: Feature; newFeature: Feature };
 
-interface Feature {
+export interface Feature {
     id: string;
-    [key: string]: any;
+    type: 'Feature';
+    properties: {
+        [key: string]: any;
+        source: FeatureType;
+    };
+    geometry: {
+        type: string;
+        coordinates: number[];
+    };
 }
 
 interface MapFeatures {
@@ -165,6 +173,7 @@ export const MapProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     const updateFeature = (featureType: FeatureType, oldFeature: Feature, newFeature: Feature) => {
         setState(prevState => {
             const currentMap = prevState.maps[prevState.currentMap];
+
             return {
                 ...prevState,
                 maps: {
@@ -401,7 +410,6 @@ export const useMapStore = () => {
     return context;
 };
 
-// Helper functions for layer setup
 export const getLayerType = (featureType: FeatureType): string => {
     switch (featureType) {
         case 'polygons':

@@ -199,6 +199,7 @@ const FeatureSearchControl: React.FC = () => {
   return (
     <>
       <Tool
+        id="tool-featureSearch"
         image="/images/search-globe.svg"
         active={true}
         inUse={isSearchVisible}

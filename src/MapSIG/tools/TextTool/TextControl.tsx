@@ -1,124 +1,107 @@
-import { useEffect, useState, FC } from 'react';
+import React, { useCallback, useState, useEffect } from 'react';
+import ToolControl from '../ToolControl';
+import TextAttributesPanel from './TextAttributesPanel';
 import { useMain } from '../../../contexts/MainContext';
 import { usePanel } from '../../contexts/PanelContext';
-import { useMapStore } from '../../contexts/MapFeaturesContext';
-import Tool from '../Tool';
-import TextAttributesPanel from './TextAttributesPanel';
+import { useMapStore, FeatureType } from '../../contexts/MapFeaturesContext';
+import { useSelection } from '../../contexts/SelectionContext';
+import { TextFeature } from './TextFeature';
 
-type GenericMapMouseEvent = {
-    lngLat: { lng: number; lat: number };
+const DEFAULT_PROPERTIES: TextFeature['properties'] = {
+  text: 'Novo texto',
+  size: 16,
+  color: '#000000',
+  backgroundColor: '#ffffff',
+  rotation: 0,
+  justify: 'center' as const,
+  source: 'texts' as FeatureType
 };
 
-interface TextFeature {
-  id: string;
-  type: 'Feature';
-  properties: {
-      text: string;
-      size: number;
-      color: string;
-      backgroundColor: string;
-      rotation: number;
-      justify: 'left' | 'center' | 'right';
-      source: string;
-  };
-  geometry: {
-      type: 'Point';
-      coordinates: [number, number];
-  };
-}
+const TextControl: React.FC = () => {
+  const { map } = useMain();
+  const { openPanel, setOpenPanel } = usePanel();
+  const { addFeature, updateFeature, removeFeature } = useMapStore();
+  const { selectFeature, clearSelection } = useSelection();
+  const [isAddingText, setIsAddingText] = useState(false);
 
-const DEFAULT_PROPERTIES = {
-    text: '',
-    size: 16,
-    color: '#000000',
-    backgroundColor: '#ffffff',
-    rotation: 0,
-    justify: 'center' as const,
-    source: 'text'
-};
+  const handleActivate = useCallback(() => {
+    console.log('Text tool activated');
+    setIsAddingText(true);
+    clearSelection();
+  }, [clearSelection]);
 
-const TextControl: FC = () => {
-    const { map } = useMain();
-    const { openPanel, setOpenPanel } = usePanel();
-    const { addFeature, updateFeature, removeFeature } = useMapStore();
-    const [active, setActive] = useState(false);
-    const [selectedFeatures, setSelectedFeatures] = useState<TextFeature[]>([]);
-  
-    useEffect(() => {
-      if (!map) return;
-  
-      const handleMapClick = (e: GenericMapMouseEvent) => {
-        if (active) {
-          addTextFeature(e.lngLat, 'Texto');
-          setActive(false);
-        }
-      };
-  
-      map.on('click', handleMapClick as any);
-  
-      return () => {
-        map.off('click', handleMapClick as any);
-      };
-    }, [map, active]);
-  
-    const addTextFeature = (lngLat: { lng: number; lat: number }, text: string) => {
-      const feature: TextFeature = {
-        type: 'Feature',
-        id: Date.now().toString(),
-        properties: { ...DEFAULT_PROPERTIES, text },
-        geometry: {
-          type: 'Point',
-          coordinates: [lngLat.lng, lngLat.lat]
-        }
-      };
-  
-      addFeature('texts', feature);
-      setSelectedFeatures([feature]);
-      setOpenPanel('textAttributes');
-    };
-  
-    const updateTextFeatures = (updatedFeatures: TextFeature[]) => {
-      updatedFeatures.forEach(feature => {
-        updateFeature('texts', feature, feature);
-      });
-      setSelectedFeatures(updatedFeatures);
-    };
-  
-    const deleteTextFeatures = (features: TextFeature[]) => {
-      features.forEach(feature => {
-        removeFeature('texts', feature);
-      });
-      setSelectedFeatures([]);
-      setOpenPanel(null);
-    };
-  
-    const handleToolClick = () => {
-      setActive(!active);
-      if (!active) {
-        setOpenPanel(null);
-        setSelectedFeatures([]);
+  const handleDeactivate = useCallback(() => {
+    console.log('Text tool deactivated');
+    setIsAddingText(false);
+    setOpenPanel(null);
+  }, [setOpenPanel]);
+
+  const handleMapClick = useCallback((e: MouseEvent) => {
+    if (!isAddingText || !map) return;
+
+    const { lng, lat } = map.unproject([e.clientX, e.clientY]);
+
+    const newFeature: TextFeature = {
+      id: Date.now().toString(),
+      type: 'Feature',
+      properties: { ...DEFAULT_PROPERTIES },
+      geometry: {
+        type: 'Point',
+        coordinates: [lng, lat]
       }
     };
-  
-    return (
-      <>
-        <Tool
-          image="/images/icon_text_black.svg"
-          active={true}
-          inUse={active}
-          tooltip="Adicionar texto ao mapa"
-          onClick={handleToolClick}
+
+    addFeature('texts', newFeature);
+    selectFeature(newFeature, false);
+    setOpenPanel('textAttributes');
+    setIsAddingText(false);
+  }, [isAddingText, map, addFeature, selectFeature, setOpenPanel]);
+
+  useEffect(() => {
+    if (!map) return;
+
+    if (isAddingText) {
+      map.getCanvas().addEventListener('click', handleMapClick);
+    } else {
+      map.getCanvas().removeEventListener('click', handleMapClick);
+    }
+
+    return () => {
+      map.getCanvas().removeEventListener('click', handleMapClick);
+    };
+  }, [map, isAddingText, handleMapClick]);
+
+  const updateTextFeatures = useCallback((updatedFeatures: TextFeature[]) => {
+    updatedFeatures.forEach(feature => {
+      updateFeature('texts', feature, feature);
+    });
+  }, [updateFeature]);
+
+  const deleteTextFeatures = useCallback((features: TextFeature[]) => {
+    features.forEach(feature => {
+      removeFeature('texts', feature);
+    });
+    clearSelection();
+    setOpenPanel(null);
+  }, [removeFeature, clearSelection, setOpenPanel]);
+
+  return (
+    <ToolControl
+      name="text"
+      icon="/images/icon_text_black.svg"
+      tooltip="Adicionar texto ao mapa"
+      onActivate={handleActivate}
+      onDeactivate={handleDeactivate}
+    >
+      {openPanel === 'textAttributes' && (
+        <TextAttributesPanel
+          updateFeatures={updateTextFeatures}
+          deleteFeatures={deleteTextFeatures}
+          onClose={() => setOpenPanel(null)}
         />
-        {openPanel === 'textAttributes' && (
-          <TextAttributesPanel
-            features={selectedFeatures}
-            updateFeatures={updateTextFeatures}
-            deleteFeatures={deleteTextFeatures}
-            onClose={() => setOpenPanel(null)}
-          />
-        )}
-      </>
-    );
-  };
-  
-  export default TextControl;
+      )}
+    </ToolControl>
+  );
+};
+
+export default TextControl;

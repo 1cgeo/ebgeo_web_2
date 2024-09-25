@@ -77,6 +77,7 @@ const VectorTileInfoControl: FC = () => {
   return (
     <>
       <Tool
+        id="tool-vectorInfoControl"
         image="/images/icon_info_black.svg"
         active={true}
         inUse={active}

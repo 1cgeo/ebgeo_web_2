@@ -1,33 +1,27 @@
-import { useEffect, useState, useCallback, FC } from "react";
+import React, { useCallback } from "react";
 import Tool from "../Tool";
 import { useMain } from "../../../contexts/MainContext";
 
-const ResetNorth: FC = () => {
+const ResetNorth: React.FC = () => {
   const { map } = useMain();
 
-  const [active, setActive] = useState<boolean>(false);
-
-  useEffect(() => {
-    if (!map) return;
-    setActive(true);
-    return () => {
-      setActive(false);
-    };
-  }, [map]);
-
-  const resetNorth = useCallback(() => {
-    map.easeTo({
-      pitch: 0,
-      bearing: 0,
-    });
+  const handleAction = useCallback(() => {
+    if (map) {
+      map.easeTo({
+        pitch: 0,
+        bearing: 0,
+      });
+    }
   }, [map]);
 
   return (
     <Tool
+      id="tool-resetNorth"
       image="/images/icon-north-black.svg"
-      active={active}
       tooltip="Resetar orientação do mapa"
-      onClick={resetNorth}
+      onClick={handleAction}
+      active={true}
+      inUse={false}
     />
   );
 };

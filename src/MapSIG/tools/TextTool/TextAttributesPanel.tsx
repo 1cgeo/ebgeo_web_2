@@ -1,171 +1,93 @@
-import React, { useState, useEffect, useCallback } from "react";
-import {
-  Box,
-  Typography,
-  Slider,
-  Button,
-  TextField,
-  Select,
-  MenuItem,
-} from "@mui/material";
-
-interface TextFeature {
-  id: string;
-  type: "Feature";
-  properties: {
-    text: string;
-    size: number;
-    color: string;
-    backgroundColor: string;
-    rotation: number;
-    justify: "left" | "center" | "right";
-    source: string;
-  };
-  geometry: {
-    type: "Point";
-    coordinates: [number, number];
-  };
-}
+import React, { useState, useEffect } from 'react';
+import { TextField, Slider, Select, MenuItem, Typography } from '@mui/material';
+import FeaturePanel from '../FeaturePanel';
+import { useSelection } from '../../contexts/SelectionContext';
+import { TextFeature } from './TextFeature';
 
 interface TextAttributesPanelProps {
-  features: TextFeature[];
   updateFeatures: (features: TextFeature[]) => void;
   deleteFeatures: (features: TextFeature[]) => void;
   onClose: () => void;
 }
 
 const TextAttributesPanel: React.FC<TextAttributesPanelProps> = ({
-  features,
   updateFeatures,
   deleteFeatures,
-  onClose,
+  onClose
 }) => {
+  const { selectedFeatures } = useSelection();
   const [localFeatures, setLocalFeatures] = useState<TextFeature[]>([]);
 
   useEffect(() => {
-    setLocalFeatures(features);
-  }, [features]);
+    setLocalFeatures(selectedFeatures as TextFeature[]);
+  }, [selectedFeatures]);
 
-  const handleChange = useCallback(
-    (property: keyof TextFeature["properties"], value: any) => {
-      const updatedFeatures = localFeatures.map((feature) => ({
-        ...feature,
-        properties: { ...feature.properties, [property]: value },
-      }));
-      setLocalFeatures(updatedFeatures);
-    },
-    [localFeatures]
-  );
-
-  const handleSave = useCallback(() => {
-    updateFeatures(localFeatures);
-    onClose();
-  }, [localFeatures]);
-
-  const handleDelete = useCallback(() => {
-    deleteFeatures(localFeatures);
-  }, [localFeatures]);
-
-  // Use the first feature for single-selection properties, or default values if no features
-  const currentProperties = localFeatures[0]?.properties || {
-    text: "",
-    size: 16,
-    color: "#000000",
-    backgroundColor: "#ffffff",
-    rotation: 0,
-    justify: "center" as const,
+  const handleChange = (property: keyof TextFeature['properties'], value: any) => {
+    setLocalFeatures(prev => prev.map(feature => ({
+      ...feature,
+      properties: { ...feature.properties, [property]: value }
+    })));
   };
 
   return (
-    <Box
-      sx={{
-        position: "fixed",
-        bottom: 10,
-        right: 10,
-        width: 300,
-        bgcolor: "background.paper",
-        border: "1px solid grey",
-        borderRadius: 1,
-        p: 2,
-        zIndex: 1002,
-      }}
+    <FeaturePanel
+      title="Propriedades do Texto"
+      features={localFeatures}
+      onUpdate={updateFeatures}
+      onDelete={deleteFeatures}
+      onClose={onClose}
     >
-      <Typography variant="h6" gutterBottom>
-        Text Properties
-      </Typography>
-
-      {localFeatures.length === 1 && (
-        <TextField
-          fullWidth
-          multiline
-          rows={3}
-          label="Text"
-          value={currentProperties.text}
-          onChange={(e) => handleChange("text", e.target.value)}
-          margin="normal"
-        />
-      )}
-
-      <Typography gutterBottom>Size</Typography>
+      <TextField
+        fullWidth
+        multiline
+        rows={3}
+        label="Texto"
+        value={localFeatures[0]?.properties.text || ''}
+        onChange={(e) => handleChange('text', e.target.value)}
+        margin="normal"
+      />
+      <Typography gutterBottom>Tamanho</Typography>
       <Slider
-        value={currentProperties.size}
-        onChange={(_, value) => handleChange("size", value as number)}
+        value={localFeatures[0]?.properties.size || 16}
+        onChange={(_, value) => handleChange('size', value as number)}
         min={1}
         max={100}
         step={1}
       />
-
       <TextField
         fullWidth
         type="color"
-        label="Color"
-        value={currentProperties.color}
-        onChange={(e) => handleChange("color", e.target.value)}
+        label="Cor"
+        value={localFeatures[0]?.properties.color || '#000000'}
+        onChange={(e) => handleChange('color', e.target.value)}
         margin="normal"
       />
-
       <TextField
         fullWidth
         type="color"
-        label="Background Color"
-        value={currentProperties.backgroundColor}
-        onChange={(e) => handleChange("backgroundColor", e.target.value)}
+        label="Cor de Fundo"
+        value={localFeatures[0]?.properties.backgroundColor || '#ffffff'}
+        onChange={(e) => handleChange('backgroundColor', e.target.value)}
         margin="normal"
       />
-
-      <Typography gutterBottom>Rotation</Typography>
+      <Typography gutterBottom>Rotação</Typography>
       <Slider
-        value={currentProperties.rotation}
-        onChange={(_, value) => handleChange("rotation", value as number)}
+        value={localFeatures[0]?.properties.rotation || 0}
+        onChange={(_, value) => handleChange('rotation', value as number)}
         min={-180}
         max={180}
         step={1}
       />
-
       <Select
         fullWidth
-        value={currentProperties.justify}
-        onChange={(e) =>
-          handleChange("justify", e.target.value as "left" | "center" | "right")
-        }
+        value={localFeatures[0]?.properties.justify || 'center'}
+        onChange={(e) => handleChange('justify', e.target.value as 'left' | 'center' | 'right')}
       >
-        <MenuItem value="left">Left</MenuItem>
-        <MenuItem value="center">Center</MenuItem>
-        <MenuItem value="right">Right</MenuItem>
+        <MenuItem value="left">Esquerda</MenuItem>
+        <MenuItem value="center">Centro</MenuItem>
+        <MenuItem value="right">Direita</MenuItem>
       </Select>
-
-      <Box sx={{ mt: 2, display: "flex", justifyContent: "space-between" }}>
-        <Button variant="contained" onClick={handleSave}>
-          Save
-        </Button>
-        <Button variant="outlined" onClick={onClose}>
-          Cancel
-        </Button>
-        <Button variant="outlined" color="error" onClick={handleDelete}>
-          Delete
-        </Button>
-      </Box>
-    </Box>
+    </FeaturePanel>
   );
 };
 
