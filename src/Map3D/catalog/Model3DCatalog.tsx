@@ -67,7 +67,7 @@ const Model3DCatalog: React.FC<Model3DCatalogProps> = ({ open, onClose, onAddMod
   }, [open]);
 
   useEffect(() => {
-    if (searchTerm.length >= 3) {
+    if (searchTerm.length >= 2) {
       debouncedSearch(searchTerm);
     } else if (searchTerm.length === 0) {
       setPage(1);
@@ -96,11 +96,14 @@ const Model3DCatalog: React.FC<Model3DCatalogProps> = ({ open, onClose, onAddMod
         maxWidth: 1200,
         maxHeight: '90vh',
         overflowY: 'auto',
-        bgcolor: 'background.paper',
+        bgcolor: 'rgba(255, 255, 255, 0.9)', // Adicionando transparência
         boxShadow: 24,
         p: 4,
         borderRadius: 2,
       }}>
+        <Typography variant="h4" component="h2" gutterBottom sx={{ mb: 3, color: '#315730' }}>
+          Catálogo
+        </Typography>
         <Box sx={{ mb: 3, position: 'relative' }}>
           <TextField
             fullWidth
@@ -148,10 +151,10 @@ const Model3DCatalog: React.FC<Model3DCatalogProps> = ({ open, onClose, onAddMod
             </Typography>
           </Box>
         ) : (
-          <Grid container spacing={3}>
+          <Grid container spacing={2}>
             <Suspense fallback={<CircularProgress />}>
               {models.map((model) => (
-                <Grid size={{ xs: 12, sm: 6, md: 4 }} key={model.id}>
+                <Grid size={{ xs: 12, sm: 6, md: 4, lg:3 }} key={model.id}>
                   <ModelCard 
                     model={model} 
                     onAddModel={onAddModel} 

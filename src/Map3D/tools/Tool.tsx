@@ -28,17 +28,25 @@ type Props = {
   tooltip: string;
 };
 
-const Tool: FC<Props> = ({ image, active, inUse, disabled, onClick, tooltip }) => (
-  <Tooltip title={tooltip} placement="left">
-  <StyledIconButton
-    onClick={onClick}
-    disabled={disabled || !active}
-    $inUse={inUse}
-    $disabled={disabled}
-  >
-    <img src={image} alt="tool icon" style={{ width: '100%', height: '100%' }} />
-  </StyledIconButton>
-  </Tooltip>
-);
+const Tool: FC<Props> = ({ image, active, inUse, disabled, onClick, tooltip }) => {
+  const button = (
+    <StyledIconButton
+      onClick={onClick}
+      disabled={disabled || !active}
+      $inUse={inUse}
+      $disabled={disabled}
+    >
+      <img src={image} alt="tool icon" style={{ width: '100%', height: '100%' }} />
+    </StyledIconButton>
+  );
+
+  const content = disabled ? <span>{button}</span> : button;
+
+  return (
+    <Tooltip title={tooltip} placement="left">
+      {content}
+    </Tooltip>
+  );
+};
 
 export default Tool;

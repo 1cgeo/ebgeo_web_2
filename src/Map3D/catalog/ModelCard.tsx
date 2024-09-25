@@ -23,7 +23,9 @@ const ModelCard: React.FC<ModelCardProps> = ({ model, onAddModel, onClose, isLoa
 
   return (
     <Card sx={{ 
-      height: 400, 
+      height: 320, 
+      width: '100%',
+      maxWidth: 250, 
       display: 'flex',
       flexDirection: 'column',
       position: 'relative',
@@ -59,7 +61,18 @@ const ModelCard: React.FC<ModelCardProps> = ({ model, onAddModel, onClose, isLoa
         <Typography variant="h6" component="div" sx={{ fontWeight: 'bold', mb: 1 }}>
           {model.name}
         </Typography>
-        <Typography variant="body2" sx={{ mb: 1, height: 40, overflow: 'hidden' }}>
+        <Typography 
+          variant="body2" 
+          sx={{ 
+            mb: 1, 
+            height: '2.5em', 
+            overflow: 'hidden', 
+            textOverflow: 'ellipsis', 
+            display: '-webkit-box', 
+            WebkitLineClamp: 2, 
+            WebkitBoxOrient: 'vertical' 
+          }}
+        >
           {model.description}
         </Typography>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>

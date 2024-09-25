@@ -1,10 +1,14 @@
 import React from 'react';
-import { Box, List, ListItem, ListItemText, IconButton, Avatar } from '@mui/material';
+import { Box, List, ListItem, ListItemText, IconButton, Avatar, Tooltip } from '@mui/material';
 import { ZoomIn, Close } from '@mui/icons-material';
 import { useMapTools } from '../contexts/Map3DTools';
 
 const Model3DLayerList: React.FC = () => {
   const { models, zoomToModel, removeModel } = useMapTools();
+
+  const truncateText = (text: string, maxLength: number) => {
+    return text.length > maxLength ? text.slice(0, maxLength) + '...' : text;
+  };
 
   return (
     <Box
@@ -37,14 +41,16 @@ const Model3DLayerList: React.FC = () => {
               variant="rounded" 
               sx={{ width: 32, height: 32, mr: 1 }}
             />
-            <ListItemText 
-              primary={model.name} 
-              primaryTypographyProps={{ 
-                noWrap: true, 
-                fontSize: '0.875rem',
-                fontWeight: 'medium'
-              }}
-            />
+            <Tooltip title={model.name}>
+              <ListItemText 
+                primary={truncateText(model.name, 20)} 
+                primaryTypographyProps={{ 
+                  noWrap: true, 
+                  fontSize: '0.875rem',
+                  fontWeight: 'medium'
+                }}
+              />
+            </Tooltip>
             <IconButton 
               size="small" 
               onClick={() => zoomToModel(model.id)}
