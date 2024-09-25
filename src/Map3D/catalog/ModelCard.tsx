@@ -1,8 +1,9 @@
 import React from 'react';
-import { Card, CardContent, CardMedia, Typography, Button, Chip, Box } from '@mui/material';
+import { Card, CardContent, CardMedia, Typography, Button, Chip, Box, Tooltip } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import CheckIcon from '@mui/icons-material/Check';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
+import LocationOnIcon from '@mui/icons-material/LocationOn';
 import { CatalogItem } from './modelTypes';
 
 interface ModelCardProps {
@@ -53,10 +54,10 @@ const ModelCard: React.FC<ModelCardProps> = ({ model, onAddModel, onClose, isLoa
         bottom: 0,
         left: 0,
         right: 0,
-        bgcolor: 'rgba(0, 0, 0, 0.7)',
+        bgcolor: 'rgba(0, 0, 0, 0.8)',
         color: 'white',
         transition: '0.3s',
-        opacity: 0.7,
+        opacity: 0.8,
       }}>
         <Typography variant="h6" component="div" sx={{ fontWeight: 'bold', mb: 1 }}>
           {model.name}
@@ -75,7 +76,7 @@ const ModelCard: React.FC<ModelCardProps> = ({ model, onAddModel, onClose, isLoa
         >
           {model.description}
         </Typography>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
           <Chip 
             label={model.type} 
             size="small" 
@@ -87,6 +88,48 @@ const ModelCard: React.FC<ModelCardProps> = ({ model, onAddModel, onClose, isLoa
               {formatDate(model.data_criacao)}
             </Typography>
           </Box>
+        </Box>
+        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+          <LocationOnIcon sx={{ fontSize: 14, mr: 0.5 }} />
+          <Typography variant="caption">
+            {model.municipio}, {model.estado}
+          </Typography>
+        </Box>
+        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+          {model.palavras_chave.slice(0, 3).map((keyword, index) => (
+            <Tooltip key={index} title={keyword} arrow>
+              <Chip
+                label={keyword}
+                size="small"
+                sx={{ 
+                  bgcolor: 'rgba(255, 255, 255, 0.2)', 
+                  color: 'white',
+                  fontSize: '0.7rem',
+                  height: 20,
+                  maxWidth: 60,
+                  '& .MuiChip-label': {
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                  }
+                }}
+              />
+            </Tooltip>
+          ))}
+          {model.palavras_chave.length > 3 && (
+            <Tooltip title={model.palavras_chave.slice(3).join(', ')} arrow>
+              <Chip
+                label={`+${model.palavras_chave.length - 3}`}
+                size="small"
+                sx={{ 
+                  bgcolor: 'rgba(255, 255, 255, 0.2)', 
+                  color: 'white',
+                  fontSize: '0.7rem',
+                  height: 20
+                }}
+              />
+            </Tooltip>
+          )}
         </Box>
       </CardContent>
       <Button 

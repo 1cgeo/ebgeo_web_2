@@ -96,7 +96,7 @@ const Model3DCatalog: React.FC<Model3DCatalogProps> = ({ open, onClose, onAddMod
         maxWidth: 1200,
         maxHeight: '90vh',
         overflowY: 'auto',
-        bgcolor: 'rgba(255, 255, 255, 0.9)', // Adicionando transparência
+        bgcolor: 'rgba(255, 255, 255, 0.9)',
         boxShadow: 24,
         p: 4,
         borderRadius: 2,

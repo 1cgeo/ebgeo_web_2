@@ -11,6 +11,9 @@ export interface Tiles3D {
     maximumScreenSpaceError: number;
     type: 'Tiles 3D';
     data_criacao: string;
+    municipio: string;
+    estado: string;
+    palavras_chave: string[];
   }
   
   export interface Modelos3D {
@@ -27,6 +30,9 @@ export interface Tiles3D {
     roll: number;
     type: 'Modelos 3D';
     data_criacao: string;
+    municipio: string;
+    estado: string;
+    palavras_chave: string[];
   }
   
   export type CatalogItem = Tiles3D | Modelos3D;
