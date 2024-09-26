@@ -29,10 +29,10 @@ const router = createBrowserRouter([
 ]);
 
 export default function App() {
-  const [isLoading, setLoading] = useState<boolean>(false);
+  const [isLoading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
-    setTimeout(() => setLoading(false), 5000);
+    setTimeout(() => setLoading(false), 2000);
   }, []);
 
   return (

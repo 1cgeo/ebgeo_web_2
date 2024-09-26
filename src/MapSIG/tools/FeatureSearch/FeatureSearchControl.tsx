@@ -219,7 +219,7 @@ const FeatureSearchControl: React.FC = () => {
           <SuggestionsList>
             {suggestions.map((suggestion) => (
               <SuggestionItem
-                key={suggestion.nome}
+                key={`${suggestion.nome} ${suggestion.municipio} ${suggestion.estado}`}
                 onMouseDown={(e) => e.preventDefault()}
                 onClick={() => handleSuggestionClick(suggestion)}
               >
