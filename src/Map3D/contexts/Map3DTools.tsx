@@ -42,6 +42,7 @@ const MapToolsProvider: FC<Props> = ({ children }) => {
   const [areToolsEnabled, setAreToolsEnabled] = useState(false);
   const [cesiumMeasure, _setCesiumMeasure] = useState<any>(null);
   const [cesiumViewshed, _setCesiumViewshed] = useState<any>(null);
+  const [primitiveModels, setPrimitiveModels] = useState<any>({});
 
   useEffect(() => {
     if (models.length > 0 || !(cesiumMeasure && cesiumViewshed)) return;
@@ -82,18 +83,18 @@ const MapToolsProvider: FC<Props> = ({ children }) => {
   };
 
   const addTiles3D = (model: Tiles3D) => {
-    const tileset = new cesium.Cesium3DTileset({
-      url: model.url,
-      maximumScreenSpaceError: model.maximumScreenSpaceError,
-      maximumMemoryUsage: 512,
-      preferLeaves: true,
-      dynamicScreenSpaceError: true,
-      dynamicScreenSpaceErrorDensity: 0.00278,
-      dynamicScreenSpaceErrorFactor: 4.0,
-      dynamicScreenSpaceErrorHeightFalloff: 0.25,
-    });
-    cesiumMap.scene.primitives.add(tileset);
-
+    const tileset = cesiumMap.scene.primitives.add(
+      new cesium.Cesium3DTileset({
+        url: model.url,
+        maximumScreenSpaceError: model.maximumScreenSpaceError,
+        maximumMemoryUsage: 512,
+        preferLeaves: true,
+        dynamicScreenSpaceError: true,
+        dynamicScreenSpaceErrorDensity: 0.00278,
+        dynamicScreenSpaceErrorFactor: 4.0,
+        dynamicScreenSpaceErrorHeightFalloff: 0.25,
+      })
+    );
     tileset.readyPromise.then(() => {
       const boundingSphere = tileset.boundingSphere;
       const cartographic = cesium.Cartographic.fromCartesian(
@@ -123,9 +124,10 @@ const MapToolsProvider: FC<Props> = ({ children }) => {
         ),
       });
     });
-
-    (cesiumMap as any).modelTilesets = (cesiumMap as any).modelTilesets || {};
-    (cesiumMap as any).modelTilesets[model.id] = tileset;
+    setPrimitiveModels({
+      ...primitiveModels,
+      [model.id]: tileset,
+    });
   };
 
   const addModelos3D = (model: Modelos3D) => {
@@ -151,9 +153,10 @@ const MapToolsProvider: FC<Props> = ({ children }) => {
         uri: model.url,
       },
     });
-
-    (cesiumMap as any).modelEntities = (cesiumMap as any).modelEntities || {};
-    (cesiumMap as any).modelEntities[model.id] = entity;
+    setPrimitiveModels({
+      ...primitiveModels,
+      [model.id]: entity,
+    });
   };
 
   const addModel = (model: CatalogItem) => {
@@ -176,24 +179,12 @@ const MapToolsProvider: FC<Props> = ({ children }) => {
       setAreToolsEnabled(newModels.length > 0);
       return newModels;
     });
+    const primitive = primitiveModels[modelId];
+    if (!primitive) return;
+    cesiumMap.entities.remove(primitive);
+    primitive.destroy();
+  };
 
-    if (
-      (cesiumMap as any).modelTilesets &&
-      (cesiumMap as any).modelTilesets[modelId]
-    ) {
-      cesiumMap.scene.primitives.remove(
-        (cesiumMap as any).modelTilesets[modelId]
-      );
-      delete (cesiumMap as any).modelTilesets[modelId];
-    }
-
-    if (
-      (cesiumMap as any).modelEntities &&
-      (cesiumMap as any).modelEntities[modelId]
-    ) {
-      cesiumMap.entities.remove((cesiumMap as any).modelEntities[modelId]);
-      delete (cesiumMap as any).modelEntities[modelId];
-    }
   };
 
   const zoomToModel = (modelId: string) => {
