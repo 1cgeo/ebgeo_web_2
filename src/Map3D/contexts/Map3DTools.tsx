@@ -15,6 +15,8 @@ interface Context {
   zoomToModel: (modelId: string) => void;
   models: CatalogItem[];
   areToolsEnabled: boolean;
+  setVisibleModel: (modelId: string, visible: boolean) => void;
+  isVisibleModel: (modelId: string) => boolean;
 }
 
 interface Props {
@@ -33,6 +35,10 @@ const MapToolsContext = createContext<Context>({
   zoomToModel: () => {},
   models: [],
   areToolsEnabled: false,
+  setVisibleModel: () => {},
+  isVisibleModel: () => {
+    return false;
+  },
 });
 
 const MapToolsProvider: FC<Props> = ({ children }) => {
@@ -185,6 +191,20 @@ const MapToolsProvider: FC<Props> = ({ children }) => {
     primitive.destroy();
   };
 
+  const setVisibleModel = (modelId: string, visible: boolean) => {
+    const primitive = primitiveModels[modelId];
+    if (!primitive) return;
+    primitive.show = visible;
+    setPrimitiveModels({
+      ...primitiveModels,
+      [modelId]: primitive,
+    });
+  };
+
+  const isVisibleModel = (modelId: string): boolean => {
+    const primitive = primitiveModels[modelId];
+    if (!primitive) return false;
+    return primitive?.show;
   };
 
   const zoomToModel = (modelId: string) => {
@@ -214,6 +234,8 @@ const MapToolsProvider: FC<Props> = ({ children }) => {
         zoomToModel,
         models,
         areToolsEnabled,
+        setVisibleModel,
+        isVisibleModel,
       }}
     >
       {children}
