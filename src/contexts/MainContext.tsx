@@ -31,8 +31,18 @@ const MainContext = createContext<Context>({
 const MainContextProvider: FC<Props> = ({ children }) => {
   const [map, setMap] = useState<any>(null);
   const [maplibregl, setMapLibregl] = useState<any>(null);
-  const [cesium, setCesium] = useState<any>(null);
-  const [cesiumMap, setCesiumMap] = useState<any>(null);
+  const [cesium, _setCesium] = useState<any>(null);
+  const [cesiumMap, _setCesiumMap] = useState<any>(null);
+
+  const setCesium = (cesium: any) => {
+    _setCesium((prevCesium: any) => (prevCesium ? prevCesium : cesium));
+  };
+
+  const setCesiumMap = (cesiumMap: any) => {
+    _setCesiumMap((prevCesiumMap: any) =>
+      prevCesiumMap ? prevCesiumMap : cesiumMap
+    );
+  };
 
   return (
     <MainContext.Provider

@@ -1,5 +1,5 @@
-import React from "react";
-import { createContext, useContext, FC, useState  } from "react";
+import React, { useEffect } from "react";
+import { createContext, useContext, FC, useState } from "react";
 import { useMain } from "../../contexts/MainContext";
 import { Tiles3D, Modelos3D, CatalogItem } from "../catalog/modelTypes";
 
@@ -40,36 +40,40 @@ const MapToolsProvider: FC<Props> = ({ children }) => {
   const [activeTool, setActiveToolState] = useState<string | null>(null);
   const [models, setModels] = useState<CatalogItem[]>([]);
   const [areToolsEnabled, setAreToolsEnabled] = useState(false);
-  var cesiumMeasure: any = null;
-  const setCesiumMeasure = (measure: any) => (cesiumMeasure = measure);
-  var cesiumViewshed: any = null;
-  const setCesiumViewshed = (viewshed: any) => (cesiumViewshed = viewshed);
+  const [cesiumMeasure, _setCesiumMeasure] = useState<any>(null);
+  const [cesiumViewshed, _setCesiumViewshed] = useState<any>(null);
 
-  const setActiveTool = (toolName: string | null) => {
-    setActiveToolState(toolName);
-    deactiveTools();
+  useEffect(() => {
+    if (models.length > 0 || !(cesiumMeasure && cesiumViewshed)) return;
     clearDrawing();
-    switch (toolName) {
-      case "clean":
-        return;
-      case "area":
-        return cesiumMeasure.setActiveMeasure("area");
-      case "distance":
-        return cesiumMeasure.setActiveMeasure("distance");
-      case "viewshed":
-        return cesiumViewshed.setActive(true);
-      case "identify":
-        return;
-      case null:
-        return;
-      default:
-        throw new Error("Not Found Tool");
-    }
+  }, [models, cesiumMeasure, cesiumViewshed]);
+
+  const setCesiumMeasure = (measure: any) => {
+    _setCesiumMeasure((prevMeasure: any) =>
+      prevMeasure ? prevMeasure : measure
+    );
   };
 
-  const deactiveTools = () => {
-    cesiumMeasure.setActiveMeasure(null);
-    cesiumViewshed.setActive(false);
+  const setCesiumViewshed = (viewshed: any) => {
+    _setCesiumViewshed((prevViewshed: any) =>
+      prevViewshed ? prevViewshed : viewshed
+    );
+  };
+
+  const setActiveTool = (toolName: string | null) => {
+    const tools: any = {
+      clean: () => {},
+      distance: () => cesiumMeasure.setActiveMeasure("distance"),
+      area: () => cesiumMeasure.setActiveMeasure("area"),
+      viewshed: () => cesiumViewshed.addViewshed(),
+      //identify: () => {},
+    };
+    setActiveToolState(toolName);
+    clearDrawing();
+    if (!(toolName && tools[toolName])) {
+      throw new Error("Not Found Tool");
+    }
+    tools[toolName]();
   };
 
   const clearDrawing = () => {
@@ -82,23 +86,41 @@ const MapToolsProvider: FC<Props> = ({ children }) => {
       url: model.url,
       maximumScreenSpaceError: model.maximumScreenSpaceError,
       maximumMemoryUsage: 512,
-        preferLeaves: true,
-        dynamicScreenSpaceError: true,
-        dynamicScreenSpaceErrorDensity: 0.00278,
-        dynamicScreenSpaceErrorFactor: 4.0,
-        dynamicScreenSpaceErrorHeightFalloff: 0.25
+      preferLeaves: true,
+      dynamicScreenSpaceError: true,
+      dynamicScreenSpaceErrorDensity: 0.00278,
+      dynamicScreenSpaceErrorFactor: 4.0,
+      dynamicScreenSpaceErrorHeightFalloff: 0.25,
     });
     cesiumMap.scene.primitives.add(tileset);
 
     tileset.readyPromise.then(() => {
       const boundingSphere = tileset.boundingSphere;
-      const cartographic = cesium.Cartographic.fromCartesian(boundingSphere.center);
-      const surface = cesium.Cartesian3.fromRadians(cartographic.longitude, cartographic.latitude, 0.0);
-      const offset = cesium.Cartesian3.fromRadians(cartographic.longitude, cartographic.latitude, model.heightOffset);
-      const translation = cesium.Cartesian3.subtract(offset, surface, new cesium.Cartesian3());
+      const cartographic = cesium.Cartographic.fromCartesian(
+        boundingSphere.center
+      );
+      const surface = cesium.Cartesian3.fromRadians(
+        cartographic.longitude,
+        cartographic.latitude,
+        0.0
+      );
+      const offset = cesium.Cartesian3.fromRadians(
+        cartographic.longitude,
+        cartographic.latitude,
+        model.heightOffset
+      );
+      const translation = cesium.Cartesian3.subtract(
+        offset,
+        surface,
+        new cesium.Cartesian3()
+      );
       tileset.modelMatrix = cesium.Matrix4.fromTranslation(translation);
       cesiumMap.camera.flyTo({
-          destination: cesium.Cartesian3.fromDegrees(model.lon, model.lat, model.height),
+        destination: cesium.Cartesian3.fromDegrees(
+          model.lon,
+          model.lat,
+          model.height
+        ),
       });
     });
 
@@ -107,12 +129,19 @@ const MapToolsProvider: FC<Props> = ({ children }) => {
   };
 
   const addModelos3D = (model: Modelos3D) => {
-    const position = cesium.Cartesian3.fromDegrees(model.lon, model.lat, model.height);
+    const position = cesium.Cartesian3.fromDegrees(
+      model.lon,
+      model.lat,
+      model.height
+    );
     const heading = cesium.Math.toRadians(model.heading);
     const pitch = cesium.Math.toRadians(model.pitch);
     const roll = cesium.Math.toRadians(model.roll);
     const hpr = new cesium.HeadingPitchRoll(heading, pitch, roll);
-    const orientation = cesium.Transforms.headingPitchRollQuaternion(position, hpr);
+    const orientation = cesium.Transforms.headingPitchRollQuaternion(
+      position,
+      hpr
+    );
 
     const entity = cesiumMap.entities.add({
       name: model.name,
@@ -133,8 +162,8 @@ const MapToolsProvider: FC<Props> = ({ children }) => {
       setAreToolsEnabled(newModels.length > 0);
       return newModels;
     });
-    
-    if (model.type === 'Tiles 3D') {
+
+    if (model.type === "Tiles 3D") {
       addTiles3D(model);
     } else {
       addModelos3D(model);
@@ -148,12 +177,20 @@ const MapToolsProvider: FC<Props> = ({ children }) => {
       return newModels;
     });
 
-    if ((cesiumMap as any).modelTilesets && (cesiumMap as any).modelTilesets[modelId]) {
-      cesiumMap.scene.primitives.remove((cesiumMap as any).modelTilesets[modelId]);
+    if (
+      (cesiumMap as any).modelTilesets &&
+      (cesiumMap as any).modelTilesets[modelId]
+    ) {
+      cesiumMap.scene.primitives.remove(
+        (cesiumMap as any).modelTilesets[modelId]
+      );
       delete (cesiumMap as any).modelTilesets[modelId];
     }
-    
-    if ((cesiumMap as any).modelEntities && (cesiumMap as any).modelEntities[modelId]) {
+
+    if (
+      (cesiumMap as any).modelEntities &&
+      (cesiumMap as any).modelEntities[modelId]
+    ) {
       cesiumMap.entities.remove((cesiumMap as any).modelEntities[modelId]);
       delete (cesiumMap as any).modelEntities[modelId];
     }
@@ -163,7 +200,11 @@ const MapToolsProvider: FC<Props> = ({ children }) => {
     const model = models.find((model) => model.id === modelId);
     if (model) {
       cesiumMap.camera.flyTo({
-        destination: cesium.Cartesian3.fromDegrees(model.lon, model.lat, model.height),
+        destination: cesium.Cartesian3.fromDegrees(
+          model.lon,
+          model.lat,
+          model.height
+        ),
       });
     }
   };

@@ -7,8 +7,6 @@ declare global {
 export default function useMeasure() {
   var activeMeasure: any = null;
   var reset: boolean = false;
-  var toClean: boolean = false;
-  var refreshIntervalId: any = null;
 
   const setup = (Cesium: any, _viewer: any) => {
     var positions: any[] = [],
@@ -340,17 +338,12 @@ export default function useMeasure() {
       _drawLayer.entities.add(_lineEntity);
     }
 
-    if (!refreshIntervalId) {
-      refreshIntervalId = setInterval(() => {
-        if (!toClean) return;
-        _clean();
-        toClean = false;
-      }, 100);
-    }
-
     return {
       setActiveMeasure,
-      clean: () => (toClean = true),
+      clean: () => {
+        activeMeasure = null;
+        _clean();
+      },
     };
   };
 

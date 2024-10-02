@@ -3,13 +3,12 @@ export default function useViewshed() {
   var viewModel = { verticalAngle: 120, horizontalAngle: 150, distance: 10 };
   var active: boolean = false;
   var reset: boolean = false;
-  var toClean: boolean = false;
   var currentViewshed: any;
-  var refreshIntervalId: any = null;
 
   const setup = (Cesium: any, _viewer: any) => {
     var _handler = new Cesium.ScreenSpaceEventHandler(_viewer.scene.canvas);
     _handler.setInputAction(function (movement: any) {
+      if (active && reset) addViewshed();
       if (!(currentViewshed && active)) return;
       currentViewshed.viewer = _viewer;
       let leftClick = currentViewshed._leftClick();
@@ -29,10 +28,12 @@ export default function useViewshed() {
         distance: Number(viewModel.distance),
         calback: function () {
           viewModel.distance = e.distance;
-          reset = false;
+          reset = true;
           currentViewshed = null;
         },
       });
+      reset = false;
+      active = true;
       currentViewshed = e;
       arrViewField.push(e);
     };
@@ -46,21 +47,9 @@ export default function useViewshed() {
       arrViewField = [];
     }
 
-    if (!refreshIntervalId) {
-      setInterval(() => {
-        if (active && !reset) {
-          reset = true;
-          addViewshed();
-        }
-        if (!toClean) return;
-        _clean();
-        toClean = false;
-      }, 100);
-    }
-
     return {
-      setActive: (a: boolean) => (active = a),
-      clean: () => (toClean = true),
+      addViewshed,
+      clean: _clean,
     };
   };
 
