@@ -189,6 +189,9 @@ const MapToolsProvider: FC<Props> = ({ children }) => {
     if (!primitive) return;
     cesiumMap.entities.remove(primitive);
     primitive.destroy();
+    const newPrimitivesModels = { ...primitiveModels };
+    delete newPrimitivesModels[modelId];
+    setPrimitiveModels(newPrimitivesModels);
   };
 
   const setVisibleModel = (modelId: string, visible: boolean) => {
