@@ -6,10 +6,8 @@ const Viewshed: FC = () => {
   const { setActiveTool, activeTool, areToolsEnabled } = useMapTools();
 
   const handleTool = useCallback(() => {
-    if (areToolsEnabled) {
-      setActiveTool(activeTool === "viewshed" ? null : "viewshed");
-    }
-  }, [activeTool, setActiveTool, areToolsEnabled]);
+    setActiveTool("viewshed");
+  }, []);
 
   return (
     <Tool

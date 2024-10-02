@@ -6,10 +6,8 @@ const Area: FC = () => {
   const { setActiveTool, activeTool, areToolsEnabled } = useMapTools();
 
   const handleTool = useCallback(() => {
-    if (areToolsEnabled) {
-      setActiveTool(activeTool === "area" ? null : "area");
-    }
-  }, [activeTool, setActiveTool, areToolsEnabled]);
+    setActiveTool("area");
+  }, []);
 
   return (
     <Tool

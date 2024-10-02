@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
-import Tool from '../tools/Tool';
-import Model3DCatalog from './Model3DCatalog';
-import { useMapTools } from '../contexts/Map3DTools';
-import styled, { keyframes, css } from 'styled-components';
+import React, { useState } from "react";
+import Tool from "../tools/Tool";
+import Model3DCatalog from "./Model3DCatalog";
+import { useMapTools } from "../contexts/Map3DTools";
+import styled, { keyframes, css } from "styled-components";
 
 const enhancedBlinkAnimation = keyframes`
   0% {
@@ -22,22 +22,19 @@ const enhancedBlinkAnimation = keyframes`
 const BlinkingWrapper = styled.div<{ $isBlinking: boolean }>`
   display: inline-block;
   border-radius: 50%;
-  ${props => props.$isBlinking && css`
-    animation: ${enhancedBlinkAnimation} 1.5s infinite;
-  `}
+  ${(props) =>
+    props.$isBlinking &&
+    css`
+      animation: ${enhancedBlinkAnimation} 1.5s infinite;
+    `}
 `;
 
 const Model3DCatalogButton: React.FC = () => {
   const [open, setOpen] = useState(false);
-  const { addModel, models } = useMapTools();
+  const { models } = useMapTools();
 
   const handleOpen = () => setOpen(true);
   const handleClose = () => setOpen(false);
-
-  const handleAddModelAndClose = (model: any) => {
-    addModel(model);
-    handleClose();
-  };
 
   const isBlinking = models.length === 0;
 
@@ -52,12 +49,7 @@ const Model3DCatalogButton: React.FC = () => {
           onClick={handleOpen}
         />
       </BlinkingWrapper>
-      <Model3DCatalog
-        open={open}
-        onClose={handleClose}
-        onAddModel={handleAddModelAndClose}
-        loadedModels={models}
-      />
+      <Model3DCatalog open={open} onClose={handleClose} />
     </>
   );
 };

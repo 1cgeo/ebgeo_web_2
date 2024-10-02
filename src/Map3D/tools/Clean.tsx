@@ -6,10 +6,8 @@ const Clean: FC = () => {
   const { setActiveTool, activeTool, areToolsEnabled } = useMapTools();
 
   const handleTool = useCallback(() => {
-    if (areToolsEnabled) {
-      setActiveTool(activeTool === "clean" ? null : "clean");
-    }
-  }, [activeTool, setActiveTool, areToolsEnabled]);
+    setActiveTool("clean");
+  }, []);
 
   return (
     <Tool

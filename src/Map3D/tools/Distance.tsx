@@ -6,10 +6,8 @@ const Distance: FC = () => {
   const { setActiveTool, activeTool, areToolsEnabled } = useMapTools();
 
   const handleTool = useCallback(() => {
-    if (areToolsEnabled) {
-      setActiveTool(activeTool === "distance" ? null : "distance");
-    }
-  }, [activeTool, setActiveTool, areToolsEnabled]);
+    setActiveTool("distance");
+  }, []);
 
   return (
     <Tool
