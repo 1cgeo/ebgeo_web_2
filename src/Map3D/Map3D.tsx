@@ -3,12 +3,14 @@ import styled from "styled-components";
 import { useMain } from "../contexts/MainContext";
 import { useMapTools } from "./contexts/Map3DTools";
 import RightSideToolBar from "./RightSideToolBar";
-import { Area, Distance, Clean, Viewshed, Identify  } from "./tools";
+import { Area, Distance, Clean, Viewshed, Identify } from "./tools";
 import useMeasure from "./hooks/useMeasure";
 import useViewshed from "./hooks/useViewshed";
 import Model3DLayerList from "./catalog/Model3DLayerList";
 import Model3DCatalogButton from "./catalog/Model3DCatalogButton";
-import config from '../config';
+import config from "../config";
+
+var loaded = false;
 
 const Map = styled("div")({
   position: "relative",
@@ -27,6 +29,7 @@ declare global {
 }
 
 function Map3D() {
+  loaded = false;
   const { setCesium, setCesiumMap } = useMain();
   const { setup: setupMeasure } = useMeasure();
   const { setup: setupViewshed } = useViewshed();
@@ -34,7 +37,8 @@ function Map3D() {
   const Cesium = window?.Cesium as any;
 
   useEffect(() => {
-    if (!Cesium) return;
+    if (!Cesium || loaded) return;
+    loaded = true;
 
     var { west, south, east, north } = {
       west: -44.449656,
@@ -60,10 +64,10 @@ function Map3D() {
       fullscreenButton: false,
       imageryProvider: new Cesium.UrlTemplateImageryProvider({
         url: `${config.endpoints.cesiumImagery}`,
-        credit : 'Diretoria de Serviço Geográfico - Exército Brasileiro'
+        credit: "Diretoria de Serviço Geográfico - Exército Brasileiro",
       }),
       terrainProvider: new Cesium.CesiumTerrainProvider({
-          url: `${config.endpoints.cesiumTerrain}`
+        url: `${config.endpoints.cesiumTerrain}`,
       }),
     });
     map.scene.globe.baseColor = Cesium.Color.BLACK;
@@ -90,13 +94,6 @@ function Map3D() {
 
     let viewshed = setupViewshed(Cesium, map);
     setCesiumViewshed(viewshed);
-
-    return () => {
-      setCesium(null);
-      setCesiumMap(null);
-      setCesiumMeasure(null);
-      setCesiumViewshed(null);
-    };
   }, [Cesium]);
 
   return (

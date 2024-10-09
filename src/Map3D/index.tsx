@@ -1,10 +1,11 @@
 import { lazy } from "react";
 import { RouteObject, Navigate } from "react-router-dom";
-import MapToolsProvider from "./contexts/Map3DTools.tsx";
+import Layout from "./layout/index.tsx";
 
 let Map3D = lazy(() => import("./Map3D.tsx"));
 
 const routes: RouteObject = {
+  element: <Layout />,
   path: "/",
   children: [
     {
@@ -13,11 +14,7 @@ const routes: RouteObject = {
     },
     {
       path: "map-3d",
-      element: (
-        <MapToolsProvider>
-          <Map3D />
-        </MapToolsProvider>
-      ),
+      element: <Map3D />,
     },
   ],
 };

@@ -9,17 +9,23 @@ const ToolbarContainer = styled(Box)`
   background-color: white;
   border-radius: 4px;
   padding: 8px;
-  display: flex;
   flex-direction: column;
   gap: 4px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   z-index: 1000;
   opacity: 0.9;
 `;
 
 const RightSideToolBar: FC<{ tools: Array<FC> }> = ({ tools }) => {
   return (
-    <ToolbarContainer>
+    <ToolbarContainer
+      sx={{
+        display: {
+          sm: "flex",
+          xs: "none",
+        },
+      }}
+    >
       {tools.map((Tool, index) => (
         <Tool key={index} />
       ))}

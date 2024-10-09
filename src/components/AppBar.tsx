@@ -10,9 +10,9 @@ import { useTheme } from "@mui/material/styles";
 import Typography from "@mui/material/Typography";
 import { List, ListItem, ListItemIcon } from "@mui/material";
 import { useLocation, useNavigate } from "react-router-dom";
-
-import MapIcon from '@mui/icons-material/Map';
-import Terrain from '@mui/icons-material/Terrain';
+import MenuIcon from "@mui/icons-material/Menu";
+import MapIcon from "@mui/icons-material/Map";
+import Terrain from "@mui/icons-material/Terrain";
 
 const Main = styled("main", {
   shouldForwardProp: (prop) => prop !== "openDrawer",
@@ -39,9 +39,9 @@ const StyledListItem = styled(ListItem)(({ theme }) => ({
   borderRadius: "20px",
   cursor: "pointer",
   padding: theme.spacing(0.5, 1),
-  minWidth: '80px',
-  '& .MuiListItemIcon-root': {
-    minWidth: '30px', // Reduz o espaço do ícone
+  minWidth: "80px",
+  "& .MuiListItemIcon-root": {
+    minWidth: "30px", // Reduz o espaço do ícone
   },
 }));
 
@@ -51,7 +51,7 @@ const NavButtonContainer = styled(Box)(({ theme }) => ({
   padding: theme.spacing(0.5),
   display: "flex",
   alignItems: "center",
-  height: '40px'
+  height: "40px",
 }));
 
 type NavButtonProps = {
@@ -71,7 +71,9 @@ const NavButton: FC<NavButtonProps> = ({ item, onClick }) => {
   return (
     <StyledListItem
       sx={{
-        backgroundColor: item.isSelected ? theme.palette.ebgeo.main : theme.palette.ebgeo.dark,
+        backgroundColor: item.isSelected
+          ? theme.palette.ebgeo.main
+          : theme.palette.ebgeo.dark,
         color: theme.palette.ebgeo.contrastText,
         "&:hover": {
           backgroundColor: theme.palette.ebgeo.main,
@@ -79,24 +81,53 @@ const NavButton: FC<NavButtonProps> = ({ item, onClick }) => {
       }}
       onClick={onClick}
     >
-      <ListItemIcon sx={{ color: theme.palette.ebgeo.contrastText, minWidth: 40 }}>
+      <ListItemIcon
+        sx={{ color: theme.palette.ebgeo.contrastText, minWidth: 40 }}
+      >
         {item.icon}
       </ListItemIcon>
-      <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
+      <Typography variant="body2" sx={{ fontWeight: "bold" }}>
         {item.label}
       </Typography>
     </StyledListItem>
   );
 };
 
+const ToolbarStyled = styled(Toolbar)(({ theme }) => ({
+  display: "flex",
+  flexDirection: "row",
+  minHeight: "80px",
+  justifyContent: "center",
+  alignContent: "center",
+  [theme.breakpoints.down(267)]: {
+    flexDirection: "column",
+  },
+}));
+
+const LogoAndButtonsContainer = styled(Box)(({ theme }) => ({
+  display: "flex",
+  flexDirection: "row",
+  alignItems: "center",
+  width: "100%",
+  justifyContent: "center",
+  alignContent: "center",
+  [theme.breakpoints.down(377)]: {
+    textAlign: "center",
+    flexDirection: "column",
+    paddingBottom: "10px",
+  },
+}));
+
 type Props = {
   children: any;
+  onDrawer?: () => void;
 };
 
-const AppDrawer: FC<Props> = ({ children }) => {
+const AppDrawer: FC<Props> = ({ children, onDrawer }) => {
   const theme = useTheme();
   const isDown574 = useMediaQuery(theme.breakpoints.down(574));
   const isDown260 = useMediaQuery(theme.breakpoints.down(260));
+
   const { pathname } = useLocation();
   const [section, setSection] = useState("");
   const navigate = useNavigate();
@@ -138,67 +169,76 @@ const AppDrawer: FC<Props> = ({ children }) => {
         }}
         position="fixed"
       >
-        <Toolbar
-          sx={{
-            padding: "0px 10px 0px 10px !important",
-            overflow: "auto",
-            display: "flex",
-            flexDirection: "row",
-            minHeight: "80px",
-          }}
-        >
-          <Box sx={{ width: "100%" }}>
+        <ToolbarStyled>
+          <LogoAndButtonsContainer>
+            <Box sx={{ width: "100%" }}>
+              <IconButton
+                color="inherit"
+                aria-label="open drawer"
+                edge="start"
+                sx={{
+                  mr: 2,
+                  margin: isDown260 ? "0px" : "",
+                  padding: "10px",
+                }}
+              >
+                <Box
+                  component="img"
+                  src="/images/dsg_symbol.svg"
+                  sx={{ width: isDown574 ? 25 : 30 }}
+                />
+                <Typography
+                  sx={{
+                    fontSize: "24px",
+                    fontWeight: "bold",
+                    unicodeBidi: "isolate",
+                    paddingLeft: "10px",
+                  }}
+                >
+                  <span style={{ color: theme.palette.ebgeo.light }}>EB</span>
+                  <span style={{ color: theme.palette.ebgeo.contrastText }}>
+                    GEO
+                  </span>
+                </Typography>
+              </IconButton>
+            </Box>
+            <NavButtonContainer>
+              <List
+                sx={{
+                  display: "flex",
+                  flexDirection: "row",
+                  justifyContent: "center",
+                  gap: 1,
+                }}
+              >
+                {navButtons.map((item) => (
+                  <NavButton
+                    key={item.path}
+                    item={{
+                      ...item,
+                      isSelected: isButtonSelected(item.path),
+                    }}
+                    onClick={() => handleClickNavButton(item.path)}
+                  />
+                ))}
+              </List>
+            </NavButtonContainer>
+            <Box sx={{ width: "100%" }}></Box>
+          </LogoAndButtonsContainer>
+          {onDrawer && (
             <IconButton
               color="inherit"
               aria-label="open drawer"
               edge="start"
+              onClick={onDrawer}
               sx={{
-                mr: 2,
-                margin: isDown260 ? "0px" : "",
-                padding: "10px",
+                display: { sm: "none" },
               }}
             >
-              <Box
-                component="img"
-                src="/images/dsg_symbol.svg"
-                sx={{ width: isDown574 ? 25 : 30 }}
-              />
-              <Typography
-                sx={{
-                  fontSize: "24px",
-                  fontWeight: "bold",
-                  unicodeBidi: "isolate",
-                  paddingLeft: "10px"
-                }}
-              >
-                <span style={{ color: theme.palette.ebgeo.light }}>EB</span>
-                <span style={{ color: theme.palette.ebgeo.contrastText }}>GEO</span>
-              </Typography>
+              <MenuIcon />
             </IconButton>
-          </Box>
-          <NavButtonContainer>
-            <List
-              sx={{
-                display: "flex",
-                flexDirection: "row",
-                justifyContent: "center",
-                gap: 1
-              }}
-            >
-              {navButtons.map((item) => (
-                <NavButton
-                  key={item.path}
-                  item={{
-                    ...item,
-                    isSelected: isButtonSelected(item.path),
-                  }}
-                  onClick={() => handleClickNavButton(item.path)}
-                />
-              ))}
-            </List>
-          </NavButtonContainer>
-          <Box sx={{ width: "100%" }}></Box>
-        </Toolbar>
+          )}
+        </ToolbarStyled>
       </AppBar>
       <Main>{children}</Main>
     </Box>

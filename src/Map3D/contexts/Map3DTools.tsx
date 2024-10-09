@@ -213,13 +213,14 @@ const MapToolsProvider: FC<Props> = ({ children }) => {
   const zoomToModel = (modelId: string) => {
     const model = models.find((model) => model.id === modelId);
     if (model) {
-      cesiumMap.camera.flyTo({
-        destination: cesium.Cartesian3.fromDegrees(
-          model.lon,
-          model.lat,
-          model.height
-        ),
-      });
+      // cesiumMap.camera.flyTo({
+      //   destination: cesium.Cartesian3.fromDegrees(
+      //     model.lon,
+      //     model.lat,
+      //     model.height
+      //   ),
+      // });
+      cesiumMap.zoomTo(model);
     }
   };
 

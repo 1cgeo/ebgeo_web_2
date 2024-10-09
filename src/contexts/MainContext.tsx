@@ -35,13 +35,11 @@ const MainContextProvider: FC<Props> = ({ children }) => {
   const [cesiumMap, _setCesiumMap] = useState<any>(null);
 
   const setCesium = (cesium: any) => {
-    _setCesium((prevCesium: any) => (prevCesium ? prevCesium : cesium));
+    _setCesium(cesium);
   };
 
   const setCesiumMap = (cesiumMap: any) => {
-    _setCesiumMap((prevCesiumMap: any) =>
-      prevCesiumMap ? prevCesiumMap : cesiumMap
-    );
+    _setCesiumMap(cesiumMap);
   };
 
   return (
