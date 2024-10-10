@@ -48,79 +48,10 @@ const Model3DCatalog: React.FC<Model3DCatalogProps> = ({ open, onClose }) => {
     setNoResults(false);
     try {
       const searchParam = search ? `&q=${encodeURIComponent(search)}` : "";
-      // const response = await fetch(
-      //   `${config.endpoints.modelCatalog}?nr_records=10&page=${pageNum}${searchParam}`
-      // );
-      // const data = await response.json();
-      const data = {
-        total: 2,
-        page: 1,
-        nr_records: 10,
-        data: [
-          {
-            id: "4fffc973-74c5-48e3-b05d-6b24d552eb57",
-            name: "PCL",
-            description: "Modelo 3D em tiles do PCL/AMAN",
-            thumbnail: "thumbnails/pcl.png",
-            url: "/3d/PCL/tileset.json",
-            lon: "-44.47332385414955",
-            lat: "-22.43976556982974",
-            height: "1000",
-            heading: null,
-            pitch: null,
-            roll: null,
-            type: "Tiles 3D",
-            heightoffset: "35",
-            maximumscreenspaceerror: "16.0",
-            data_criacao: "2024-09-25T13:09:07.595Z",
-            municipio: "Resende",
-            estado: "Rio de Janeiro",
-            palavras_chave: ["pcl", "aman", "agulhas negras"],
-          },
-          {
-            id: "73b3167c-4895-4a39-9e7d-ec5663a61e97",
-            name: "AMAN",
-            description:
-              "Modelo 3D em tiles da Academia Militar das Agulhas Negras",
-            thumbnail: "/thumbnails/aman.png",
-            url: "/3d/AMAN/tileset.json",
-            lon: "-44.449655",
-            lat: "-22.455921",
-            height: "2200",
-            heading: null,
-            pitch: null,
-            roll: null,
-            type: "Tiles 3D",
-            heightoffset: "50",
-            maximumscreenspaceerror: "16.0",
-            data_criacao: "2024-09-25T13:09:07.595Z",
-            municipio: "Resende",
-            estado: "Rio de Janeiro",
-            palavras_chave: ["aman", "academia militar", "agulhas negras"],
-          },
-          {
-            id: "73b3167c-4895-4a39-9e7d-ec5663a61e888",
-            name: "TESTE",
-            description:
-              "Modelo 3D em tiles da Academia Militar das Agulhas Negras",
-            thumbnail: "/thumbnails/aman.png",
-            url: "/3d/teste/tileset.json",
-            lon: "-91.99374",
-            lat: "46.84256",
-            height: "2200",
-            heading: null,
-            pitch: null,
-            roll: null,
-            type: "Tiles 3D",
-            heightoffset: "50",
-            maximumscreenspaceerror: "16.0",
-            data_criacao: "2024-09-25T13:09:07.595Z",
-            municipio: "Resende",
-            estado: "Rio de Janeiro",
-            palavras_chave: ["aman", "academia militar", "agulhas negras"],
-          },
-        ],
-      };
+      const response = await fetch(
+        `${config.endpoints.modelCatalog}?nr_records=10&page=${pageNum}${searchParam}`
+      );
+      const data = await response.json();
       if (pageNum === 1) {
         setModels(data.data);
         setNoResults(data.data.length === 0);

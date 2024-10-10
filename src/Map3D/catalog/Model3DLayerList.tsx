@@ -1,4 +1,4 @@
-import React from "react";
+import React, { memo, useEffect } from "react";
 import {
   Box,
   List,
@@ -31,13 +31,77 @@ const VisibilityButton: React.FC<VisibilityButtonProps> = ({
   );
 };
 
-const Model3DLayerList: React.FC = () => {
-  const { models, zoomToModel, removeModel, setVisibleModel, isVisibleModel } =
+type Model3DItemProps = {
+  model: {
+    thumbnail: string;
+    name: string;
+    id: string;
+  };
+};
+const Model3DItem: React.FC<Model3DItemProps> = ({ model }) => {
+  const { zoomToModel, removeModel, setVisibleModel, isVisibleModel } =
     useMapTools();
 
   const truncateText = (text: string, maxLength: number) => {
     return text.length > maxLength ? text.slice(0, maxLength) + "..." : text;
   };
+
+  return (
+    <ListItem
+      disableGutters
+      sx={{
+        py: 0.5,
+        px: 1,
+        "&:hover": { backgroundColor: "rgba(0, 0, 0, 0.04)" },
+      }}
+    >
+      <Avatar
+        src={model.thumbnail}
+        variant="rounded"
+        sx={{ width: 32, height: 32, mr: 1 }}
+      />
+      <Tooltip title={model.name}>
+        <ListItemText
+          primary={truncateText(model.name, 20)}
+          primaryTypographyProps={{
+            noWrap: true,
+            fontSize: "0.875rem",
+            fontWeight: "medium",
+          }}
+        />
+      </Tooltip>
+      <VisibilityButton
+        isVisible={isVisibleModel(model.id)}
+        onVisibleModel={() =>
+          setVisibleModel(model.id, !isVisibleModel(model.id))
+        }
+      />
+      <IconButton
+        size="small"
+        onClick={() => zoomToModel(model.id)}
+        sx={{ ml: 0.5 }}
+      >
+        <ZoomIn fontSize="small" />
+      </IconButton>
+      <IconButton
+        size="small"
+        onClick={() => removeModel(model.id)}
+        sx={{ ml: 0.5 }}
+      >
+        <Close fontSize="small" />
+      </IconButton>
+    </ListItem>
+  );
+};
+
+const Model3DLayerList: React.FC = () => {
+  const { models, removeModel } = useMapTools();
+
+  useEffect(() => {
+    return () => {
+      models.map((model) => removeModel(model.id));
+    };
+  }, []);
 
   return (
     <Box
@@ -56,51 +120,7 @@ const Model3DLayerList: React.FC = () => {
     >
       <List disablePadding>
         {models.map((model) => (
-          <ListItem
-            key={model.id}
-            disableGutters
-            sx={{
-              py: 0.5,
-              px: 1,
-              "&:hover": { backgroundColor: "rgba(0, 0, 0, 0.04)" },
-            }}
-          >
-            <Avatar
-              src={model.thumbnail}
-              variant="rounded"
-              sx={{ width: 32, height: 32, mr: 1 }}
-            />
-            <Tooltip title={model.name}>
-              <ListItemText
-                primary={truncateText(model.name, 20)}
-                primaryTypographyProps={{
-                  noWrap: true,
-                  fontSize: "0.875rem",
-                  fontWeight: "medium",
-                }}
-              />
-            </Tooltip>
-            <VisibilityButton
-              isVisible={isVisibleModel(model.id)}
-              onVisibleModel={() =>
-                setVisibleModel(model.id, !isVisibleModel(model.id))
-              }
-            />
-            <IconButton
-              size="small"
-              onClick={() => zoomToModel(model.id)}
-              sx={{ ml: 0.5 }}
-            >
-              <ZoomIn fontSize="small" />
-            </IconButton>
-            <IconButton
-              size="small"
-              onClick={() => removeModel(model.id)}
-              sx={{ ml: 0.5 }}
-            >
-              <Close fontSize="small" />
-            </IconButton>
-          </ListItem>
+          <Model3DItem key={model.id} model={model} />
         ))}
       </List>
     </Box>
