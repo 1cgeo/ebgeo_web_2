@@ -2,6 +2,7 @@ import React, { useEffect } from "react";
 import { createContext, useContext, FC, useState } from "react";
 import { useMain } from "../../contexts/MainContext";
 import { Tiles3D, Modelos3D, CatalogItem } from "../catalog/modelTypes";
+import config from "../../config";
 
 interface Context {
   cesiumMeasure: any;
@@ -73,7 +74,7 @@ const MapToolsProvider: FC<Props> = ({ children }) => {
       distance: () => cesiumMeasure.setActiveMeasure("distance"),
       area: () => cesiumMeasure.setActiveMeasure("area"),
       viewshed: () => cesiumViewshed.addViewshed(),
-      //identify: () => {},
+      identify: () => {},
     };
     setActiveToolState(toolName);
     clearDrawing();
@@ -91,8 +92,8 @@ const MapToolsProvider: FC<Props> = ({ children }) => {
   const addTiles3D = (model: Tiles3D) => {
     const tileset = cesiumMap.scene.primitives.add(
       new cesium.Cesium3DTileset({
-        url: model.url,
-        maximumScreenSpaceError: model.maximumScreenSpaceError,
+        url: `${config.endpoints.models3d}${model.url}`,
+        maximumScreenSpaceError: model.maximumscreenspaceerror,
         maximumMemoryUsage: 512,
         preferLeaves: true,
         dynamicScreenSpaceError: true,
@@ -114,7 +115,7 @@ const MapToolsProvider: FC<Props> = ({ children }) => {
       const offset = cesium.Cartesian3.fromRadians(
         cartographic.longitude,
         cartographic.latitude,
-        model.heightOffset
+        model.heightoffset
       );
       const translation = cesium.Cartesian3.subtract(
         offset,
@@ -156,8 +157,15 @@ const MapToolsProvider: FC<Props> = ({ children }) => {
       position: position,
       orientation: orientation,
       model: {
-        uri: model.url,
+        uri: `${config.endpoints.models3d}${model.url}`,
       },
+    });
+    cesiumMap.camera.flyTo({
+      destination: cesium.Cartesian3.fromDegrees(
+        model.lon,
+        model.lat,
+        model.height
+      ),
     });
     setPrimitiveModels({
       ...primitiveModels,
@@ -188,7 +196,7 @@ const MapToolsProvider: FC<Props> = ({ children }) => {
     const primitive = primitiveModels[modelId];
     if (!primitive) return;
     cesiumMap.entities.remove(primitive);
-    primitive.destroy();
+    if(primitive?.destroy) primitive.destroy();
     const newPrimitivesModels = { ...primitiveModels };
     delete newPrimitivesModels[modelId];
     setPrimitiveModels(newPrimitivesModels);
@@ -213,14 +221,14 @@ const MapToolsProvider: FC<Props> = ({ children }) => {
   const zoomToModel = (modelId: string) => {
     const model = models.find((model) => model.id === modelId);
     if (model) {
-      // cesiumMap.camera.flyTo({
-      //   destination: cesium.Cartesian3.fromDegrees(
-      //     model.lon,
-      //     model.lat,
-      //     model.height
-      //   ),
-      // });
-      cesiumMap.zoomTo(model);
+      cesiumMap.camera.flyTo({
+        destination: cesium.Cartesian3.fromDegrees(
+          model.lon,
+          model.lat,
+          model.height
+        ),
+      });
+      //cesiumMap.zoomTo(model);
     }
   };
 

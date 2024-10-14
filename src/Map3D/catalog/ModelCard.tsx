@@ -14,6 +14,7 @@ import CheckIcon from "@mui/icons-material/Check";
 import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 import { CatalogItem } from "./modelTypes";
+import config from "../../config";
 
 interface ModelCardProps {
   model: CatalogItem;
@@ -59,7 +60,7 @@ const ModelCard: React.FC<ModelCardProps> = ({
     >
       <CardMedia
         component="img"
-        image={model.thumbnail}
+        image={`${config.endpoints.models3d}${model.thumbnail}`}
         alt={model.name}
         sx={{ flexGrow: 1, objectFit: "cover" }}
       />

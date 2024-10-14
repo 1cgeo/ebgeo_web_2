@@ -35,4 +35,4 @@ public/street_view/IMG/*.jpg
 public/street_view/METADATA/*.json
 
 .env.production
-.env
+.env.development

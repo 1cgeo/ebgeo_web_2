@@ -4,6 +4,7 @@ import List from "@mui/material/List";
 import ListItem from "@mui/material/ListItem";
 import Toolbar from "@mui/material/Toolbar";
 import Button from "@mui/material/Button";
+import { ResetNorth, VectorTileInfoControl, FeatureSearchControl, TextControl } from "../tools";
 
 interface Props {
   onSelect: () => void;
@@ -21,6 +22,22 @@ const DrawerContent: FC<Props> = ({ onSelect }) => {
       <Divider />
       <List>
         {[  
+          {
+            name: "Pesquisar Local",
+            component: <FeatureSearchControl/>
+          },
+          {
+            name: "Resetar Orientação",
+            component: <ResetNorth/>
+          },
+          {
+            name: "Obter Informação",
+            component: <VectorTileInfoControl/>
+          },
+          {
+            name: "Adicionar Texto",
+            component: <TextControl/>
+          }
         ].map((item: Item) => (
           <ListItem key={item.name} disablePadding>
             {

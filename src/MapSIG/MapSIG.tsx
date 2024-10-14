@@ -4,10 +4,7 @@ import topoBaseMapStyles from "./tools/BaseMapToggle/topoBaseMapStyles";
 import { ResetNorth, VectorTileInfoControl, FeatureSearchControl, TextControl, SaveLoadControl } from "./tools";
 import { useMain } from "../contexts/MainContext";
 import RightSideToolBar from "./RightSideToolBar";
-import PanelProvider from './contexts/PanelContext';
-import ToolProvider from './contexts/ToolContext';
-import SelectionProvider from './contexts/SelectionContext';
-import { MapProvider, useMapStore, getLayerType, getLayerPaint, getLayerLayout } from './contexts/MapFeaturesContext';
+import { useMapStore, getLayerType, getLayerPaint, getLayerLayout } from './contexts/MapFeaturesContext';
 import BaseMapToggleControl from "./tools/BaseMapToggle/BaseMapToggleControl";
 
 const MapContainer = styled.div`
@@ -23,7 +20,7 @@ declare global {
   }
 }
 
-function MapContent() {
+function MapSig() {
   const { setMap, setMapLibregl, map } = useMain();
   const { state } = useMapStore();
 
@@ -125,20 +122,6 @@ function MapContent() {
         <BaseMapToggleControl />
       </MapContainer>
     </>
-  );
-}
-
-function MapSig() {
-  return (
-    <MapProvider>
-      <ToolProvider>
-      <SelectionProvider>
-      <PanelProvider>
-        <MapContent />
-      </PanelProvider>
-      </SelectionProvider>
-      </ToolProvider>
-    </MapProvider>
   );
 }
 

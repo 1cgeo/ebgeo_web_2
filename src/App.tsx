@@ -7,6 +7,10 @@ import routeMapSIG from "./MapSIG";
 import routeMap3D from "./Map3D";
 import "./App.css";
 import MapToolsProvider from "./Map3D/contexts/Map3DTools.tsx";
+import PanelProvider from "./MapSIG/contexts/PanelContext";
+import ToolProvider from "./MapSIG/contexts/ToolContext";
+import SelectionProvider from "./MapSIG/contexts/SelectionContext";
+import { MapProvider } from "./MapSIG/contexts/MapFeaturesContext";
 
 const router = createBrowserRouter([
   {
@@ -35,9 +39,17 @@ export default function App() {
       <MainContextProvider>
         <MapToolsProvider>
           <ThemeConfig>
-            <Suspense fallback={<Loading />}>
-              <RouterProvider router={router} />
-            </Suspense>
+            <MapProvider>
+              <ToolProvider>
+                <SelectionProvider>
+                  <PanelProvider>
+                    <Suspense fallback={<Loading />}>
+                      <RouterProvider router={router} />
+                    </Suspense>
+                  </PanelProvider>
+                </SelectionProvider>
+              </ToolProvider>
+            </MapProvider>
           </ThemeConfig>
         </MapToolsProvider>
       </MainContextProvider>

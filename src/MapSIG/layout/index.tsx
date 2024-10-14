@@ -26,8 +26,7 @@ export default function Layout() {
 
   return (
     <RootStyle>
-      {/* <AppBar onDrawer={() => setOpenDrawer(!openDrawer)}> */}
-      <AppBar>
+      <AppBar onDrawer={() => setOpenDrawer(!openDrawer)}>
         <MainStyle>
           <Outlet />
         </MainStyle>

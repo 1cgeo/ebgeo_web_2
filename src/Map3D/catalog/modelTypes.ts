@@ -7,8 +7,8 @@ export interface Tiles3D {
     lon: number;
     lat: number;
     height: number;
-    heightOffset: number;
-    maximumScreenSpaceError: number;
+    heightoffset: number;
+    maximumscreenspaceerror: number;
     type: 'Tiles 3D';
     data_criacao: string;
     municipio: string;
