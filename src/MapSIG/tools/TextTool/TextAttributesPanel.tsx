@@ -2,13 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { TextField, Slider, Select, MenuItem, Typography } from '@mui/material';
 import FeaturePanel from '../FeaturePanel';
 import { useSelection } from '../../contexts/SelectionContext';
-import { TextFeature } from './TextFeature';
-
-interface TextAttributesPanelProps {
-  updateFeatures: (features: TextFeature[]) => void;
-  deleteFeatures: (features: TextFeature[]) => void;
-  onClose: () => void;
-}
+import {
+  TextAttributesPanelProps,
+  TextFeature
+} from "../../../ts/interfaces/mapSig.interfaces";
 
 const TextAttributesPanel: React.FC<TextAttributesPanelProps> = ({
   updateFeatures,

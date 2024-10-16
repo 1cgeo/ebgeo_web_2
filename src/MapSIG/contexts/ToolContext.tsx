@@ -1,24 +1,18 @@
 import * as React from "react";
 import { createContext, useContext, FC } from "react";
 import { useState } from "react";
+import {
+  ToolContextProps,
+  ToolProviderProps,
+} from "../../ts/interfaces/mapSig.interfaces";
+import { ToolType } from "../../ts/types/mapSig.types";
 
-export type ToolType = 'text' | 'resetNorth' | 'featureSearch' | 'vectorTileInfo' | null;
-
-interface Tool_Context {
-  activeTool: ToolType;
-  setActiveTool: (tool: ToolType) => void;
-}
-
-interface Props {
-  children: React.ReactNode;
-}
-
-const ToolContext = createContext<Tool_Context>({
+const ToolContext = createContext<ToolContextProps>({
   activeTool: null,
   setActiveTool: () => {},
 });
 
-const ToolProvider: FC<Props> = ({ children }) => {
+const ToolProvider: FC<ToolProviderProps> = ({ children }) => {
   const [activeTool, setActiveTool] = useState<ToolType>(null);
 
   const context = {

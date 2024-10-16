@@ -1,16 +1,11 @@
 import React, { useCallback, useMemo } from 'react';
-import { useTool, ToolType } from '../contexts/ToolContext';
+import { useTool } from '../contexts/ToolContext';
 import { useSelection } from '../contexts/SelectionContext';
 import Tool from './Tool';
+import {
+  ToolControlProps
+} from "../../ts/interfaces/mapSig.interfaces";
 
-interface ToolControlProps {
-  name: ToolType;
-  icon: string;
-  tooltip: string;
-  children?: React.ReactNode;
-  onActivate?: () => void;
-  onDeactivate?: () => void;
-}
 
 const ToolControl: React.FC<ToolControlProps> = ({
   name,

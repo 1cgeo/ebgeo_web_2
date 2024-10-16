@@ -1,17 +1,9 @@
 import { FC } from 'react';
 import { Box, Typography, List, ListItem, ListItemText, Button } from '@mui/material';
+import {
+  FeatureSearchPanelProps
+} from "../../../ts/interfaces/mapSig.interfaces";
 
-interface FeatureSearchPanelProps {
-  feature: {
-    nome: string;
-    latitude: number;
-    longitude: number;
-    tipo: string;
-    municipio: string;
-    estado: string;
-  };
-  onClose: () => void;
-}
 
 const FeatureSearchPanel: FC<FeatureSearchPanelProps> = ({ feature, onClose }) => {
   const displayProperties = [

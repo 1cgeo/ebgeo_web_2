@@ -1,24 +1,20 @@
-import * as React from "react";
 import { createContext, useContext, FC } from "react";
 import { useState } from "react";
+import {
+  PanelContextProps,
+  PanelProviderProps
+} from "../../ts/interfaces/mapSig.interfaces";
+import {
+  PanelType
+} from "../../ts/types/mapSig.types";
 
-type PanelType = 'featureSearch' | 'vectorTileInfo' | 'textAttributes' | null;
 
-interface Panel_Context {
-  openPanel: PanelType;
-  setOpenPanel: (panel: PanelType) => void;
-}
-
-interface Props {
-  children: React.ReactNode;
-}
-
-const PanelContext = createContext<Panel_Context>({
+const PanelContext = createContext<PanelContextProps>({
   openPanel: null,
   setOpenPanel: () => {},
 });
 
-const PanelProvider: FC<Props> = ({ children }) => {
+const PanelProvider: FC<PanelProviderProps> = ({ children }) => {
   const [openPanel, setOpenPanel] = useState<PanelType>(null);
 
   const context = {

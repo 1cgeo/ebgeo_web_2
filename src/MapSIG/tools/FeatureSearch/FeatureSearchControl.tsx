@@ -5,26 +5,11 @@ import FeatureSearchPanel from './FeatureSearchPanel';
 import styled from 'styled-components';
 import config from '../../../config';
 import Tool from '../Tool';
+import {
+  Suggestion,
+  GenericMarker
+} from "../../../ts/types/mapSig.types";
 
-type Suggestion = {
-  tipo: string;
-  nome: string;
-  municipio: string;
-  estado: string;
-  latitude: number;
-  longitude: number;
-};
-
-type GenericMap = {
-  getCenter: () => { lat: number; lng: number };
-  flyTo: (options: { center: [number, number]; zoom: number; essential: boolean }) => void;
-};
-
-type GenericMarker = {
-  setLngLat: (coords: [number, number]) => GenericMarker;
-  addTo: (map: GenericMap) => GenericMarker;
-  remove: () => void;
-};
 
 const SearchContainer = styled.div<{ $isVisible: boolean }>`
   position: absolute;
