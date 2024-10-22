@@ -18,6 +18,8 @@ interface Context {
   areToolsEnabled: boolean;
   setVisibleModel: (modelId: string, visible: boolean) => void;
   isVisibleModel: (modelId: string) => boolean;
+  cesiumLabel: any;
+  setCesiumLabel: (viewshed: any) => void;
 }
 
 interface Props {
@@ -40,6 +42,8 @@ const MapToolsContext = createContext<Context>({
   isVisibleModel: () => {
     return false;
   },
+  cesiumLabel: null,
+  setCesiumLabel: () => {},
 });
 
 const MapToolsProvider: FC<Props> = ({ children }) => {
@@ -50,6 +54,7 @@ const MapToolsProvider: FC<Props> = ({ children }) => {
   const [cesiumMeasure, _setCesiumMeasure] = useState<any>(null);
   const [cesiumViewshed, _setCesiumViewshed] = useState<any>(null);
   const [primitiveModels, setPrimitiveModels] = useState<any>({});
+  const [cesiumLabel, setCesiumLabel] = useState<any>(null);
 
   useEffect(() => {
     if (models.length > 0 || !(cesiumMeasure && cesiumViewshed)) return;
@@ -57,15 +62,11 @@ const MapToolsProvider: FC<Props> = ({ children }) => {
   }, [models, cesiumMeasure, cesiumViewshed]);
 
   const setCesiumMeasure = (measure: any) => {
-    _setCesiumMeasure((prevMeasure: any) =>
-      prevMeasure ? prevMeasure : measure
-    );
+    _setCesiumMeasure(measure);
   };
 
   const setCesiumViewshed = (viewshed: any) => {
-    _setCesiumViewshed((prevViewshed: any) =>
-      prevViewshed ? prevViewshed : viewshed
-    );
+    _setCesiumViewshed(viewshed);
   };
 
   const setActiveTool = (toolName: string | null) => {
@@ -75,6 +76,7 @@ const MapToolsProvider: FC<Props> = ({ children }) => {
       area: () => cesiumMeasure.setActiveMeasure("area"),
       viewshed: () => cesiumViewshed.addViewshed(),
       identify: () => {},
+      label: () => cesiumLabel.setActive(true),
     };
     setActiveToolState(toolName);
     clearDrawing();
@@ -87,6 +89,7 @@ const MapToolsProvider: FC<Props> = ({ children }) => {
   const clearDrawing = () => {
     cesiumMeasure.clean();
     cesiumViewshed.clean();
+    cesiumLabel.clean();
   };
 
   const addTiles3D = (model: Tiles3D) => {
@@ -196,7 +199,7 @@ const MapToolsProvider: FC<Props> = ({ children }) => {
     const primitive = primitiveModels[modelId];
     if (!primitive) return;
     cesiumMap.entities.remove(primitive);
-    if(primitive?.destroy) primitive.destroy();
+    if (primitive?.destroy) primitive.destroy();
     const newPrimitivesModels = { ...primitiveModels };
     delete newPrimitivesModels[modelId];
     setPrimitiveModels(newPrimitivesModels);
@@ -248,6 +251,8 @@ const MapToolsProvider: FC<Props> = ({ children }) => {
         areToolsEnabled,
         setVisibleModel,
         isVisibleModel,
+        cesiumLabel, 
+        setCesiumLabel
       }}
     >
       {children}

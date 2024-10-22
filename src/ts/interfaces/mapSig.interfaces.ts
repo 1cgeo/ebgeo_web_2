@@ -5,6 +5,7 @@ import {
   ToolType,
   GenericMapGeoJSONFeature,
 } from "../../ts/types/mapSig.types";
+import { SxProps } from '@mui/system';
 
 export interface Feature {
   id: string;
@@ -131,13 +132,13 @@ export interface VectorTileInfoPanelProps {
   onClose: () => void;
 }
 
-export interface FeaturePanelProps<T> {
+export interface FeaturePanelProps {
   title: string;
-  features: T[];
-  onUpdate: (features: T[]) => void;
-  onDelete: (features: T[]) => void;
+  onUpdate: () => void;
+  onDelete: () => void;
   onClose: () => void;
   children: React.ReactNode;
+  sx?: SxProps;
 }
 
 export interface StyledIconButtonProps {
@@ -153,13 +154,11 @@ export interface ToolProps {
   id: string;
 }
 
-
 export interface ToolControlProps {
-    name: ToolType;
-    icon: string;
-    tooltip: string;
-    children?: React.ReactNode;
-    onActivate?: () => void;
-    onDeactivate?: () => void;
-  }
-  
+  name: ToolType;
+  icon: string;
+  tooltip: string;
+  children?: React.ReactNode;
+  onActivate?: () => void;
+  onDeactivate?: () => void;
+}

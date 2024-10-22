@@ -1,14 +1,14 @@
 import { Box, Typography, Button } from "@mui/material";
-import { FeaturePanelProps } from "../../ts/interfaces/mapSig.interfaces";
+import { FeaturePanelProps } from "../ts/interfaces/mapSig.interfaces";
 
-function FeaturePanel<T>({
+function FeaturePanel({
   title,
-  features,
   onUpdate,
   onDelete,
   onClose,
   children,
-}: FeaturePanelProps<T>) {
+  sx,
+}: FeaturePanelProps) {
   return (
     <Box
       sx={{
@@ -21,6 +21,7 @@ function FeaturePanel<T>({
         borderRadius: 1,
         p: 2,
         zIndex: 1002,
+        ...sx,
       }}
     >
       <Typography variant="h6" gutterBottom>
@@ -28,17 +29,13 @@ function FeaturePanel<T>({
       </Typography>
       {children}
       <Box sx={{ mt: 2, display: "flex", justifyContent: "space-between" }}>
-        <Button variant="contained" onClick={() => onUpdate(features)}>
+        <Button variant="contained" onClick={onUpdate}>
           Salvar
         </Button>
         <Button variant="outlined" onClick={onClose}>
           Cancelar
         </Button>
-        <Button
-          variant="outlined"
-          color="error"
-          onClick={() => onDelete(features)}
-        >
+        <Button variant="outlined" color="error" onClick={onDelete}>
           Excluir
         </Button>
       </Box>

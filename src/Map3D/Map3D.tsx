@@ -3,9 +3,8 @@ import styled from "styled-components";
 import { useMain } from "../contexts/MainContext";
 import { useMapTools } from "./contexts/Map3DTools";
 import RightSideToolBar from "./RightSideToolBar";
-import { Area, Distance, Clean, Viewshed, Identify } from "./tools";
-import useMeasure from "./hooks/useMeasure";
-import useViewshed from "./hooks/useViewshed";
+import { Area, Distance, Clean, Viewshed, Identify, Label } from "./tools";
+import { useMeasure, useViewshed, useLabel } from "./hooks";
 import Model3DLayerList from "./catalog/Model3DLayerList";
 import Model3DCatalogButton from "./catalog/Model3DCatalogButton";
 import config from "../config";
@@ -33,7 +32,8 @@ function Map3D() {
   const { setCesium, setCesiumMap } = useMain();
   const { setup: setupMeasure } = useMeasure();
   const { setup: setupViewshed } = useViewshed();
-  const { setCesiumMeasure, setCesiumViewshed } = useMapTools();
+  const { setup: setupLabel } = useLabel();
+  const { setCesiumMeasure, setCesiumViewshed, setCesiumLabel } = useMapTools();
   const Cesium = window?.Cesium as any;
 
   useEffect(() => {
@@ -89,11 +89,9 @@ function Map3D() {
     setCesium(Cesium);
     setCesiumMap(map);
 
-    let measure = setupMeasure(Cesium, map);
-    setCesiumMeasure(measure);
-
-    let viewshed = setupViewshed(Cesium, map);
-    setCesiumViewshed(viewshed);
+    setCesiumMeasure(setupMeasure(Cesium, map));
+    setCesiumViewshed(setupViewshed(Cesium, map));
+    setCesiumLabel(setupLabel(Cesium, map));
   }, [Cesium]);
 
   return (
@@ -106,6 +104,7 @@ function Map3D() {
           () => <Distance key={"Distance"} />,
           () => <Viewshed key={"Viewshed"} />,
           () => <Identify key={"Identify"} />,
+          () => <Label key={"Label"} />,
         ]}
       />
       <Model3DLayerList />

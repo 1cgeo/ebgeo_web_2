@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { TextField, Slider, Select, MenuItem, Typography } from '@mui/material';
-import FeaturePanel from '../FeaturePanel';
+import FeaturePanel from '../../../components/FeaturePanel';
 import { useSelection } from '../../contexts/SelectionContext';
 import {
   TextAttributesPanelProps,
@@ -29,9 +29,8 @@ const TextAttributesPanel: React.FC<TextAttributesPanelProps> = ({
   return (
     <FeaturePanel
       title="Propriedades do Texto"
-      features={localFeatures}
-      onUpdate={updateFeatures}
-      onDelete={deleteFeatures}
+      onUpdate={()=> updateFeatures(localFeatures)}
+      onDelete={()=> deleteFeatures(localFeatures)}
       onClose={onClose}
     >
       <TextField
