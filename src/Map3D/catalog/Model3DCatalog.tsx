@@ -18,7 +18,7 @@ import {
 import Grid from "@mui/material/Grid2";
 import SearchIcon from "@mui/icons-material/Search";
 import config from "../../config";
-import { CatalogItem } from "./modelTypes";
+import { CatalogItem } from "../../ts/types/map3D.types";
 import { useMapTools } from "../contexts/Map3DTools";
 
 const ModelCard = React.lazy(() => import("./ModelCard"));

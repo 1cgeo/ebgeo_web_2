@@ -13,7 +13,7 @@ import AddIcon from "@mui/icons-material/Add";
 import CheckIcon from "@mui/icons-material/Check";
 import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
-import { CatalogItem } from "./modelTypes";
+import { CatalogItem } from "../../ts/types/map3D.types";
 import { getModelUrl } from "../../utils/source";
 
 interface ModelCardProps {
