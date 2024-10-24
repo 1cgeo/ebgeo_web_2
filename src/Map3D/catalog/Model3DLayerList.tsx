@@ -10,7 +10,7 @@ import {
 } from "@mui/material";
 import { ZoomIn, Close, Visibility, VisibilityOff } from "@mui/icons-material";
 import { useMapTools } from "../contexts/Map3DTools";
-import config from "../../config";
+import { getModelUrl } from "../../utils/source";
 
 type VisibilityButtonProps = {
   isVisible: boolean;
@@ -37,6 +37,7 @@ type Model3DItemProps = {
     thumbnail: string;
     name: string;
     id: string;
+    type: string;
   };
 };
 const Model3DItem: React.FC<Model3DItemProps> = ({ model }) => {
@@ -57,7 +58,7 @@ const Model3DItem: React.FC<Model3DItemProps> = ({ model }) => {
       }}
     >
       <Avatar
-        src={`${config.endpoints.models3d}${model.thumbnail}`}
+        src={`${getModelUrl(model.type)}${model.thumbnail}`}
         variant="rounded"
         sx={{ width: 32, height: 32, mr: 1 }}
       />

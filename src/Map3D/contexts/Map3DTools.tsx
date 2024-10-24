@@ -1,8 +1,13 @@
 import React, { useEffect } from "react";
 import { createContext, useContext, FC, useState } from "react";
 import { useMain } from "../../contexts/MainContext";
-import { Tiles3D, Modelos3D, CatalogItem } from "../catalog/modelTypes";
-import config from "../../config";
+import {
+  Tiles3D,
+  Modelos3D,
+  PointCloud,
+} from "../../ts/interfaces/map3D.interfaces";
+import { CatalogItem } from "../../ts/types/map3D.types";
+import { getModelUrl } from "../../utils/source";
 
 interface Context {
   cesiumMeasure: any;
@@ -80,9 +85,7 @@ const MapToolsProvider: FC<Props> = ({ children }) => {
     };
     setActiveToolState(toolName);
     clearDrawing();
-    if (!(toolName && tools[toolName])) {
-      throw new Error("Not Found Tool");
-    }
+    if (!(toolName && tools[toolName])) throw new Error("Not Found Tool");
     tools[toolName]();
   };
 
@@ -92,10 +95,30 @@ const MapToolsProvider: FC<Props> = ({ children }) => {
     cesiumLabel.clean();
   };
 
+  const addModel = (model: CatalogItem) => {
+    setModels((prevModels) => {
+      const newModels = [...prevModels, model];
+      setAreToolsEnabled(newModels.length > 0);
+      return newModels;
+    });
+
+    let loader = getModelLoader(model.type);
+    if (!loader) throw new Error("Not Found Model Loader");
+    loader(model);
+  };
+
+  const getModelLoader = (modelType: string): any => {
+    return {
+      "Tiles 3D": addTiles3D,
+      "Modelos 3D": addModelos3D,
+      "Nuvem de Pontos": addPointCloud,
+    }[modelType];
+  };
+
   const addTiles3D = (model: Tiles3D) => {
     const tileset = cesiumMap.scene.primitives.add(
       new cesium.Cesium3DTileset({
-        url: `${config.endpoints.models3d}${model.url}`,
+        url: `${getModelUrl(model.type)}${model.url}`,
         maximumScreenSpaceError: model.maximumscreenspaceerror,
         maximumMemoryUsage: 512,
         preferLeaves: true,
@@ -160,7 +183,7 @@ const MapToolsProvider: FC<Props> = ({ children }) => {
       position: position,
       orientation: orientation,
       model: {
-        uri: `${config.endpoints.models3d}${model.url}`,
+        uri: `${getModelUrl(model.type)}${model.url}`,
       },
     });
     cesiumMap.camera.flyTo({
@@ -176,18 +199,34 @@ const MapToolsProvider: FC<Props> = ({ children }) => {
     });
   };
 
-  const addModel = (model: CatalogItem) => {
-    setModels((prevModels) => {
-      const newModels = [...prevModels, model];
-      setAreToolsEnabled(newModels.length > 0);
-      return newModels;
+  const addPointCloud = (model: PointCloud) => {
+    let pointCloudShading = new cesium.PointCloudShading({
+      attenuation: true,
+      geometricErrorScale: 1.0,
+      maximumAttenuation: 10.0,
+      baseResolution: 0.05,
+      eyeDomeLighting: true,
     });
 
-    if (model.type === "Tiles 3D") {
-      addTiles3D(model);
-    } else {
-      addModelos3D(model);
-    }
+    let tileset = new cesium.Cesium3DTileset({
+      url: `${getModelUrl(model.type)}/esao/tileset.json`,
+    });
+    cesiumMap.scene.primitives.add(tileset);
+    tileset.style = new cesium.Cesium3DTileStyle(model.style);
+    tileset.pointCloudShading = pointCloudShading;
+
+    cesiumMap.camera.flyTo({
+      destination: cesium.Cartesian3.fromDegrees(
+        model.lon,
+        model.lat,
+        model.height
+      ),
+    });
+
+    setPrimitiveModels({
+      ...primitiveModels,
+      [model.id]: tileset,
+    });
   };
 
   const removeModel = (modelId: string) => {
@@ -251,8 +290,8 @@ const MapToolsProvider: FC<Props> = ({ children }) => {
         areToolsEnabled,
         setVisibleModel,
         isVisibleModel,
-        cesiumLabel, 
-        setCesiumLabel
+        cesiumLabel,
+        setCesiumLabel,
       }}
     >
       {children}
