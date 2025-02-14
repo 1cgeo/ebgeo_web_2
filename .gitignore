@@ -36,3 +36,5 @@ public/street_view/METADATA/*.json
 
 .env.production
 .env.development
+
+.lock

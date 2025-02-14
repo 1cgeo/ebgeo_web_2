@@ -197,7 +197,7 @@ const AppDrawer: FC<Props> = ({ children, onDrawer }) => {
                 >
                   <span style={{ color: theme.palette.ebgeo.light }}>EB</span>
                   <span style={{ color: theme.palette.ebgeo.contrastText }}>
-                    GEO
+                    Geo
                   </span>
                 </Typography>
               </IconButton>

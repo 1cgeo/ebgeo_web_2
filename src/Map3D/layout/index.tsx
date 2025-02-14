@@ -24,6 +24,10 @@ const MainStyle = styled("div")(({ theme }) => ({
 export default function Layout() {
   const [openDrawer, setOpenDrawer] = useState<boolean>(false);
 
+  const handleDrawerClose = () => {
+    setOpenDrawer(false);
+  };
+
   return (
     <RootStyle>
       <AppBar onDrawer={() => setOpenDrawer(!openDrawer)}>
@@ -33,7 +37,7 @@ export default function Layout() {
         <SwipeableDrawer
           anchor={"right"}
           open={openDrawer}
-          onClose={() => setOpenDrawer(false)}
+          onClose={handleDrawerClose}
           onOpen={() => setOpenDrawer(true)}
           sx={{
             display: {
@@ -41,7 +45,7 @@ export default function Layout() {
             },
           }}
         >
-          <DrawerContent onSelect={() => setOpenDrawer(false)}/>
+          <DrawerContent onClose={handleDrawerClose} />
         </SwipeableDrawer>
       </AppBar>
     </RootStyle>

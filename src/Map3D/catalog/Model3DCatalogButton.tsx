@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import Tool from "../tools/Tool";
 import Model3DCatalog from "./Model3DCatalog";
 import { useMapTools } from "../contexts/Map3DTools";
@@ -29,14 +29,23 @@ const BlinkingWrapper = styled.div<{ $isBlinking: boolean }>`
     `}
 `;
 
-const Model3DCatalogButton: React.FC = () => {
-  const [open, setOpen] = useState(false);
+interface Model3DCatalogButtonProps {
+  open?: boolean;
+  onClose?: () => void;
+}
+
+const Model3DCatalogButton: React.FC<Model3DCatalogButtonProps> = ({
+  open = false,
+  onClose,
+}) => {
   const { models } = useMapTools();
-
-  const handleOpen = () => setOpen(true);
-  const handleClose = () => setOpen(false);
-
   const isBlinking = models.length === 0;
+
+  const handleClick = () => {
+    if (onClose) {
+      onClose();
+    }
+  };
 
   return (
     <>
@@ -46,10 +55,10 @@ const Model3DCatalogButton: React.FC = () => {
           active={true}
           inUse={open}
           tooltip="Catálogo de modelos 3D"
-          onClick={handleOpen}
+          onClick={handleClick}
         />
       </BlinkingWrapper>
-      <Model3DCatalog open={open} onClose={handleClose} />
+      <Model3DCatalog open={open} onClose={handleClick} />
     </>
   );
 };

@@ -1,50 +1,47 @@
-import { FC } from "react";
+import { FC, useState } from "react";
 import Divider from "@mui/material/Divider";
 import List from "@mui/material/List";
 import ListItem from "@mui/material/ListItem";
 import Toolbar from "@mui/material/Toolbar";
-import Button from "@mui/material/Button";
-import Model3DCatalogButton from "../catalog/Model3DCatalogButton";
+import { ListItemButton, ListItemIcon } from "@mui/material";
+import Model3DCatalog from "../catalog/Model3DCatalog";
+import styled from "styled-components";
+
+const StyledIcon = styled.img`
+  width: 24px;
+  height: 24px;
+`;
 
 interface Props {
-  onSelect: () => void;
+  onClose: () => void;
 }
 
-interface Item {
-  name: string;
-  component: any;
-}
+const DrawerContent: FC<Props> = ({ onClose }) => {
+  const [catalogOpen, setCatalogOpen] = useState(false);
 
-const DrawerContent: FC<Props> = ({ onSelect }) => {
+  const handleCatalogClick = () => {
+    setCatalogOpen(true);
+    onClose(); // Fecha o drawer quando abre o catálogo
+  };
+
   return (
     <div>
       <Toolbar />
       <Divider />
       <List>
-        {[
-          {
-            name: "Catálogo 3D",
-            component: <Model3DCatalogButton />,
-          },
-        ].map((item: Item) => (
-          <ListItem key={item.name} disablePadding>
-            {
-              <Button
-                component="label"
-                role={undefined}
-                tabIndex={-1}
-                startIcon={item.component}
-                sx={{
-                  color: "black",
-                }}
-                onClick={onSelect}
-              >
-                {item.name}
-              </Button>
-            }
-          </ListItem>
-        ))}
+        <ListItem disablePadding>
+          <ListItemButton onClick={handleCatalogClick}>
+            <ListItemIcon>
+              <StyledIcon src="/images/catalog.svg" alt="Catálogo 3D" />
+            </ListItemIcon>
+            Catálogo 3D
+          </ListItemButton>
+        </ListItem>
       </List>
+      <Model3DCatalog 
+        open={catalogOpen} 
+        onClose={() => setCatalogOpen(false)} 
+      />
     </div>
   );
 };

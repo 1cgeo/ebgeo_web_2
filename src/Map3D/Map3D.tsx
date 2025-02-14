@@ -1,4 +1,4 @@
-import { useEffect, memo } from "react";
+import { useEffect, memo, useState } from "react";
 import styled from "styled-components";
 import { useMain } from "../contexts/MainContext";
 import { useMapTools } from "./contexts/Map3DTools";
@@ -34,6 +34,7 @@ function Map3D() {
   const { setup: setupViewshed } = useViewshed();
   const { setup: setupLabel } = useLabel();
   const { setCesiumMeasure, setCesiumViewshed, setCesiumLabel } = useMapTools();
+  const [catalogOpen, setCatalogOpen] = useState(true);
   const Cesium = window?.Cesium as any;
 
   useEffect(() => {
@@ -94,11 +95,21 @@ function Map3D() {
     setCesiumLabel(setupLabel(Cesium, map));
   }, [Cesium]);
 
+  const handleCatalogToggle = () => {
+    setCatalogOpen(!catalogOpen);
+  };
+
   return (
     <Map id="map-3d">
       <RightSideToolBar
         tools={[
-          () => <Model3DCatalogButton key={"Catalog"} />,
+          () => (
+            <Model3DCatalogButton
+              key={"Catalog"}
+              open={catalogOpen}
+              onClose={handleCatalogToggle}
+            />
+          ),
           () => <Clean key={"Clear"} />,
           () => <Area key={"Area"} />,
           () => <Distance key={"Distance"} />,
