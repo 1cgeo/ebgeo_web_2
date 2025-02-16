@@ -1,14 +1,7 @@
 // Path: mapSig\features\textTool\TextAttributesPanel\index.tsx
-import {
-  Box,
-  MenuItem,
-  Select,
-  Slider,
-  TextField,
-  Typography,
-} from '@mui/material';
+import { MenuItem, Select, Slider, TextField, Typography } from '@mui/material';
 
-import React, { type FC } from 'react';
+import { type FC } from 'react';
 
 import { useTextToolStore } from '../store';
 import {

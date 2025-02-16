@@ -1,7 +1,9 @@
 // Path: map3d\features\identify\api.ts
 import { env } from '@/shared/config/env';
 
-import { type Coordinates, type FeatureInfo, featureInfoSchema } from './types';
+import { type Coordinates, type FeatureInfo, apiResponseSchema } from './types';
+
+const IDENTIFY_ENDPOINT = `${env.VITE_API_URL}/feicoes`;
 
 export async function fetchFeatureInfo(
   coordinates: Coordinates,
@@ -9,7 +11,7 @@ export async function fetchFeatureInfo(
   const { lat, lon, height } = coordinates;
 
   const response = await fetch(
-    `${env.VITE_API_URL}/feicoes?lat=${lat}&lon=${lon}&z=${height}`,
+    `${IDENTIFY_ENDPOINT}?lat=${lat}&lon=${lon}&z=${height}`,
   );
 
   if (!response.ok) {
@@ -17,5 +19,11 @@ export async function fetchFeatureInfo(
   }
 
   const data = await response.json();
-  return featureInfoSchema.parse(data);
+  const validatedData = apiResponseSchema.parse(data);
+
+  if (!validatedData.success) {
+    throw new Error('Resposta da API inválida');
+  }
+
+  return validatedData.data;
 }

@@ -1,25 +1,34 @@
 // Path: map3d\features\label\types.ts
 import { z } from 'zod';
 
-export const labelPositionSchema = z.object({
-  x: z.number(),
-  y: z.number(),
-  z: z.number(),
-});
+// Schema para posição do rótulo
+export const labelPositionSchema = z
+  .object({
+    x: z.number(),
+    y: z.number(),
+    z: z.number(),
+  })
+  .strict();
 
-export const labelPropertiesSchema = z.object({
-  text: z.string().min(1),
-  size: z.number().min(8).max(72),
-  fillColor: z.string().regex(/^#([0-9A-F]{6})$/i),
-  backgroundColor: z.string().regex(/^#([0-9A-F]{8})$/i),
-  align: z.enum(['left', 'center', 'right']),
-});
+// Schema para propriedades do rótulo
+export const labelPropertiesSchema = z
+  .object({
+    text: z.string().min(1),
+    size: z.number().min(8).max(72),
+    fillColor: z.string().regex(/^#([0-9A-F]{6})$/i),
+    backgroundColor: z.string().regex(/^#([0-9A-F]{8})$/i),
+    align: z.enum(['left', 'center', 'right']),
+  })
+  .strict();
 
-export const labelSchema = z.object({
-  id: z.string(),
-  position: labelPositionSchema,
-  properties: labelPropertiesSchema,
-});
+// Schema para o rótulo completo
+export const labelSchema = z
+  .object({
+    id: z.string(),
+    position: labelPositionSchema,
+    properties: labelPropertiesSchema,
+  })
+  .strict();
 
 // Types inferidos
 export type LabelPosition = z.infer<typeof labelPositionSchema>;

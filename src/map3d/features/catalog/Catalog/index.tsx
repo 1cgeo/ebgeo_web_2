@@ -1,8 +1,10 @@
 // Path: map3d\features\catalog\Catalog\index.tsx
+import CloseIcon from '@mui/icons-material/Close';
 import SearchIcon from '@mui/icons-material/Search';
 import {
   CircularProgress,
   Grid,
+  IconButton,
   InputAdornment,
   Modal,
   TextField,
@@ -11,44 +13,34 @@ import {
 
 import { type FC, Suspense } from 'react';
 
-import { useQuery } from '@tanstack/react-query';
-
 import { useMap3DStore } from '@/map3d/store';
 
 import { ModelCard } from '../ModelCard';
-import { fetchCatalog } from '../api';
 import { useCatalogStore } from '../store';
+import { usePaginatedCatalog } from '../useQueries';
 import {
-  CatalogContainer,
+  HeaderContainer,
   LoadMoreButton,
   LoadingWrapper,
   NoResultsMessage,
+  PanelContainer,
   ResultsContainer,
   SearchBox,
 } from './styles';
 
-export const Model3DCatalog: FC = () => {
+export const CatalogPanel: FC = () => {
   const {
     isPanelOpen,
     closePanel,
-    searchTerm,
+    searchParams,
     setSearchTerm,
-    page,
-    setPage,
-    pageSize,
+    addModelToScene,
   } = useCatalogStore();
 
-  const { models, addModel } = useMap3DStore();
+  const { models } = useMap3DStore();
 
-  const { data, isLoading, error } = useQuery({
-    queryKey: ['models', searchTerm, page],
-    queryFn: () => fetchCatalog(searchTerm, page, pageSize),
-    enabled: isPanelOpen,
-  });
-
-  const handleLoadMore = () => {
-    setPage(page + 1);
-  };
+  const { data, isLoading, error, hasNextPage, page, setPage, totalPages } =
+    usePaginatedCatalog();
 
   const isModelLoaded = (modelId: string) => {
     return models.some(m => m.id === modelId);
@@ -57,18 +49,36 @@ export const Model3DCatalog: FC = () => {
   if (!isPanelOpen) return null;
 
   return (
-    <Modal open={isPanelOpen} onClose={closePanel}>
-      <CatalogContainer>
-        <Typography variant="h4" component="h2" color="primary" gutterBottom>
-          Catálogo de modelos 3D
-        </Typography>
+    <Modal
+      open={isPanelOpen}
+      onClose={closePanel}
+      aria-labelledby="catalog-title"
+    >
+      <PanelContainer>
+        <HeaderContainer>
+          <Typography
+            id="catalog-title"
+            variant="h5"
+            component="h2"
+            color="primary"
+          >
+            Catálogo de modelos 3D
+          </Typography>
+          <IconButton
+            onClick={closePanel}
+            size="small"
+            aria-label="fechar catálogo"
+          >
+            <CloseIcon />
+          </IconButton>
+        </HeaderContainer>
 
         <SearchBox>
           <TextField
             fullWidth
             variant="outlined"
             placeholder="Buscar modelos..."
-            value={searchTerm}
+            value={searchParams.query || ''}
             onChange={e => setSearchTerm(e.target.value)}
             InputProps={{
               startAdornment: (
@@ -82,8 +92,12 @@ export const Model3DCatalog: FC = () => {
 
         {data && (
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            Mostrando {data.data.length > 0 ? (page - 1) * pageSize + 1 : 0}–
-            {Math.min(page * pageSize, data.total)} de {data.total} resultados
+            Mostrando{' '}
+            {data.data.length > 0
+              ? (page - 1) * searchParams.por_pagina + 1
+              : 0}
+            –{Math.min(page * searchParams.por_pagina, data.total)} de{' '}
+            {data.total} resultados
           </Typography>
         )}
 
@@ -114,7 +128,7 @@ export const Model3DCatalog: FC = () => {
                   <Grid item xs={12} sm={6} md={4} lg={3} key={model.id}>
                     <ModelCard
                       model={model}
-                      onAddModel={addModel}
+                      onAddModel={addModelToScene}
                       isLoaded={isModelLoaded(model.id)}
                     />
                   </Grid>
@@ -123,17 +137,17 @@ export const Model3DCatalog: FC = () => {
             </Grid>
           )}
 
-          {data && page * pageSize < data.total && (
+          {hasNextPage && (
             <LoadMoreButton
               variant="contained"
-              onClick={handleLoadMore}
+              onClick={() => setPage(page + 1)}
               disabled={isLoading}
             >
-              {isLoading ? 'Carregando...' : 'Mostrar mais'}
+              {isLoading ? 'Carregando...' : 'Carregar mais'}
             </LoadMoreButton>
           )}
         </ResultsContainer>
-      </CatalogContainer>
+      </PanelContainer>
     </Modal>
   );
 };

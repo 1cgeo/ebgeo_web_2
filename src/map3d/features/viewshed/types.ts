@@ -2,30 +2,36 @@
 import { z } from 'zod';
 
 // Schema para ponto no espaço
-export const cartesianSchema = z.object({
-  x: z.number(),
-  y: z.number(),
-  z: z.number(),
-});
+export const cartesianSchema = z
+  .object({
+    x: z.number(),
+    y: z.number(),
+    z: z.number(),
+  })
+  .strict();
 
 // Schema para configurações do viewshed
-export const viewshedOptionsSchema = z.object({
-  id: z.string(),
-  point: cartesianSchema.optional(),
-  horizontalAngle: z.number().min(0).max(360).default(150),
-  verticalAngle: z.number().min(0).max(180).default(120),
-  distance: z.number().min(0).default(10), // em metros
-  isComplete: z.boolean().default(false),
-});
+export const viewshedOptionsSchema = z
+  .object({
+    id: z.string(),
+    point: cartesianSchema.optional(),
+    horizontalAngle: z.number().min(0).max(360).default(150),
+    verticalAngle: z.number().min(0).max(180).default(120),
+    distance: z.number().min(0).default(10), // em metros
+    isComplete: z.boolean().default(false),
+  })
+  .strict();
 
 // Schema para configurações de estilo
-export const viewshedStyleSchema = z.object({
-  color: z.string().default('#FF0000'),
-  opacity: z.number().min(0).max(1).default(0.3),
-  outlineColor: z.string().default('#FF0000'),
-  outlineOpacity: z.number().min(0).max(1).default(0.8),
-  outlineWidth: z.number().min(1).default(2),
-});
+export const viewshedStyleSchema = z
+  .object({
+    color: z.string().regex(/^#([0-9A-F]{6}|[0-9A-F]{8})$/i),
+    opacity: z.number().min(0).max(1),
+    outlineColor: z.string().regex(/^#([0-9A-F]{6}|[0-9A-F]{8})$/i),
+    outlineOpacity: z.number().min(0).max(1),
+    outlineWidth: z.number().min(1),
+  })
+  .strict();
 
 // Types inferidos
 export type Cartesian = z.infer<typeof cartesianSchema>;

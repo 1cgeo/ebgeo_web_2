@@ -10,18 +10,21 @@ interface CleanControlProps {
 }
 
 export const CleanControl: FC<CleanControlProps> = ({ disabled }) => {
-  const { clearAll } = useCleanStore();
+  const { clearAll, config, isEnabled } = useCleanStore();
 
   const handleClick = useCallback(() => {
     clearAll();
   }, [clearAll]);
 
+  // Se o componente estiver desabilitado externamente ou o store indicar que não está habilitado
+  const isDisabled = disabled || !isEnabled;
+
   return (
     <Tool
-      image="/images/icon-clear.svg"
+      image={config.icon}
       active={true}
-      disabled={disabled}
-      tooltip="Limpar medições e análises"
+      disabled={isDisabled}
+      tooltip={config.tooltip}
       onClick={handleClick}
     />
   );

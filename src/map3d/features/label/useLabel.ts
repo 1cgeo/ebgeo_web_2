@@ -1,68 +1,78 @@
 // Path: map3d\features\label\useLabel.ts
-import { useEffect, useCallback } from 'react';
+import { useCallback, useEffect } from 'react';
+
 import { useMapsStore } from '@/shared/store/mapsStore';
+import { EventEmitter } from '@/shared/utils/events';
+
 import { useMap3DStore } from '@/map3d/store';
+
 import { useLabelStore } from './store';
+import { type LabelPosition } from './types';
 
 export function useLabel() {
   const { cesium, cesiumMap } = useMapsStore();
   const { activeTool } = useMap3DStore();
-  const { 
-    addLabel,
-    selectLabel,
-    labels,
-  } = useLabelStore();
+  const { addLabel, selectLabel, labels } = useLabelStore();
 
   const isActive = activeTool === 'label';
 
   // Handler para clique no mapa
-  const handleMapClick = useCallback((event: any) => {
-    if (!isActive || !cesium || !cesiumMap) return;
+  const handleMapClick = useCallback(
+    (event: any) => {
+      if (!isActive || !cesium || !cesiumMap) return;
 
-    const { position } = event;
-    const cartesian = cesiumMap.scene.pickPosition(position);
-    
-    if (!cartesian) return;
+      const { position } = event;
+      const cartesian = cesiumMap.scene.pickPosition(position);
 
-    addLabel({
-      x: cartesian.x,
-      y: cartesian.y,
-      z: cartesian.z,
-    });
-  }, [isActive, cesium, cesiumMap, addLabel]);
+      if (!cartesian) return;
 
-  // Handler para seleção de label existente
-  const handleLabelSelect = useCallback((event: any) => {
-    if (!isActive || !cesium || !cesiumMap) return;
+      const labelPosition: LabelPosition = {
+        x: cartesian.x,
+        y: cartesian.y,
+        z: cartesian.z,
+      };
 
-    const pickedObject = cesiumMap.scene.pick(event.position);
-    if (cesium.defined(pickedObject) && pickedObject.id) {
-      const label = labels.find(l => l.id === pickedObject.id.id);
-      if (label) {
-        selectLabel(label);
+      addLabel(labelPosition);
+    },
+    [isActive, cesium, cesiumMap, addLabel],
+  );
+
+  // Handler para seleção de rótulo existente
+  const handleLabelSelect = useCallback(
+    (event: any) => {
+      if (!isActive || !cesium || !cesiumMap) return;
+
+      const pickedObject = cesiumMap.scene.pick(event.position);
+      if (cesium.defined(pickedObject) && pickedObject.id) {
+        const label = labels.find(l => l.id === pickedObject.id.id);
+        if (label) {
+          selectLabel(label);
+          EventEmitter.dispatch('3d-label-select', label);
+        }
       }
-    }
-  }, [isActive, cesium, cesiumMap, labels, selectLabel]);
+    },
+    [isActive, cesium, cesiumMap, labels, selectLabel],
+  );
 
   // Setup dos event listeners
   useEffect(() => {
     if (!cesiumMap) return;
 
-    const handler = new cesium?.ScreenSpaceEventHandler(cesiumMap.scene.canvas);
-
     if (isActive) {
-      handler.setInputAction(handleMapClick, cesium?.ScreenSpaceEventType.LEFT_CLICK);
-      handler.setInputAction(handleLabelSelect, cesium?.ScreenSpaceEventType.LEFT_CLICK);
-    }
+      cesiumMap.canvas.addEventListener('click', handleMapClick);
+      cesiumMap.canvas.addEventListener('click', handleLabelSelect);
 
-    return () => {
-      handler.destroy();
-    };
-  }, [
-    cesium,
-    cesiumMap,
-    isActive,
-    handleMapClick,
-    handleLabelSelect
-  ]);
+      return () => {
+        cesiumMap.canvas.removeEventListener('click', handleMapClick);
+        cesiumMap.canvas.removeEventListener('click', handleLabelSelect);
+      };
+    }
+  }, [cesiumMap, isActive, handleMapClick, handleLabelSelect]);
+
+  return {
+    onSelect: (callback: (label: Label) => void) => {
+      EventEmitter.subscribe('3d-label-select', callback);
+      return () => EventEmitter.unsubscribe('3d-label-select');
+    },
+  };
 }

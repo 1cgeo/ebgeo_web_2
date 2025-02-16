@@ -2,8 +2,7 @@
 import { nanoid } from 'nanoid';
 import { create } from 'zustand';
 
-import { useMapsStore } from '@/shared/store/mapsStore';
-
+import { getMap } from '../../store';
 import { type TextAttributes, defaultTextAttributes } from './types';
 
 interface TextToolState {
@@ -30,7 +29,7 @@ export const useTextToolStore = create<TextToolState>(set => ({
   isPanelOpen: false,
 
   setActive: active => {
-    const map = useMapsStore.getState().map;
+    const map = getMap();
     if (map) {
       map.getCanvas().style.cursor = active ? 'crosshair' : '';
     }

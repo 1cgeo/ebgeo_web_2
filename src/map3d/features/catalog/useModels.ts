@@ -3,196 +3,149 @@ import { useCallback, useEffect, useRef } from 'react';
 
 import { useMapsStore } from '@/shared/store/mapsStore';
 
-import { getModelUrl } from '../api';
-import { type CatalogItem } from '../types';
+import { getModelUrl, isModelos3D, isNuvemPontos, isTiles3D } from './api';
+import { type Model3D } from './types';
 
 export function useModels() {
   const { cesium, cesiumMap } = useMapsStore();
-  const primitiveRefs = useRef<Record<string, any>>({});
+  const modelRefs = useRef<Record<string, any>>({});
 
-  // Handlers para diferentes tipos de modelo
-  const addTiles3D = useCallback(
-    (model: CatalogItem) => {
+  // Adiciona modelo à cena
+  const addModel = useCallback(
+    (model: Model3D) => {
       if (!cesium || !cesiumMap) return;
 
-      const tileset = cesiumMap.scene.primitives.add(
-        new cesium.Cesium3DTileset({
-          url: getModelUrl(model.type, model.url),
-          maximumScreenSpaceError: model.maximumscreenspaceerror,
-          maximumMemoryUsage: 512,
-          preferLeaves: true,
-          dynamicScreenSpaceError: true,
-          dynamicScreenSpaceErrorDensity: 0.00278,
-          dynamicScreenSpaceErrorFactor: 4.0,
-          dynamicScreenSpaceErrorHeightFalloff: 0.25,
-        }),
-      );
-
-      primitiveRefs.current[model.id] = tileset;
-
-      tileset.readyPromise.then(() => {
-        const boundingSphere = tileset.boundingSphere;
-        const cartographic = cesium.Cartographic.fromCartesian(
-          boundingSphere.center,
+      if (isTiles3D(model)) {
+        // Adiciona Tileset 3D
+        const tileset = cesiumMap.scene.primitives.add(
+          new cesium.Cesium3DTileset({
+            url: getModelUrl(model),
+            maximumScreenSpaceError: model.erro_maximo_tela,
+            maximumMemoryUsage: 512,
+            preferLeaves: true,
+          }),
         );
-        const surface = cesium.Cartesian3.fromRadians(
-          cartographic.longitude,
-          cartographic.latitude,
-          0.0,
+
+        modelRefs.current[model.id] = tileset;
+
+        // Configura posição e orientação
+        tileset.readyPromise.then(() => {
+          const boundingSphere = tileset.boundingSphere;
+          const cartographic = cesium.Cartographic.fromCartesian(
+            boundingSphere.center,
+          );
+          const surface = cesium.Cartesian3.fromRadians(
+            cartographic.longitude,
+            cartographic.latitude,
+            0.0,
+          );
+          const offset = cesium.Cartesian3.fromRadians(
+            cartographic.longitude,
+            cartographic.latitude,
+            model.offset_altura,
+          );
+          const translation = cesium.Cartesian3.subtract(
+            offset,
+            surface,
+            new cesium.Cartesian3(),
+          );
+          tileset.modelMatrix = cesium.Matrix4.fromTranslation(translation);
+        });
+      } else if (isModelos3D(model)) {
+        // Adiciona modelo GLB/GLTF
+        const position = cesium.Cartesian3.fromDegrees(
+          model.coordenadas.lon,
+          model.coordenadas.lat,
+          model.coordenadas.altura,
         );
-        const offset = cesium.Cartesian3.fromRadians(
-          cartographic.longitude,
-          cartographic.latitude,
-          model.heightoffset || 0,
+        const heading = cesium.Math.toRadians(model.heading);
+        const pitch = cesium.Math.toRadians(model.pitch);
+        const roll = cesium.Math.toRadians(model.roll);
+        const hpr = new cesium.HeadingPitchRoll(heading, pitch, roll);
+        const orientation = cesium.Transforms.headingPitchRollQuaternion(
+          position,
+          hpr,
         );
-        const translation = cesium.Cartesian3.subtract(
-          offset,
-          surface,
-          new cesium.Cartesian3(),
-        );
-        tileset.modelMatrix = cesium.Matrix4.fromTranslation(translation);
 
-        flyToModel(model);
-      });
-    },
-    [cesium, cesiumMap],
-  );
+        const entity = cesiumMap.entities.add({
+          name: model.nome,
+          position: position,
+          orientation: orientation,
+          model: {
+            uri: getModelUrl(model),
+          },
+        });
 
-  const addModelos3D = useCallback(
-    (model: CatalogItem) => {
-      if (!cesium || !cesiumMap) return;
+        modelRefs.current[model.id] = entity;
+      } else if (isNuvemPontos(model)) {
+        // Adiciona nuvem de pontos
+        const pointCloudShading = new cesium.PointCloudShading({
+          attenuation: true,
+          geometricErrorScale: 1.0,
+          maximumAttenuation: 10.0,
+          baseResolution: 0.05,
+          eyeDomeLighting: true,
+        });
 
-      const position = cesium.Cartesian3.fromDegrees(
-        model.lon,
-        model.lat,
-        model.height,
-      );
-      const heading = cesium.Math.toRadians(model.heading || 0);
-      const pitch = cesium.Math.toRadians(model.pitch || 0);
-      const roll = cesium.Math.toRadians(model.roll || 0);
-      const hpr = new cesium.HeadingPitchRoll(heading, pitch, roll);
-      const orientation = cesium.Transforms.headingPitchRollQuaternion(
-        position,
-        hpr,
-      );
+        const tileset = new cesium.Cesium3DTileset({
+          url: getModelUrl(model),
+          pointCloudShading: pointCloudShading,
+        });
 
-      const entity = cesiumMap.entities.add({
-        name: model.name,
-        position,
-        orientation,
-        model: {
-          uri: getModelUrl(model.type, model.url),
-        },
-      });
+        if (model.estilo) {
+          tileset.style = new cesium.Cesium3DTileStyle(model.estilo);
+        }
 
-      primitiveRefs.current[model.id] = entity;
-      flyToModel(model);
-    },
-    [cesium, cesiumMap],
-  );
-
-  const addPointCloud = useCallback(
-    (model: CatalogItem) => {
-      if (!cesium || !cesiumMap) return;
-
-      const pointCloudShading = new cesium.PointCloudShading({
-        attenuation: true,
-        geometricErrorScale: 1.0,
-        maximumAttenuation: 10.0,
-        baseResolution: 0.05,
-        eyeDomeLighting: true,
-      });
-
-      const tileset = new cesium.Cesium3DTileset({
-        url: getModelUrl(model.type, model.url),
-      });
-
-      if (model.style) {
-        tileset.style = new cesium.Cesium3DTileStyle(model.style);
+        cesiumMap.scene.primitives.add(tileset);
+        modelRefs.current[model.id] = tileset;
       }
-
-      tileset.pointCloudShading = pointCloudShading;
-      cesiumMap.scene.primitives.add(tileset);
-
-      primitiveRefs.current[model.id] = tileset;
-      flyToModel(model);
     },
     [cesium, cesiumMap],
   );
 
-  const flyToModel = useCallback(
-    (model: CatalogItem) => {
-      if (!cesium || !cesiumMap) return;
-
-      cesiumMap.camera.flyTo({
-        destination: cesium.Cartesian3.fromDegrees(
-          model.lon,
-          model.lat,
-          model.height,
-        ),
-      });
-    },
-    [cesium, cesiumMap],
-  );
-
+  // Remove modelo da cena
   const removeModel = useCallback(
     (modelId: string) => {
-      if (!cesiumMap) return;
+      const model = modelRefs.current[modelId];
+      if (!model) return;
 
-      const primitive = primitiveRefs.current[modelId];
-      if (!primitive) return;
-
-      // Remove do Cesium
-      cesiumMap.entities.remove(primitive);
-      if (primitive.destroy) {
-        primitive.destroy();
+      if (model.destroy) {
+        model.destroy();
+      } else {
+        cesiumMap?.entities.remove(model);
       }
 
-      delete primitiveRefs.current[modelId];
+      delete modelRefs.current[modelId];
     },
     [cesiumMap],
   );
 
+  // Altera visibilidade do modelo
   const setModelVisibility = useCallback(
     (modelId: string, visible: boolean) => {
-      const primitive = primitiveRefs.current[modelId];
-      if (!primitive) return;
+      const model = modelRefs.current[modelId];
+      if (!model) return;
 
-      primitive.show = visible;
+      model.show = visible;
     },
     [],
   );
 
-  // Cleanup na desmontagem
+  // Limpa modelos na desmontagem
   useEffect(() => {
     return () => {
-      Object.values(primitiveRefs.current).forEach(primitive => {
-        if (primitive.destroy) {
-          primitive.destroy();
+      Object.values(modelRefs.current).forEach(model => {
+        if (model.destroy) {
+          model.destroy();
         }
       });
-      primitiveRefs.current = {};
+      modelRefs.current = {};
     };
   }, []);
 
   return {
-    addModel: useCallback(
-      (model: CatalogItem) => {
-        const handlers = {
-          'Tiles 3D': addTiles3D,
-          'Modelos 3D': addModelos3D,
-          'Nuvem de Pontos': addPointCloud,
-        };
-
-        const handler = handlers[model.type];
-        if (handler) {
-          handler(model);
-        }
-      },
-      [addTiles3D, addModelos3D, addPointCloud],
-    ),
+    addModel,
     removeModel,
     setModelVisibility,
-    flyToModel,
   };
 }

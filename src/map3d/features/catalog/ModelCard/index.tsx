@@ -7,8 +7,8 @@ import { Box, Chip, Tooltip, Typography } from '@mui/material';
 
 import { type FC } from 'react';
 
-import { getModelUrl } from '../api';
-import { type CatalogItem } from '../types';
+import { getModelThumbnailUrl } from '../api';
+import { type Model3D } from '../types';
 import {
   ActionButton,
   CardContainer,
@@ -20,8 +20,8 @@ import {
 } from './styles';
 
 interface ModelCardProps {
-  model: CatalogItem;
-  onAddModel: (model: CatalogItem) => void;
+  model: Model3D;
+  onAddModel: (model: Model3D) => void;
   isLoaded: boolean;
 }
 
@@ -42,20 +42,20 @@ export const ModelCard: FC<ModelCardProps> = ({
     <CardContainer>
       <CardMedia
         component="img"
-        image={getModelUrl(model.type, model.thumbnail)}
-        alt={model.name}
+        image={getModelThumbnailUrl(model)}
+        alt={model.nome}
       />
       <CardContent>
         <Typography variant="h6" component="div">
-          {model.name}
+          {model.nome}
         </Typography>
-        <Typography variant="body2">{model.description}</Typography>
+        <Typography variant="body2">{model.descricao}</Typography>
 
         <InfoContainer>
           <Chip
-            label={model.type}
+            label={model.tipo}
             size="small"
-            color={model.type === 'Tiles 3D' ? 'primary' : 'secondary'}
+            color={model.tipo === 'Tiles 3D' ? 'primary' : 'secondary'}
           />
           <MetaInfo>
             <CalendarTodayIcon sx={{ fontSize: 14 }} />

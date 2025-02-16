@@ -3,43 +3,49 @@ import { Tooltip } from '@mui/material';
 
 import React, { type FC } from 'react';
 
+import { useMapSigStore } from '../../store';
 import { StyledIconButton } from './styles';
 
 interface ToolProps {
-  // Props de identificação e conteúdo
+  // Identificação e conteúdo
+  id: string;
   image?: string;
   icon?: React.ReactNode;
   tooltip: string;
 
-  // Props de estado
-  active: boolean;
-  inUse?: boolean;
+  // Estado
   disabled?: boolean;
   drawerMode?: boolean;
 
   // Handlers
-  onClick: () => void;
-
-  // Props de estilo
-  tooltipPlacement?: 'left' | 'right' | 'top' | 'bottom';
+  onClick?: () => void;
 }
 
 export const Tool: FC<ToolProps> = ({
+  id,
   image,
   icon,
   tooltip,
-  active,
-  inUse,
   disabled,
   drawerMode = false,
   onClick,
-  tooltipPlacement = 'left',
 }) => {
+  const { activeTool, setActiveTool } = useMapSigStore();
+
+  const handleClick = () => {
+    if (onClick) {
+      onClick();
+    }
+    setActiveTool(activeTool === id ? null : id);
+  };
+
+  const isActive = activeTool === id;
+
   const content = (
     <StyledIconButton
-      onClick={onClick}
-      disabled={disabled || !active}
-      $active={inUse}
+      onClick={handleClick}
+      disabled={disabled}
+      $active={isActive}
       $disabled={disabled}
       $drawerMode={drawerMode}
       aria-label={tooltip}
@@ -57,14 +63,12 @@ export const Tool: FC<ToolProps> = ({
     </StyledIconButton>
   );
 
-  // No modo drawer ou quando desabilitado, retornamos o botão sem tooltip
   if (disabled || drawerMode) {
     return content;
   }
 
   return (
-    <Tooltip title={tooltip} placement={tooltipPlacement} arrow>
-      {/* Wrapper div necessário para o Tooltip funcionar com botão disabled */}
+    <Tooltip title={tooltip} placement="left" arrow>
       <span>{content}</span>
     </Tooltip>
   );

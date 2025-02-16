@@ -1,19 +1,18 @@
 // Path: mapSig\store.ts
-import { type Map as MapLibreMap } from 'maplibre-gl';
 import { create } from 'zustand';
+
+import { useMapsStore } from '@/shared/store/mapsStore';
 
 import { type FeatureId } from './features/registry';
 
-interface MapSigState {
-  // Estado do mapa
-  map: MapLibreMap | null;
+// Lista de ferramentas mutuamente exclusivas
+const EXCLUSIVE_TOOLS = ['vectorInfo', 'textTool'] as const;
+type ExclusiveTool = (typeof EXCLUSIVE_TOOLS)[number];
 
+interface MapSigState {
   // Estado da UI compartilhado
   activeTool: FeatureId | null;
   isDrawerOpen: boolean;
-
-  // Ações do mapa
-  setMap: (map: MapLibreMap) => void;
 
   // Ações da UI
   setActiveTool: (toolId: FeatureId | null) => void;
@@ -23,30 +22,36 @@ interface MapSigState {
 
 export const useMapSigStore = create<MapSigState>((set, get) => ({
   // Estado inicial
-  map: null,
   activeTool: null,
   isDrawerOpen: false,
 
-  // Ações do mapa
-  setMap: map => set({ map }),
-
   // Ações da UI
   setActiveTool: toolId => {
-    if (get().activeTool === toolId) {
+    const currentTool = get().activeTool;
+
+    // Se está tentando ativar a mesma ferramenta, desativa
+    if (currentTool === toolId) {
       set({ activeTool: null });
-    } else {
+      return;
+    }
+
+    // Se está tentando ativar uma ferramenta exclusiva
+    if (toolId && EXCLUSIVE_TOOLS.includes(toolId as ExclusiveTool)) {
+      set({ activeTool: toolId });
+    } else if (!EXCLUSIVE_TOOLS.includes(toolId as ExclusiveTool)) {
+      // Se não é uma ferramenta exclusiva, permite ativar normalmente
       set({ activeTool: toolId });
     }
 
     // Atualiza cursor do mapa
-    const map = get().map;
+    const map = getMap();
     if (map) {
       map.getCanvas().style.cursor = toolId ? 'crosshair' : '';
     }
   },
 
   clearActiveTool: () => {
-    const map = get().map;
+    const map = getMap();
     if (map) {
       map.getCanvas().style.cursor = '';
     }
@@ -66,6 +71,7 @@ export function useMapSigToolState(toolId: FeatureId) {
 }
 
 // Helper para acesso ao mapa em funções síncronas
-export function getMap(): MapLibreMap | null {
-  return useMapSigStore.getState().map;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function getMap(): any | null {
+  return useMapsStore.getState().map;
 }

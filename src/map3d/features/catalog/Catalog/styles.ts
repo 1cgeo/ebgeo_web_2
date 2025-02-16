@@ -2,7 +2,7 @@
 import { Box, Button } from '@mui/material';
 import { styled } from '@mui/material/styles';
 
-export const CatalogContainer = styled(Box)(({ theme }) => ({
+export const PanelContainer = styled(Box)(({ theme }) => ({
   position: 'absolute',
   top: '50%',
   left: '50%',
@@ -27,6 +27,13 @@ export const CatalogContainer = styled(Box)(({ theme }) => ({
     borderRadius: '4px',
   },
 }));
+
+export const HeaderContainer = styled(Box)({
+  display: 'flex',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+  marginBottom: 24,
+});
 
 export const SearchBox = styled(Box)(({ theme }) => ({
   marginBottom: theme.spacing(3),

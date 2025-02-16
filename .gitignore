@@ -38,3 +38,4 @@ public/street_view/METADATA/*.json
 .env.development
 
 .lock
+package-lock.json

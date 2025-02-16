@@ -2,13 +2,13 @@
 import { z } from 'zod';
 
 // Schema para coordenadas
-export const coordinateSchema = z.object({
+const coordinateSchema = z.object({
   lat: z.number(),
   lon: z.number(),
 });
 
 // Schema para feature individual
-export const searchFeatureSchema = z.object({
+const searchFeatureSchema = z.object({
   id: z.string(),
   nome: z.string(),
   tipo: z.string(),
@@ -25,7 +25,7 @@ export const searchResultSchema = z.object({
 });
 
 // Schema para parâmetros de busca
-export const searchParamsSchema = z.object({
+const _searchParamsSchema = z.object({
   query: z.string(),
   page: z.number().min(1).default(1),
   pageSize: z.number().min(1).default(10),
@@ -35,4 +35,4 @@ export const searchParamsSchema = z.object({
 export type Coordinate = z.infer<typeof coordinateSchema>;
 export type SearchFeature = z.infer<typeof searchFeatureSchema>;
 export type SearchResult = z.infer<typeof searchResultSchema>;
-export type SearchParams = z.infer<typeof searchParamsSchema>;
+export type SearchParams = z.infer<typeof _searchParamsSchema>;

@@ -1,8 +1,7 @@
 // Path: mapSig\features\featureSearch\store.ts
 import { create } from 'zustand';
 
-import { useMapsStore } from '@/shared/store/mapsStore';
-
+import { getMap } from '../../store';
 import { type SearchFeature } from './types';
 
 interface FeatureSearchState {
@@ -30,7 +29,7 @@ export const useFeatureSearchStore = create<FeatureSearchState>((set, get) => ({
   },
 
   flyToFeature: feature => {
-    const map = useMapsStore.getState().map;
+    const map = getMap();
     if (!map) return;
 
     map.flyTo({

@@ -1,9 +1,8 @@
 // Path: mapSig\hooks\useMapSetup.ts
-import { type Map as MapLibreMap } from 'maplibre-gl';
-
 import { useEffect } from 'react';
 
-import { useMapSigStore } from '../store';
+import { useMapsStore } from '@/shared/store/mapsStore';
+
 import { type MapState } from '../types';
 
 const defaultMapConfig: MapState = {
@@ -26,7 +25,7 @@ interface UseMapSetupOptions {
 }
 
 export function useMapSetup({ containerId, initialState }: UseMapSetupOptions) {
-  const { setMap } = useMapSigStore();
+  const { setMapLibregl, setMap } = useMapsStore();
 
   useEffect(() => {
     const config = {
@@ -34,7 +33,17 @@ export function useMapSetup({ containerId, initialState }: UseMapSetupOptions) {
       ...initialState,
     };
 
-    const map = new MapLibreMap({
+    const lib = window.maplibregl;
+    if (!lib) {
+      console.error(
+        "MapLibre GL library not found in global scope (window.maplibregl). Make sure it's correctly loaded in index.html.",
+      );
+      return;
+    }
+
+    setMapLibregl(lib);
+
+    const map = new lib.Map({
       container: containerId,
       style: 'mapbox://styles/mapbox/streets-v11',
       center: [config.center.lng, config.center.lat],
@@ -53,5 +62,5 @@ export function useMapSetup({ containerId, initialState }: UseMapSetupOptions) {
       map.remove();
       setMap(null);
     };
-  }, [containerId, initialState, setMap]);
+  }, [containerId, initialState, setMap, setMapLibregl]);
 }

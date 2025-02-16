@@ -1,7 +1,7 @@
 // Path: mapSig\features\registry.ts
 import { z } from 'zod';
 
-import { type FC } from 'react';
+import { type ComponentType } from 'react';
 
 // Imports de features
 import { BaseMapToggleControl } from './baseMapToggle/BaseMapToggleControl';
@@ -10,25 +10,27 @@ import { ResetNorthControl } from './resetNorth/ResetNorthControl';
 import { TextControl } from './textTool/TextControl';
 import { VectorInfoControl } from './vectorInfo/VectorInfoControl';
 
-// Schema para componente de feature
-const featureComponentSchema = z.custom<FC<any>>(
-  data => {
-    return typeof data === 'function';
-  },
-  {
-    message: 'Deve ser um componente React válido',
-  },
-);
+interface FeatureProps {
+  drawerMode?: boolean;
+  disabled?: boolean;
+}
 
 // Schema para feature
 export const featureSchema = z.object({
   id: z.string(),
   name: z.string(),
-  component: featureComponentSchema,
+  component: z.custom<ComponentType<FeatureProps>>(
+    data => {
+      return typeof data === 'function';
+    },
+    {
+      message: 'Deve ser um componente React válido',
+    },
+  ),
   order: z.number(),
   showInDrawer: z.boolean().default(true),
   showInToolbar: z.boolean().default(true),
-  dependencies: z.array(z.string()).optional(),
+  requiresModel: z.boolean().default(false),
   description: z.string().optional(),
 });
 

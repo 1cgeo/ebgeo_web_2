@@ -33,18 +33,26 @@ export const IdentifyPanel: FC = () => {
           </Typography>
 
           <InfoGroup>
-            <Typography>
-              <strong>Nome:</strong> {featureInfo.nome}
-            </Typography>
-            <Typography>
-              <strong>Município:</strong> {featureInfo.municipio}
-            </Typography>
-            <Typography>
-              <strong>Estado:</strong> {featureInfo.estado}
-            </Typography>
-            <Typography>
-              <strong>Tipo:</strong> {featureInfo.tipo}
-            </Typography>
+            {featureInfo.nome && (
+              <Typography>
+                <strong>Nome:</strong> {featureInfo.nome}
+              </Typography>
+            )}
+            {featureInfo.municipio && (
+              <Typography>
+                <strong>Município:</strong> {featureInfo.municipio}
+              </Typography>
+            )}
+            {featureInfo.estado && (
+              <Typography>
+                <strong>Estado:</strong> {featureInfo.estado}
+              </Typography>
+            )}
+            {featureInfo.tipo && (
+              <Typography>
+                <strong>Tipo:</strong> {featureInfo.tipo}
+              </Typography>
+            )}
             {featureInfo.altitude_base !== undefined && (
               <Typography>
                 <strong>Altitude Base:</strong> {featureInfo.altitude_base} m

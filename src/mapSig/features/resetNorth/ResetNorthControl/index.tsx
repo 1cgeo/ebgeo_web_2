@@ -2,7 +2,7 @@
 import ExploreIcon from '@mui/icons-material/Explore';
 import { Tooltip } from '@mui/material';
 
-import React, { type FC } from 'react';
+import { type FC } from 'react';
 
 import { useResetNorthStore } from '../store';
 import { StyledIconButton } from './styles';

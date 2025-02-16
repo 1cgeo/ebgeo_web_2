@@ -1,15 +1,11 @@
 // Path: mapSig\features\baseMapToggle\baseMapStyles\index.ts
-import { type OrtoMapStyle, ortoBaseMapStyle } from './ortoBaseMapStyles';
-import { type TopoMapStyle, topoBaseMapStyle } from './topoBaseMapStyles';
+import { type BaseMapStyles, type BaseMapType } from '../types';
+import { ortoBaseMapStyle } from './ortoBaseMapStyles';
+import { topoBaseMapStyle } from './topoBaseMapStyles';
 
-export const baseMapStyles = {
+export const baseMapStyles: BaseMapStyles = {
   orto: ortoBaseMapStyle,
   topo: topoBaseMapStyle,
-} as const;
-
-export type BaseMapStyles = {
-  orto: OrtoMapStyle;
-  topo: TopoMapStyle;
 };
 
-export type BaseMapStyleType = keyof BaseMapStyles;
+export type BaseMapStyleType = BaseMapType;

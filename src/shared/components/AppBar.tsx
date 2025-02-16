@@ -13,7 +13,13 @@ import { styled } from '@mui/material/styles';
 import { useTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
 
-import React, { type ReactNode, useCallback, useEffect, useState } from 'react';
+import React, {
+  type ReactNode,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 const Main = styled('main')(({ theme }) => ({
@@ -131,18 +137,21 @@ export function AppBar({ children, onDrawer }: AppBarProps) {
   const [section, setSection] = useState('');
   const navigate = useNavigate();
 
-  const navButtons = [
-    {
-      path: 'map-sig',
-      label: 'SIG',
-      icon: <MapIcon />,
-    },
-    {
-      path: 'map-3d',
-      label: '3D',
-      icon: <Terrain />,
-    },
-  ];
+  const navButtons = useMemo(
+    () => [
+      {
+        path: 'map-sig',
+        label: 'SIG',
+        icon: <MapIcon />,
+      },
+      {
+        path: 'map-3d',
+        label: '3D',
+        icon: <Terrain />,
+      },
+    ],
+    [],
+  );
 
   const handleClickNavButton = useCallback(
     (path: string) => navigate(path),
@@ -156,7 +165,7 @@ export function AppBar({ children, onDrawer }: AppBarProps) {
       pathname.match(new RegExp(item.path, 'g')),
     );
     setSection(found ? found.path : '');
-  }, [pathname]);
+  }, [pathname, navButtons]);
 
   return (
     <Box sx={{ display: 'flex' }}>

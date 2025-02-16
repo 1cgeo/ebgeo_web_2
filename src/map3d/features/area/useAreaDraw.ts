@@ -3,6 +3,7 @@ import { useEffect, useCallback } from 'react';
 import { useMapsStore } from '@/shared/store/mapsStore';
 import { useMap3DStore } from '@/map3d/store';
 import { useAreaStore } from './store';
+import { type Cartesian } from './types';
 
 export function useAreaDraw() {
   const { cesium, cesiumMap } = useMapsStore();
@@ -17,11 +18,13 @@ export function useAreaDraw() {
   const isActive = activeTool === 'area';
 
   // Calcula a área usando o turf.js
-  const calculateArea = useCallback((positions: any[]) => {
+  const calculateArea = useCallback((positions: Cartesian[]): number => {
     if (!window.turf || positions.length < 3) return 0;
 
     const coordinates = positions.map(position => {
-      const cartographic = cesium?.Cartographic.fromCartesian(position);
+      const cartographic = cesium?.Cartographic.fromCartesian(
+        new cesium.Cartesian3(position.x, position.y, position.z)
+      );
       return [
         cesium?.Math.toDegrees(cartographic?.longitude || 0),
         cesium?.Math.toDegrees(cartographic?.latitude || 0)
@@ -58,13 +61,9 @@ export function useAreaDraw() {
   const handleRightClick = useCallback(() => {
     if (!currentArea || currentArea.points.length < 3) return;
 
-    const positions = currentArea.points.map(point => 
-      new cesium?.Cartesian3(point.x, point.y, point.z)
-    );
-
-    const area = calculateArea(positions);
+    const area = calculateArea(currentArea.points);
     completeArea(area);
-  }, [cesium, currentArea, calculateArea, completeArea]);
+  }, [currentArea, calculateArea, completeArea]);
 
   const handleMouseMove = useCallback((event: any) => {
     if (!isActive || !currentArea || !cesium || !cesiumMap) return;
@@ -74,15 +73,10 @@ export function useAreaDraw() {
     
     if (!cartesian) return;
 
-    // Update last point for preview
+    // Atualizar visualização temporária
     if (currentArea.points.length > 0) {
-      const points = [...currentArea.points];
-      points[points.length - 1] = {
-        x: cartesian.x,
-        y: cartesian.y,
-        z: cartesian.z
-      };
-      // Trigger update in visualization
+      // Aqui você pode atualizar a visualização da área no mapa
+      // sem modificar o estado
     }
   }, [isActive, currentArea, cesium, cesiumMap]);
 
@@ -101,7 +95,6 @@ export function useAreaDraw() {
     };
   }, [cesium, cesiumMap, handleLeftClick, handleRightClick, handleMouseMove]);
 
-  // Retorna as funções que podem ser úteis para componentes
   return {
     calculateArea
   };

@@ -2,67 +2,89 @@
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
 
-import { type Model3D } from '@/map3d/schemas';
 import { useMap3DStore } from '@/map3d/store';
 
-interface CatalogState {
-  isPanelOpen: boolean;
-  searchTerm: string;
-  page: number;
-  pageSize: number;
-  totalResults: number;
+import {
+  type Model3D,
+  type SearchParams,
+  defaultSearchParams,
+  searchParamsSchema,
+} from './types';
 
-  // Panel controls
+interface CatalogState {
+  // Estado do painel
+  isPanelOpen: boolean;
+
+  // Estado da busca
+  searchParams: SearchParams;
+  selectedModel: Model3D | null;
+
+  // Ações do painel
   openPanel: () => void;
   closePanel: () => void;
 
-  // Search controls
+  // Ações de busca
   setSearchTerm: (term: string) => void;
   setPage: (page: number) => void;
-  setTotalResults: (total: number) => void;
   resetSearch: () => void;
 
-  // Model management
-  onModelSelect: (model: Model3D) => void;
+  // Ações de modelo
+  selectModel: (model: Model3D | null) => void;
+  addModelToScene: (model: Model3D) => void;
 }
 
 export const useCatalogStore = create<CatalogState>()(
   devtools(
     (set, get) => ({
+      // Estado inicial
       isPanelOpen: false,
-      searchTerm: '',
-      page: 1,
-      pageSize: 10,
-      totalResults: 0,
+      searchParams: defaultSearchParams,
+      selectedModel: null,
 
+      // Ações do painel
       openPanel: () => set({ isPanelOpen: true }),
       closePanel: () => {
         set({
           isPanelOpen: false,
-          searchTerm: '',
-          page: 1,
+          searchParams: defaultSearchParams,
+          selectedModel: null,
         });
       },
 
-      setSearchTerm: searchTerm =>
-        set({
-          searchTerm,
-          page: 1, // Reset page when search changes
-        }),
+      // Ações de busca
+      setSearchTerm: query => {
+        const params = searchParamsSchema.parse({
+          ...get().searchParams,
+          query,
+          pagina: 1, // Reset página quando busca muda
+        });
+        set({ searchParams: params });
+      },
 
-      setPage: page => set({ page }),
-
-      setTotalResults: totalResults => set({ totalResults }),
+      setPage: pagina => {
+        const params = searchParamsSchema.parse({
+          ...get().searchParams,
+          pagina,
+        });
+        set({ searchParams: params });
+      },
 
       resetSearch: () =>
         set({
-          searchTerm: '',
-          page: 1,
-          totalResults: 0,
+          searchParams: defaultSearchParams,
+          selectedModel: null,
         }),
 
-      onModelSelect: model => {
+      // Ações de modelo
+      selectModel: model =>
+        set({
+          selectedModel: model,
+        }),
+
+      addModelToScene: model => {
+        // Adiciona o modelo à cena através do store global
         useMap3DStore.getState().addModel(model);
+        // Fecha o painel
         get().closePanel();
       },
     }),
@@ -71,3 +93,21 @@ export const useCatalogStore = create<CatalogState>()(
     },
   ),
 );
+
+// Hook para seleção de modelo
+export function useSelectedModel() {
+  return useCatalogStore(state => ({
+    selectedModel: state.selectedModel,
+    selectModel: state.selectModel,
+  }));
+}
+
+// Hook para parâmetros de busca
+export function useSearchParams() {
+  return useCatalogStore(state => ({
+    params: state.searchParams,
+    setSearchTerm: state.setSearchTerm,
+    setPage: state.setPage,
+    resetSearch: state.resetSearch,
+  }));
+}

@@ -1,5 +1,4 @@
 // Path: mapSig\types.ts
-import { type Map as MapLibreMap } from 'maplibre-gl';
 import { z } from 'zod';
 
 // Schema para coordenadas
@@ -34,11 +33,6 @@ export const mapStateSchema = z.object({
 export type Coordinates = z.infer<typeof coordinatesSchema>;
 export type Bounds = z.infer<typeof boundsSchema>;
 export type MapState = z.infer<typeof mapStateSchema>;
-
-// Interface para componentes relacionados ao mapa
-export interface MapContextProps {
-  map: MapLibreMap | null;
-}
 
 // Types para callbacks comuns
 export type CoordinatesChangeHandler = (coords: Coordinates) => void;

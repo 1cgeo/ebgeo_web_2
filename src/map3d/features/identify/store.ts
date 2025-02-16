@@ -3,7 +3,12 @@ import { create } from 'zustand';
 
 import { useMap3DStore } from '@/map3d/store';
 
-import { type Coordinates, type FeatureInfo } from './types';
+import {
+  type Coordinates,
+  type FeatureInfo,
+  coordinatesSchema,
+  featureInfoSchema,
+} from './types';
 
 interface IdentifyState {
   selectedCoordinates: Coordinates | null;
@@ -29,17 +34,31 @@ export const useIdentifyStore = create<IdentifyState>(set => ({
   error: null,
   isPanelOpen: false,
 
-  setSelectedCoordinates: coordinates =>
-    set({
-      selectedCoordinates: coordinates,
-    }),
+  setSelectedCoordinates: coordinates => {
+    if (coordinates) {
+      const validatedCoords = coordinatesSchema.parse(coordinates);
+      set({ selectedCoordinates: validatedCoords });
+    } else {
+      set({ selectedCoordinates: null });
+    }
+  },
 
-  setFeatureInfo: info =>
-    set({
-      featureInfo: info,
-      isLoading: false,
-      error: null,
-    }),
+  setFeatureInfo: info => {
+    if (info) {
+      const validatedInfo = featureInfoSchema.parse(info);
+      set({
+        featureInfo: validatedInfo,
+        isLoading: false,
+        error: null,
+      });
+    } else {
+      set({
+        featureInfo: null,
+        isLoading: false,
+        error: null,
+      });
+    }
+  },
 
   setLoading: loading =>
     set({

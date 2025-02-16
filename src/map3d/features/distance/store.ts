@@ -5,9 +5,12 @@ import { create } from 'zustand';
 import { useMap3DStore } from '@/map3d/store';
 
 import {
+  type Cartesian,
   type DistanceLine,
   type DistanceStyle,
+  cartesianSchema,
   defaultDistanceStyle,
+  distanceLineSchema,
 } from './types';
 
 interface DistanceState {
@@ -17,7 +20,7 @@ interface DistanceState {
 
   // Actions
   startNewLine: () => void;
-  addPoint: (point: { x: number; y: number; z: number }) => void;
+  addPoint: (point: Cartesian) => void;
   completeLine: (finalDistance: number) => void;
   removeLine: (id: string) => void;
   clearLines: () => void;
@@ -30,37 +33,41 @@ export const useDistanceStore = create<DistanceState>((set, get) => ({
   lines: [],
   style: defaultDistanceStyle,
 
-  startNewLine: () =>
-    set({
-      currentLine: {
-        id: nanoid(),
-        points: [],
-        isComplete: false,
-      },
-    }),
+  startNewLine: () => {
+    const newLine = distanceLineSchema.parse({
+      id: nanoid(),
+      points: [],
+      isComplete: false,
+    });
 
-  addPoint: point =>
+    set({ currentLine: newLine });
+  },
+
+  addPoint: point => {
+    // Valida o ponto antes de adicionar
+    const validatedPoint = cartesianSchema.parse(point);
+
     set(state => {
       if (!state.currentLine) return state;
 
-      const newPoints = [...state.currentLine.points, point];
-      return {
-        currentLine: {
-          ...state.currentLine,
-          points: newPoints,
-        },
-      };
-    }),
+      const updatedLine = distanceLineSchema.parse({
+        ...state.currentLine,
+        points: [...state.currentLine.points, validatedPoint],
+      });
+
+      return { currentLine: updatedLine };
+    });
+  },
 
   completeLine: finalDistance => {
     const state = get();
     if (!state.currentLine) return;
 
-    const completedLine = {
+    const completedLine = distanceLineSchema.parse({
       ...state.currentLine,
       distance: finalDistance,
       isComplete: true,
-    };
+    });
 
     set({
       lines: [...state.lines, completedLine],

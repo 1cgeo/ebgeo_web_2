@@ -9,6 +9,7 @@ import {
   type LabelPosition,
   type LabelProperties,
   defaultLabelProperties,
+  labelSchema,
 } from './types';
 
 interface LabelState {
@@ -33,11 +34,11 @@ export const useLabelStore = create<LabelState>(set => ({
   isPanelOpen: false,
 
   addLabel: position => {
-    const newLabel: Label = {
+    const newLabel = labelSchema.parse({
       id: nanoid(),
       position,
       properties: defaultLabelProperties,
-    };
+    });
 
     set(state => ({
       labels: [...state.labels, newLabel],
@@ -50,18 +51,18 @@ export const useLabelStore = create<LabelState>(set => ({
     set(state => ({
       labels: state.labels.map(label =>
         label.id === labelId
-          ? {
+          ? labelSchema.parse({
               ...label,
               properties: { ...label.properties, ...properties },
-            }
+            })
           : label,
       ),
       selectedLabel:
         state.selectedLabel?.id === labelId
-          ? {
+          ? labelSchema.parse({
               ...state.selectedLabel,
               properties: { ...state.selectedLabel.properties, ...properties },
-            }
+            })
           : state.selectedLabel,
     })),
 
@@ -90,6 +91,7 @@ export const useLabelStore = create<LabelState>(set => ({
   },
 
   openPanel: () => set({ isPanelOpen: true }),
+
   closePanel: () =>
     set({
       isPanelOpen: false,

@@ -1,8 +1,7 @@
 // Path: mapSig\features\vectorInfo\store.ts
 import { create } from 'zustand';
 
-import { useMapsStore } from '@/shared/store/mapsStore';
-
+import { getMap } from '../../store';
 import { type VectorFeature, type VectorLayer } from './types';
 
 interface VectorInfoState {
@@ -27,7 +26,7 @@ interface VectorInfoState {
   refreshLayers: () => void;
 }
 
-export const useVectorInfoStore = create<VectorInfoState>((set, get) => ({
+export const useVectorInfoStore = create<VectorInfoState>(set => ({
   isPanelOpen: false,
   isActive: false,
   layers: [],
@@ -44,7 +43,7 @@ export const useVectorInfoStore = create<VectorInfoState>((set, get) => ({
   setLayers: layers => set({ layers }),
 
   updateLayerVisibility: (layerId, visible) => {
-    const map = useMapsStore.getState().map;
+    const map = getMap();
     if (!map) return;
 
     map.setLayoutProperty(layerId, 'visibility', visible ? 'visible' : 'none');
@@ -64,7 +63,7 @@ export const useVectorInfoStore = create<VectorInfoState>((set, get) => ({
   },
 
   setActive: active => {
-    const map = useMapsStore.getState().map;
+    const map = getMap();
     if (map) {
       map.getCanvas().style.cursor = active ? 'pointer' : '';
     }
@@ -72,7 +71,7 @@ export const useVectorInfoStore = create<VectorInfoState>((set, get) => ({
   },
 
   refreshLayers: () => {
-    const map = useMapsStore.getState().map;
+    const map = getMap();
     if (!map) return;
 
     const vectorLayers = map

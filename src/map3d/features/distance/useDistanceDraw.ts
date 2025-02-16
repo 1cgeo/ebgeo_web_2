@@ -3,6 +3,7 @@ import { useEffect, useCallback } from 'react';
 import { useMapsStore } from '@/shared/store/mapsStore';
 import { useMap3DStore } from '@/map3d/store';
 import { useDistanceStore } from './store';
+import { type Cartesian } from './types';
 
 export function useDistanceDraw() {
   const { cesium, cesiumMap } = useMapsStore();
@@ -17,13 +18,24 @@ export function useDistanceDraw() {
   const isActive = activeTool === 'distance';
 
   // Calcula a distância entre pontos
-  const calculateDistance = useCallback((positions: any[]) => {
+  const calculateDistance = useCallback((positions: Cartesian[]): number => {
     if (!cesium || positions.length < 2) return 0;
 
     let totalDistance = 0;
     for (let i = 0; i < positions.length - 1; i++) {
-      const point1cartographic = cesium.Cartographic.fromCartesian(positions[i]);
-      const point2cartographic = cesium.Cartographic.fromCartesian(positions[i + 1]);
+      const point1 = new cesium.Cartesian3(
+        positions[i].x,
+        positions[i].y,
+        positions[i].z
+      );
+      const point2 = new cesium.Cartesian3(
+        positions[i + 1].x,
+        positions[i + 1].y,
+        positions[i + 1].z
+      );
+
+      const point1cartographic = cesium.Cartographic.fromCartesian(point1);
+      const point2cartographic = cesium.Cartographic.fromCartesian(point2);
       
       const geodesic = new cesium.EllipsoidGeodesic();
       geodesic.setEndPoints(point1cartographic, point2cartographic);
@@ -66,37 +78,9 @@ export function useDistanceDraw() {
   const handleRightClick = useCallback(() => {
     if (!currentLine || currentLine.points.length < 2) return;
 
-    const positions = currentLine.points.map(point => 
-      new cesium?.Cartesian3(point.x, point.y, point.z)
-    );
-
-    const distance = calculateDistance(positions);
+    const distance = calculateDistance(currentLine.points);
     completeLine(distance);
-  }, [cesium, currentLine, calculateDistance, completeLine]);
-
-  const handleMouseMove = useCallback((event: any) => {
-    if (!isActive || !currentLine || !cesium || !cesiumMap) return;
-
-    const { endPosition } = event;
-    const cartesian = cesiumMap.scene.pickPosition(endPosition);
-    
-    if (!cartesian) return;
-
-    // Update preview point
-    if (currentLine.points.length > 0) {
-      const points = [...currentLine.points];
-      if (points.length === 1) {
-        points.push(cartesian);
-      } else {
-        points[points.length - 1] = {
-          x: cartesian.x,
-          y: cartesian.y,
-          z: cartesian.z
-        };
-      }
-      // Trigger update in visualization
-    }
-  }, [isActive, currentLine, cesium, cesiumMap]);
+  }, [currentLine, calculateDistance, completeLine]);
 
   // Setup event handlers
   useEffect(() => {
@@ -106,12 +90,11 @@ export function useDistanceDraw() {
 
     handler.setInputAction(handleLeftClick, cesium?.ScreenSpaceEventType.LEFT_CLICK);
     handler.setInputAction(handleRightClick, cesium?.ScreenSpaceEventType.RIGHT_CLICK);
-    handler.setInputAction(handleMouseMove, cesium?.ScreenSpaceEventType.MOUSE_MOVE);
 
     return () => {
       handler.destroy();
     };
-  }, [cesium, cesiumMap, handleLeftClick, handleRightClick, handleMouseMove]);
+  }, [cesium, cesiumMap, handleLeftClick, handleRightClick]);
 
   return {
     calculateDistance

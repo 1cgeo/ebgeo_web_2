@@ -1,14 +1,14 @@
 // Path: mapSig\features\featureSearch\FeatureSearchPanel\index.tsx
 import {
   CircularProgress,
-  List,
   ListItem,
   ListItemText,
   TextField,
   Typography,
 } from '@mui/material';
+import debounce from 'lodash/debounce';
 
-import { type FC, useState } from 'react';
+import { type FC, useMemo, useState } from 'react';
 
 import { useQuery } from '@tanstack/react-query';
 
@@ -45,6 +45,14 @@ export const FeatureSearchPanel: FC<FeatureSearchPanelProps> = ({
     enabled: searchTerm.length >= 3,
   });
 
+  const debouncedSetSearchTerm = useMemo(
+    () =>
+      debounce((value: string) => {
+        setSearchTerm(value);
+      }, 300),
+    [],
+  );
+
   if (!open) return null;
 
   return (
@@ -54,7 +62,7 @@ export const FeatureSearchPanel: FC<FeatureSearchPanelProps> = ({
           fullWidth
           placeholder="Buscar feições..."
           value={searchTerm}
-          onChange={e => setSearchTerm(e.target.value)}
+          onChange={e => debouncedSetSearchTerm(e.target.value)}
           variant="outlined"
           size="small"
         />
@@ -76,7 +84,7 @@ export const FeatureSearchPanel: FC<FeatureSearchPanelProps> = ({
         {data?.features.map(feature => (
           <ListItem
             key={feature.id}
-            button
+            component="button"
             onClick={() => selectFeature(feature)}
           >
             <ListItemText

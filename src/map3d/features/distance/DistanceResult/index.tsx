@@ -10,13 +10,11 @@ import { ResultContainer, ResultText } from './styles';
 interface DistanceResultProps {
   lineId: string;
   distance: number;
-  parentPoint?: { x: number; y: number; z: number };
 }
 
 export const DistanceResult: FC<DistanceResultProps> = ({
   lineId,
   distance,
-  parentPoint,
 }) => {
   const { removeLine } = useDistanceStore();
 
@@ -28,7 +26,7 @@ export const DistanceResult: FC<DistanceResultProps> = ({
   };
 
   return (
-    <ResultContainer $position={parentPoint}>
+    <ResultContainer>
       <ResultText>{formatDistance(distance)}</ResultText>
       <IconButton
         size="small"

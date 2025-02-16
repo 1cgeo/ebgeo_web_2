@@ -3,6 +3,7 @@ import { useEffect, useCallback, useRef } from 'react';
 import { useMapsStore } from '@/shared/store/mapsStore';
 import { useMap3DStore } from '@/map3d/store';
 import { useViewshedStore } from './store';
+import { type Cartesian } from './types';
 
 export function useViewshedDraw() {
   const { cesium, cesiumMap } = useMapsStore();
@@ -43,11 +44,13 @@ export function useViewshedDraw() {
     
     if (!cartesian) return;
 
-    setViewshedPoint({
+    const point: Cartesian = {
       x: cartesian.x,
       y: cartesian.y,
       z: cartesian.z
-    });
+    };
+
+    setViewshedPoint(point);
 
     // Se já existe um viewshed atual, atualiza sua posição
     if (currentViewshed?.id && viewshedRefs.current[currentViewshed.id]) {

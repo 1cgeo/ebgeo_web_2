@@ -1,8 +1,7 @@
 // Path: mapSig\features\resetNorth\store.ts
 import { create } from 'zustand';
 
-import { useMapsStore } from '@/shared/store/mapsStore';
-
+import { getMap } from '../../store';
 import { type ResetOptions, defaultResetOptions } from './types';
 
 interface ResetNorthState {
@@ -22,7 +21,7 @@ export const useResetNorthStore = create<ResetNorthState>(set => ({
     })),
 
   resetBearing: () => {
-    const map = useMapsStore.getState().map;
+    const map = getMap();
     if (!map) return;
 
     set({ isResetting: true });

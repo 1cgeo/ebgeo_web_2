@@ -1,30 +1,36 @@
 // Path: map3d\features\distance\types.ts
 import { z } from 'zod';
 
-// Schema para ponto no espaço
-export const cartesianSchema = z.object({
-  x: z.number(),
-  y: z.number(),
-  z: z.number(),
-});
+// Schema para ponto no espaço 3D
+export const cartesianSchema = z
+  .object({
+    x: z.number(),
+    y: z.number(),
+    z: z.number(),
+  })
+  .strict();
 
 // Schema para linha de medição
-export const distanceLineSchema = z.object({
-  id: z.string(),
-  points: z.array(cartesianSchema),
-  distance: z.number().optional(),
-  isComplete: z.boolean(),
-});
+export const distanceLineSchema = z
+  .object({
+    id: z.string(),
+    points: z.array(cartesianSchema),
+    distance: z.number().optional(),
+    isComplete: z.boolean(),
+  })
+  .strict();
 
 // Schema para configurações de estilo
-export const distanceStyleSchema = z.object({
-  color: z.string().default('#0000FF'),
-  opacity: z.number().min(0).max(1).default(0.8),
-  width: z.number().min(1).default(2),
-  pointSize: z.number().min(1).default(8),
-  pointColor: z.string().default('#FFFFFF'),
-  pointBorderColor: z.string().default('#0000FF'),
-});
+export const distanceStyleSchema = z
+  .object({
+    color: z.string().regex(/^#([0-9A-F]{6}|[0-9A-F]{8})$/i),
+    opacity: z.number().min(0).max(1),
+    width: z.number().min(1),
+    pointSize: z.number().min(1),
+    pointColor: z.string().regex(/^#([0-9A-F]{6}|[0-9A-F]{8})$/i),
+    pointBorderColor: z.string().regex(/^#([0-9A-F]{6}|[0-9A-F]{8})$/i),
+  })
+  .strict();
 
 // Types inferidos
 export type Cartesian = z.infer<typeof cartesianSchema>;

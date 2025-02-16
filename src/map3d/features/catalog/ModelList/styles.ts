@@ -6,7 +6,7 @@ export const ListContainer = styled(Box)(({ theme }) => ({
   position: 'absolute',
   left: theme.spacing(1),
   top: 120,
-  width: 250,
+  width: 300,
   maxHeight: 'calc(100vh - 140px)',
   backgroundColor: theme.palette.background.paper,
   borderRadius: theme.shape.borderRadius,
@@ -22,6 +22,10 @@ export const ListItem = styled(MuiListItem)(({ theme }) => ({
   },
   display: 'flex',
   alignItems: 'center',
+  borderBottom: `1px solid ${theme.palette.divider}`,
+  '&:last-child': {
+    borderBottom: 'none',
+  },
 }));
 
 export const Controls = styled(Box)(({ theme }) => ({
@@ -30,5 +34,8 @@ export const Controls = styled(Box)(({ theme }) => ({
   marginLeft: 'auto',
   '& .MuiIconButton-root': {
     padding: theme.spacing(0.5),
+    '&:hover': {
+      backgroundColor: theme.palette.action.hover,
+    },
   },
 }));

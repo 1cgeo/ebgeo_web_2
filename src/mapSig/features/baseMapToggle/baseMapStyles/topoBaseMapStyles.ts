@@ -1,58 +1,7 @@
 // Path: mapSig\features\baseMapToggle\baseMapStyles\topoBaseMapStyles.ts
-import { z } from 'zod';
+import { type TopoStyle } from '../types';
 
-const topoSourceSchema = z.object({
-  type: z.literal('vector'),
-  tiles: z.array(z.string()),
-  minzoom: z.number().optional(),
-  maxzoom: z.number().optional(),
-  attribution: z.string().optional(),
-});
-
-const layerPaintSchema = z
-  .object({
-    'fill-color': z.string().optional(),
-    'fill-opacity': z.number().optional(),
-    'line-color': z.string().optional(),
-    'line-width': z.number().optional(),
-    'line-opacity': z.number().optional(),
-    'text-color': z.string().optional(),
-    'text-halo-color': z.string().optional(),
-    'text-halo-width': z.number().optional(),
-  })
-  .optional();
-
-const layerLayoutSchema = z
-  .object({
-    visibility: z.enum(['visible', 'none']).optional(),
-    'text-field': z.string().optional(),
-    'text-font': z.array(z.string()).optional(),
-    'text-size': z.number().optional(),
-    'text-anchor': z
-      .enum(['center', 'left', 'right', 'top', 'bottom'])
-      .optional(),
-  })
-  .optional();
-
-export const topoStyleSchema = z.object({
-  version: z.literal(8),
-  name: z.string(),
-  sources: z.record(topoSourceSchema),
-  layers: z.array(
-    z.object({
-      id: z.string(),
-      type: z.enum(['fill', 'line', 'symbol']),
-      source: z.string(),
-      'source-layer': z.string().optional(),
-      minzoom: z.number().optional(),
-      maxzoom: z.number().optional(),
-      paint: layerPaintSchema,
-      layout: layerLayoutSchema,
-    }),
-  ),
-});
-
-export const topoBaseMapStyle = {
+export const topoBaseMapStyle: TopoStyle = {
   version: 8,
   name: 'EBGEO - Topográfico',
   sources: {
@@ -103,10 +52,4 @@ export const topoBaseMapStyle = {
       },
     },
   ],
-} as const;
-
-// Valida o estilo em tempo de execução
-export const validatedTopoStyle = topoStyleSchema.parse(topoBaseMapStyle);
-
-// Type inferido do schema
-export type TopoMapStyle = z.infer<typeof topoStyleSchema>;
+};

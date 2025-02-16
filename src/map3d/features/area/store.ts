@@ -4,7 +4,14 @@ import { create } from 'zustand';
 
 import { useMap3DStore } from '@/map3d/store';
 
-import { type Area, type AreaStyle, defaultAreaStyle } from './types';
+import {
+  type Area,
+  type AreaStyle,
+  type Cartesian,
+  areaSchema,
+  cartesianSchema,
+  defaultAreaStyle,
+} from './types';
 
 interface AreaState {
   currentArea: Area | null;
@@ -13,7 +20,7 @@ interface AreaState {
 
   // Actions
   startNewArea: () => void;
-  addPoint: (point: { x: number; y: number; z: number }) => void;
+  addPoint: (point: Cartesian) => void;
   completeArea: (finalArea: number) => void;
   removeArea: (id: string) => void;
   clearAreas: () => void;
@@ -26,36 +33,41 @@ export const useAreaStore = create<AreaState>((set, get) => ({
   areas: [],
   style: defaultAreaStyle,
 
-  startNewArea: () =>
-    set({
-      currentArea: {
-        id: nanoid(),
-        points: [],
-        isComplete: false,
-      },
-    }),
+  startNewArea: () => {
+    const newArea = areaSchema.parse({
+      id: nanoid(),
+      points: [],
+      isComplete: false,
+    });
 
-  addPoint: point =>
+    set({ currentArea: newArea });
+  },
+
+  addPoint: point => {
+    // Valida o ponto antes de adicionar
+    const validatedPoint = cartesianSchema.parse(point);
+
     set(state => {
       if (!state.currentArea) return state;
 
-      return {
-        currentArea: {
-          ...state.currentArea,
-          points: [...state.currentArea.points, point],
-        },
-      };
-    }),
+      const updatedArea = areaSchema.parse({
+        ...state.currentArea,
+        points: [...state.currentArea.points, validatedPoint],
+      });
+
+      return { currentArea: updatedArea };
+    });
+  },
 
   completeArea: finalArea => {
     const state = get();
     if (!state.currentArea) return;
 
-    const completedArea = {
+    const completedArea = areaSchema.parse({
       ...state.currentArea,
       area: finalArea,
       isComplete: true,
-    };
+    });
 
     set({
       areas: [...state.areas, completedArea],

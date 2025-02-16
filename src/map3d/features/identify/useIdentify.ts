@@ -7,8 +7,9 @@ import { useMapsStore } from '@/shared/store/mapsStore';
 
 import { useMap3DStore } from '@/map3d/store';
 
-import { fetchFeatureInfo } from '../api';
-import { useIdentifyStore } from '../store';
+import { fetchFeatureInfo } from './api';
+import { useIdentifyStore } from './store';
+import { type Coordinates } from './types';
 
 export function useIdentify() {
   const { cesium, cesiumMap } = useMapsStore();
@@ -61,15 +62,13 @@ export function useIdentify() {
         const cartesian = cesiumMap.scene.pickPosition(position);
         if (cesium.defined(cartesian)) {
           const cartographic = cesium.Cartographic.fromCartesian(cartesian);
-          const longitude = cesium.Math.toDegrees(cartographic.longitude);
-          const latitude = cesium.Math.toDegrees(cartographic.latitude);
-          const height = cartographic.height;
+          const coordinates: Coordinates = {
+            lat: cesium.Math.toDegrees(cartographic.latitude),
+            lon: cesium.Math.toDegrees(cartographic.longitude),
+            height: cartographic.height,
+          };
 
-          setSelectedCoordinates({
-            lat: latitude,
-            lon: longitude,
-            height,
-          });
+          setSelectedCoordinates(coordinates);
         }
       } else {
         closePanel();
