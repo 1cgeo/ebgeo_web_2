@@ -1,18 +1,20 @@
-import React, { type ReactNode, useCallback, useEffect, useState } from 'react';
-import CssBaseline from '@mui/material/CssBaseline';
-import { styled } from '@mui/material/styles';
-import Box from '@mui/material/Box';
-import MuiAppBar from '@mui/material/AppBar';
-import Toolbar from '@mui/material/Toolbar';
-import IconButton from '@mui/material/IconButton';
-import useMediaQuery from '@mui/material/useMediaQuery';
-import { useTheme } from '@mui/material/styles';
-import Typography from '@mui/material/Typography';
-import { List, ListItem, ListItemIcon } from '@mui/material';
-import { useLocation, useNavigate } from 'react-router-dom';
-import MenuIcon from '@mui/icons-material/Menu';
+// Path: shared\components\AppBar.tsx
 import MapIcon from '@mui/icons-material/Map';
+import MenuIcon from '@mui/icons-material/Menu';
 import Terrain from '@mui/icons-material/Terrain';
+import { List, ListItem, ListItemIcon } from '@mui/material';
+import MuiAppBar from '@mui/material/AppBar';
+import Box from '@mui/material/Box';
+import CssBaseline from '@mui/material/CssBaseline';
+import IconButton from '@mui/material/IconButton';
+import Toolbar from '@mui/material/Toolbar';
+import Typography from '@mui/material/Typography';
+import { styled } from '@mui/material/styles';
+import { useTheme } from '@mui/material/styles';
+import useMediaQuery from '@mui/material/useMediaQuery';
+
+import React, { type ReactNode, useCallback, useEffect, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 const Main = styled('main')(({ theme }) => ({
   flexGrow: 1,
@@ -128,7 +130,7 @@ export function AppBar({ children, onDrawer }: AppBarProps) {
   const { pathname } = useLocation();
   const [section, setSection] = useState('');
   const navigate = useNavigate();
-  
+
   const navButtons = [
     {
       path: 'map-sig',
@@ -144,13 +146,15 @@ export function AppBar({ children, onDrawer }: AppBarProps) {
 
   const handleClickNavButton = useCallback(
     (path: string) => navigate(path),
-    [navigate]
+    [navigate],
   );
 
   const isButtonSelected = (label: string) => section === label;
 
   useEffect(() => {
-    const found = navButtons.find((item) => pathname.match(new RegExp(item.path, 'g')));
+    const found = navButtons.find(item =>
+      pathname.match(new RegExp(item.path, 'g')),
+    );
     setSection(found ? found.path : '');
   }, [pathname]);
 
@@ -206,7 +210,7 @@ export function AppBar({ children, onDrawer }: AppBarProps) {
                   gap: 1,
                 }}
               >
-                {navButtons.map((item) => (
+                {navButtons.map(item => (
                   <NavButton
                     key={item.path}
                     item={{

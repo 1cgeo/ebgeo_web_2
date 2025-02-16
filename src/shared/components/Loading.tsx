@@ -1,5 +1,7 @@
-import { PropagateLoader } from 'react-spinners';
+// Path: shared\components\Loading.tsx
 import styled from 'styled-components';
+
+import { PropagateLoader } from 'react-spinners';
 
 const Background = styled('div')({
   backgroundColor: '#508D4E',

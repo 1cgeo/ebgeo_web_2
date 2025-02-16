@@ -1,53 +1,40 @@
-import { type StateCreator } from 'zustand';
+// Path: map3d\store\slices\tools.ts
 import { z } from 'zod';
+import { type StateCreator } from 'zustand';
+
+import { useMapsStore } from '@/shared/store/mapsStore';
 
 const toolStateSchema = z.object({
   id: z.string(),
-  active: z.boolean(),
-  options: z.record(z.any()).optional(),
+  isActive: z.boolean(),
 });
 
 export type ToolState = z.infer<typeof toolStateSchema>;
 
 export interface ToolsSlice {
   activeTool: string | null;
-  toolStates: Record<string, ToolState>;
   setActiveTool: (toolId: string | null) => void;
-  updateToolState: (toolId: string, updates: Partial<ToolState>) => void;
-  resetTools: () => void;
+  clearActiveTool: () => void;
 }
 
-export const createToolsSlice: StateCreator<ToolsSlice> = (set) => ({
+export const createToolsSlice: StateCreator<ToolsSlice> = set => ({
   activeTool: null,
-  toolStates: {},
 
-  setActiveTool: (toolId) => set((state) => {
-    const newToolStates = Object.entries(state.toolStates).reduce(
-      (acc, [id, toolState]) => ({
-        ...acc,
-        [id]: { ...toolState, active: id === toolId },
-      }),
-      {}
-    );
+  setActiveTool: toolId => {
+    // Acessa o cesiumMap para atualizar o cursor
+    const map = useMapsStore.getState().cesiumMap;
+    if (map) {
+      map.container.style.cursor = toolId ? 'crosshair' : 'default';
+    }
+    set({ activeTool: toolId });
+  },
 
-    return {
-      activeTool: toolId,
-      toolStates: newToolStates,
-    };
-  }),
-
-  updateToolState: (toolId, updates) => set((state) => ({
-    toolStates: {
-      ...state.toolStates,
-      [toolId]: {
-        ...state.toolStates[toolId],
-        ...updates,
-      },
-    },
-  })),
-
-  resetTools: () => set({
-    activeTool: null,
-    toolStates: {},
-  }),
+  clearActiveTool: () => {
+    // Reseta o cursor
+    const map = useMapsStore.getState().cesiumMap;
+    if (map) {
+      map.container.style.cursor = 'default';
+    }
+    set({ activeTool: null });
+  },
 });

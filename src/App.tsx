@@ -1,17 +1,16 @@
+// Path: App.tsx
 import { Suspense } from 'react';
-import { createBrowserRouter, RouterProvider } from 'react-router-dom';
-import { Providers } from './shared/components/Providers';
-import { Loading } from './shared/components/Loading';
-import routeMapSIG from './mapSig/routes';
+import { RouterProvider, createBrowserRouter } from 'react-router-dom';
+
 import routeMap3D from './map3d/routes';
+import routeMapSIG from './mapSig/routes';
+import { Loading } from './shared/components/Loading';
+import { Providers } from './shared/components/Providers';
 
 const router = createBrowserRouter([
   {
     path: '/',
-    children: [
-      routeMapSIG,
-      routeMap3D,
-    ],
+    children: [routeMapSIG, routeMap3D],
   },
 ]);
 

@@ -1,5 +1,8 @@
-import React, { type FC } from 'react';
+// Path: map3d\components\Tool\index.tsx
 import { Tooltip } from '@mui/material';
+
+import React, { type FC } from 'react';
+
 import { StyledIconButton } from './styles';
 
 interface ToolProps {
@@ -32,12 +35,14 @@ export const Tool: FC<ToolProps> = ({
       $drawerMode={drawerMode}
     >
       {image ? (
-        <img 
-          src={image} 
-          alt="tool icon" 
-          style={{ width: '100%', height: '100%' }} 
+        <img
+          src={image}
+          alt="tool icon"
+          style={{ width: '100%', height: '100%' }}
         />
-      ) : icon}
+      ) : (
+        icon
+      )}
     </StyledIconButton>
   );
 

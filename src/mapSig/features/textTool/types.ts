@@ -1,3 +1,4 @@
+// Path: mapSig\features\textTool\types.ts
 import { z } from 'zod';
 
 export const textAttributesSchema = z.object({
@@ -9,16 +10,19 @@ export const textAttributesSchema = z.object({
   align: z.enum(['left', 'center', 'right']),
   coordinates: z.object({
     lng: z.number(),
-    lat: z.number()
-  })
+    lat: z.number(),
+  }),
 });
 
+// Types inferidos
 export type TextAttributes = z.infer<typeof textAttributesSchema>;
 
-export const defaultTextAttributes: Omit<TextAttributes, 'id' | 'coordinates'> = {
-  text: 'Novo texto',
-  size: 14,
-  color: '#000000',
-  backgroundColor: '#FFFFFF',
-  align: 'center'
-};
+// Configurações padrão
+export const defaultTextAttributes: Omit<TextAttributes, 'id' | 'coordinates'> =
+  {
+    text: 'Novo texto',
+    size: 14,
+    color: '#000000',
+    backgroundColor: '#FFFFFF',
+    align: 'center',
+  };

@@ -1,12 +1,19 @@
-import { searchResultSchema, type SearchResult } from './types';
+// Path: mapSig\features\featureSearch\api.ts
 import { env } from '@/shared/config/env';
 
+import {
+  type SearchParams,
+  type SearchResult,
+  searchResultSchema,
+} from './types';
+
 export async function searchFeatures(
-  query: string,
-  page: number = 1
+  params: SearchParams,
 ): Promise<SearchResult> {
+  const { query, page, pageSize } = params;
+
   const response = await fetch(
-    `${env.VITE_API_URL}/busca?q=${encodeURIComponent(query)}&page=${page}`
+    `${env.VITE_API_URL}/busca?q=${encodeURIComponent(query)}&page=${page}&pageSize=${pageSize}`,
   );
 
   if (!response.ok) {

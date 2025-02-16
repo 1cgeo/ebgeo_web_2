@@ -1,15 +1,17 @@
-import { catalogResponseSchema, type CatalogResponse } from './types';
+// Path: map3d\features\catalog\api.ts
 import { env } from '@/shared/config/env';
+
+import { type CatalogResponse, catalogResponseSchema } from './types';
 
 export async function fetchCatalog(
   query: string = '',
   page: number = 1,
-  pageSize: number = 10
+  pageSize: number = 10,
 ): Promise<CatalogResponse> {
   const searchParam = query ? `&q=${encodeURIComponent(query)}` : '';
-  
+
   const response = await fetch(
-    `${env.VITE_API_URL}/catalogo3d?nr_records=${pageSize}&page=${page}${searchParam}`
+    `${env.VITE_API_URL}/catalogo3d?nr_records=${pageSize}&page=${page}${searchParam}`,
   );
 
   if (!response.ok) {

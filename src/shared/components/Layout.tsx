@@ -1,8 +1,11 @@
-import { Outlet } from 'react-router-dom';
-import { styled } from '@mui/material/styles';
-import { AppBar } from './AppBar';
+// Path: shared\components\Layout.tsx
 import SwipeableDrawer from '@mui/material/SwipeableDrawer';
+import { styled } from '@mui/material/styles';
+
 import { useState } from 'react';
+import { Outlet } from 'react-router-dom';
+
+import { AppBar } from './AppBar';
 
 const RootStyle = styled('div')({
   display: 'flex',
@@ -36,7 +39,7 @@ export function Layout() {
           onOpen={() => setOpenDrawer(true)}
           sx={{
             display: {
-              sm: 'none'
+              sm: 'none',
             },
           }}
         >

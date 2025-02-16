@@ -10,9 +10,9 @@
   "importOrder": [
     "^react",
     "^@tanstack/(.*)$",
-    "^@/lib/(.*)$",
-    "^@/features/(.*)$",
-    "^@/components/(.*)$",
+    "^@/shared/(.*)$",
+    "^@/map3d/(.*)$",
+    "^@/mapsig/(.*)$",
     "^@/(.*)$",
     "^[./]"
   ],

@@ -1,35 +1,59 @@
+// Path: mapSig\components\DrawerContent\index.tsx
+import { Box, Button, Divider, Toolbar, Typography } from '@mui/material';
+
 import { type FC } from 'react';
-import { Divider, Toolbar, Button } from '@mui/material';
+
 import { useMapSigFeatures } from '../../features/registry';
 import { DrawerList, DrawerListItem } from './styles';
 
 interface DrawerContentProps {
-  onSelect: () => void;
+  onClose: () => void;
 }
 
-export const DrawerContent: FC<DrawerContentProps> = ({ onSelect }) => {
+export const DrawerContent: FC<DrawerContentProps> = ({ onClose }) => {
+  // Obtém apenas features que devem aparecer no drawer
   const features = useMapSigFeatures({ showInDrawer: true });
 
   return (
-    <div>
-      <Toolbar />
+    <Box component="nav" aria-label="Ferramentas do mapa">
+      <Toolbar>
+        <Typography variant="h6" component="h2">
+          Ferramentas
+        </Typography>
+      </Toolbar>
+
       <Divider />
+
       <DrawerList>
         {features.map(feature => {
           const FeatureComponent = feature.component;
+
           return (
             <DrawerListItem key={feature.id} disablePadding>
               <Button
-                component="label"
+                component="div"
+                fullWidth
                 startIcon={<FeatureComponent drawerMode />}
-                onClick={onSelect}
+                onClick={onClose}
+                sx={{ justifyContent: 'flex-start', textTransform: 'none' }}
               >
-                {feature.name}
+                <Box sx={{ ml: 1 }}>
+                  <Typography variant="body1">{feature.name}</Typography>
+                  {feature.description && (
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      display="block"
+                    >
+                      {feature.description}
+                    </Typography>
+                  )}
+                </Box>
               </Button>
             </DrawerListItem>
           );
         })}
       </DrawerList>
-    </div>
+    </Box>
   );
 };

@@ -1,45 +1,59 @@
+// Path: mapSig\types.ts
+import { type Map as MapLibreMap } from 'maplibre-gl';
 import { z } from 'zod';
 
-// Base schemas
+// Schema para coordenadas
 export const coordinatesSchema = z.object({
-  lat: z.number(),
-  lng: z.number(),
+  lat: z.number().min(-90).max(90),
+  lng: z.number().min(-180).max(180),
 });
 
-export const boundingBoxSchema = z.object({
-  north: z.number(),
-  south: z.number(),
-  east: z.number(),
-  west: z.number(),
-});
+// Schema para bounds do mapa
+export const boundsSchema = z
+  .object({
+    north: z.number().min(-90).max(90),
+    south: z.number().min(-90).max(90),
+    east: z.number().min(-180).max(180),
+    west: z.number().min(-180).max(180),
+  })
+  .refine(data => data.north > data.south, {
+    message: 'north deve ser maior que south',
+  })
+  .refine(data => data.east > data.west, {
+    message: 'east deve ser maior que west',
+  });
 
-// Map schemas
-export const mapStyleSchema = z.object({
-  version: z.number(),
-  name: z.string(),
-  sources: z.record(z.any()),
-  layers: z.array(z.any()),
-});
-
+// Schema para estado básico do mapa
 export const mapStateSchema = z.object({
-  zoom: z.number(),
+  zoom: z.number().min(0).max(22),
   center: coordinatesSchema,
-  bounds: boundingBoxSchema,
-  style: mapStyleSchema,
-});
-
-// Feature schemas
-export const featureStyleSchema = z.object({
-  color: z.string(),
-  weight: z.number(),
-  opacity: z.number(),
-  fillColor: z.string().optional(),
-  fillOpacity: z.number().optional(),
+  bounds: boundsSchema,
 });
 
 // Types inferidos
 export type Coordinates = z.infer<typeof coordinatesSchema>;
-export type BoundingBox = z.infer<typeof boundingBoxSchema>;
-export type MapStyle = z.infer<typeof mapStyleSchema>;
+export type Bounds = z.infer<typeof boundsSchema>;
 export type MapState = z.infer<typeof mapStateSchema>;
-export type FeatureStyle = z.infer<typeof featureStyleSchema>;
+
+// Interface para componentes relacionados ao mapa
+export interface MapContextProps {
+  map: MapLibreMap | null;
+}
+
+// Types para callbacks comuns
+export type CoordinatesChangeHandler = (coords: Coordinates) => void;
+export type BoundsChangeHandler = (bounds: Bounds) => void;
+export type ZoomChangeHandler = (zoom: number) => void;
+
+// Helpers de validação
+export function validateCoordinates(coords: unknown): Coordinates {
+  return coordinatesSchema.parse(coords);
+}
+
+export function validateBounds(bounds: unknown): Bounds {
+  return boundsSchema.parse(bounds);
+}
+
+export function validateMapState(state: unknown): MapState {
+  return mapStateSchema.parse(state);
+}

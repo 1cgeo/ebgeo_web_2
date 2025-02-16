@@ -1,16 +1,19 @@
-import { type FC } from 'react';
+// Path: map3d\components\RightSideToolBar\index.tsx
 import { Box } from '@mui/material';
-import { ToolbarContainer } from './styles';
+
+import { type FC } from 'react';
+
 import { type Map3DFeature } from '../../features/registry';
+import { ToolbarContainer } from './styles';
 
 interface RightSideToolBarProps {
   features: Map3DFeature[];
   enabled: boolean;
 }
 
-export const RightSideToolBar: FC<RightSideToolBarProps> = ({ 
+export const RightSideToolBar: FC<RightSideToolBarProps> = ({
   features,
-  enabled 
+  enabled,
 }) => {
   return (
     <ToolbarContainer

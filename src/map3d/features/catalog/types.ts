@@ -1,9 +1,10 @@
+// Path: map3d\features\catalog\types.ts
 import { z } from 'zod';
 
 export const modelTypeSchema = z.enum([
   'Tiles 3D',
   'Modelos 3D',
-  'Nuvem de Pontos'
+  'Nuvem de Pontos',
 ]);
 
 export const catalogItemSchema = z.object({

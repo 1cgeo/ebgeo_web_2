@@ -1,3 +1,4 @@
+// Path: shared\config\theme.ts
 import { createTheme } from '@mui/material/styles';
 
 declare module '@mui/material/styles' {

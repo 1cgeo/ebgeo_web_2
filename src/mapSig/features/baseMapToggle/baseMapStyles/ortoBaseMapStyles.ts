@@ -1,3 +1,4 @@
+// Path: mapSig\features\baseMapToggle\baseMapStyles\ortoBaseMapStyles.ts
 import { z } from 'zod';
 
 const ortoSourceSchema = z.object({
@@ -11,20 +12,24 @@ export const ortoStyleSchema = z.object({
   version: z.literal(8),
   name: z.string(),
   sources: z.record(ortoSourceSchema),
-  layers: z.array(z.object({
-    id: z.string(),
-    type: z.literal('raster'),
-    source: z.string(),
-    minzoom: z.number().optional(),
-    maxzoom: z.number().optional(),
-    paint: z.object({
-      'raster-opacity': z.number().optional(),
-      'raster-brightness-min': z.number().optional(),
-      'raster-brightness-max': z.number().optional(),
-      'raster-contrast': z.number().optional(),
-      'raster-saturation': z.number().optional(),
-    }).optional(),
-  })),
+  layers: z.array(
+    z.object({
+      id: z.string(),
+      type: z.literal('raster'),
+      source: z.string(),
+      minzoom: z.number().optional(),
+      maxzoom: z.number().optional(),
+      paint: z
+        .object({
+          'raster-opacity': z.number().optional(),
+          'raster-brightness-min': z.number().optional(),
+          'raster-brightness-max': z.number().optional(),
+          'raster-contrast': z.number().optional(),
+          'raster-saturation': z.number().optional(),
+        })
+        .optional(),
+    }),
+  ),
 });
 
 export const ortoBaseMapStyle = {

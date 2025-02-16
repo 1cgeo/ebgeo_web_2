@@ -1,72 +1,76 @@
+// Path: map3d\store\slices\camera.ts
 import { type StateCreator } from 'zustand';
-import { z } from 'zod';
 
-const cameraPositionSchema = z.object({
-  longitude: z.number(),
-  latitude: z.number(),
-  height: z.number(),
-  heading: z.number(),
-  pitch: z.number(),
-  roll: z.number(),
-});
+import { useMapsStore } from '@/shared/store/mapsStore';
 
-export type CameraPosition = z.infer<typeof cameraPositionSchema>;
+import { type Camera3D } from '../../types';
 
 export interface CameraSlice {
-  position: CameraPosition | null;
-  savedPositions: Record<string, CameraPosition>;
-  setPosition: (position: CameraPosition) => void;
-  flyTo: (position: Partial<CameraPosition>, options?: { duration?: number }) => void;
-  savePosition: (name: string) => void;
-  loadPosition: (name: string) => CameraPosition | null;
-  removeSavedPosition: (name: string) => void;
+  cameraPosition: Camera3D | null;
+  defaultPosition: Camera3D;
+  setCameraPosition: (position: Camera3D) => void;
+  flyToPosition: (position: Camera3D, duration?: number) => void;
+  resetCamera: () => void;
 }
 
 export const createCameraSlice: StateCreator<CameraSlice> = (set, get) => ({
-  position: null,
-  savedPositions: {},
+  cameraPosition: null,
+  defaultPosition: {
+    latitude: -22.4546061,
+    longitude: -44.4481491,
+    height: 424.7,
+    heading: 164,
+    pitch: -2,
+    roll: -1,
+  },
 
-  setPosition: (position) => set({
-    position: cameraPositionSchema.parse(position)
-  }),
+  setCameraPosition: position => {
+    const { cesium, cesiumMap } = useMapsStore.getState();
+    if (!cesium || !cesiumMap) return;
 
-  flyTo: (position, options = {}) => {
-    const current = get().position;
-    if (!current) return;
+    const destination = cesium.Cartesian3.fromDegrees(
+      position.longitude,
+      position.latitude,
+      position.height,
+    );
 
-    set({
-      position: {
-        ...current,
-        ...position,
-      }
+    cesiumMap.camera.setView({
+      destination,
+      orientation: {
+        heading: cesium.Math.toRadians(position.heading),
+        pitch: cesium.Math.toRadians(position.pitch),
+        roll: cesium.Math.toRadians(position.roll),
+      },
     });
 
-    // Nota: A implementação real do flyTo seria feita no componente
-    // que consome este store, usando a API do Cesium
+    set({ cameraPosition: position });
   },
 
-  savePosition: (name) => {
-    const current = get().position;
-    if (!current) return;
+  flyToPosition: (position, duration = 2) => {
+    const { cesium, cesiumMap } = useMapsStore.getState();
+    if (!cesium || !cesiumMap) return;
 
-    set((state) => ({
-      savedPositions: {
-        ...state.savedPositions,
-        [name]: current
-      }
-    }));
+    const destination = cesium.Cartesian3.fromDegrees(
+      position.longitude,
+      position.latitude,
+      position.height,
+    );
+
+    cesiumMap.camera.flyTo({
+      destination,
+      orientation: {
+        heading: cesium.Math.toRadians(position.heading),
+        pitch: cesium.Math.toRadians(position.pitch),
+        roll: cesium.Math.toRadians(position.roll),
+      },
+      duration,
+    });
+
+    set({ cameraPosition: position });
   },
 
-  loadPosition: (name) => {
-    const position = get().savedPositions[name];
-    if (!position) return null;
-    
-    set({ position });
-    return position;
+  resetCamera: () => {
+    const { defaultPosition } = get();
+    get().flyToPosition(defaultPosition);
   },
-
-  removeSavedPosition: (name) => set((state) => {
-    const { [name]: removed, ...rest } = state.savedPositions;
-    return { savedPositions: rest };
-  })
 });

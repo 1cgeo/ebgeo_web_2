@@ -1,54 +1,52 @@
-import { useState } from 'react';
-import { Outlet } from 'react-router-dom';
-import { styled } from '@mui/material/styles';
+// Path: mapSig\components\Layout\index.tsx
 import { SwipeableDrawer } from '@mui/material';
+
+import { type FC, type ReactNode } from 'react';
+import { Outlet } from 'react-router-dom';
+
 import { AppBar } from '@/shared/components/AppBar';
-import { DrawerContent } from '../DrawerContent';
+
 import { useMapSigStore } from '../../store';
+import { DrawerContent } from '../DrawerContent';
+import { MainStyle, RootStyle } from './styles';
 
-const RootStyle = styled('div')({
-  display: 'flex',
-  flexDirection: 'column',
-  minHeight: '100%',
-  overflow: 'hidden',
-});
+interface LayoutProps {
+  children?: ReactNode;
+  hideDrawer?: boolean;
+}
 
-const MainStyle = styled('div')(({ theme }) => ({
-  flexGrow: 1,
-  overflow: 'auto',
-  minHeight: '100%',
-  [theme.breakpoints.down(260)]: {
-    paddingTop: 60,
-  },
-}));
+export const Layout: FC<LayoutProps> = ({ children, hideDrawer = false }) => {
+  const { isDrawerOpen, setDrawerOpen } = useMapSigStore();
 
-export function Layout() {
-  const [openDrawer, setOpenDrawer] = useState(false);
-  const tools = useMapSigStore(state => state.tools);
+  const handleDrawerOpen = () => setDrawerOpen(true);
+  const handleDrawerClose = () => setDrawerOpen(false);
 
   return (
     <RootStyle>
-      <AppBar onDrawer={() => setOpenDrawer(!openDrawer)}>
-        <MainStyle>
-          <Outlet />
-        </MainStyle>
-        <SwipeableDrawer
-          anchor="right"
-          open={openDrawer}
-          onClose={() => setOpenDrawer(false)}
-          onOpen={() => setOpenDrawer(true)}
-          sx={{
-            display: {
-              sm: 'none',
-            },
-          }}
-        >
-          <DrawerContent 
-            tools={tools}
-            onSelect={() => setOpenDrawer(false)}
-          />
-        </SwipeableDrawer>
+      <AppBar onDrawer={hideDrawer ? undefined : handleDrawerOpen}>
+        <MainStyle>{children ?? <Outlet />}</MainStyle>
+
+        {!hideDrawer && (
+          <SwipeableDrawer
+            anchor="right"
+            open={isDrawerOpen}
+            onClose={handleDrawerClose}
+            onOpen={handleDrawerOpen}
+            ModalProps={{
+              keepMounted: true, // Melhor performance ao abrir/fechar
+            }}
+            sx={{
+              display: { sm: 'none' },
+              '& .MuiDrawer-paper': {
+                boxSizing: 'border-box',
+                width: 250,
+              },
+            }}
+          >
+            <DrawerContent onClose={handleDrawerClose} />
+          </SwipeableDrawer>
+        )}
       </AppBar>
     </RootStyle>
   );
-}
+};

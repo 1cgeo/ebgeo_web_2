@@ -1,41 +1,32 @@
-import { memo } from 'react';
-import { styled } from '@mui/material/styles';
+// Path: mapSig\components\MapSIGView\index.tsx
+import { type FC, memo } from 'react';
+
+import { useMapSetup } from '../../hooks/useMapSetup';
+import { useMapSigStore } from '../../store';
+import { type MapState } from '../../types';
 import { RightSideToolBar } from '../RightSideToolBar';
-import { BaseMapToggleControl } from '../../features/baseMapToggle/components/BaseMapToggleControl';
-import { FeatureSearchControl } from '../../features/featureSearch/components/FeatureSearchControl';
-import { ResetNorthControl } from '../../features/resetNorth/components/ResetNorthControl';
-import { TextControl } from '../../features/textTool/components/TextControl';
-import { VectorInfoControl } from '../../features/vectorInfo/components/VectorInfoControl';
-import { useMapsStore } from '@/shared/store/mapsStore';
+import { MapContainer } from './styles';
 
-const MapContainer = styled('div')({
-  position: 'relative',
-  overflow: 'hidden',
-  width: '100%',
-  top: 0,
-  left: 0,
-  height: '100vh',
-  cursor: 'default',
-});
+interface MapSIGViewProps {
+  initialState?: Partial<MapState>;
+}
 
-function MapSIGView() {
-  const { map } = useMapsStore();
+const MapSIGView: FC<MapSIGViewProps> = ({ initialState }) => {
+  const map = useMapSigStore(state => state.map);
+
+  useMapSetup({
+    containerId: 'map-sig',
+    initialState,
+  });
 
   if (!map) return null;
 
   return (
     <MapContainer id="map-sig">
-      <RightSideToolBar
-        tools={[
-          () => <BaseMapToggleControl key="BaseMap" />,
-          () => <FeatureSearchControl key="FeatureSearch" />,
-          () => <ResetNorthControl key="ResetNorth" />,
-          () => <TextControl key="Text" />,
-          () => <VectorInfoControl key="VectorInfo" />,
-        ]}
-      />
+      <RightSideToolBar />
     </MapContainer>
   );
-}
+};
 
+// Memorizamos o componente para evitar re-renders desnecessários
 export default memo(MapSIGView);
