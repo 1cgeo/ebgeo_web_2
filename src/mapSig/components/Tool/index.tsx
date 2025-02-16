@@ -3,6 +3,7 @@ import { Tooltip } from '@mui/material';
 
 import React, { type FC } from 'react';
 
+import type { FeatureId } from '../../features/registry';
 import { useMapSigStore } from '../../store';
 import { StyledIconButton } from './styles';
 
@@ -36,7 +37,7 @@ export const Tool: FC<ToolProps> = ({
     if (onClick) {
       onClick();
     }
-    setActiveTool(activeTool === id ? null : id);
+    setActiveTool((activeTool === id ? null : id) as FeatureId | null);
   };
 
   const isActive = activeTool === id;

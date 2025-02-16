@@ -11,7 +11,7 @@ interface TextToolState {
   isActive: boolean;
   isPanelOpen: boolean;
 
-  // Actions
+  // Ações - UI
   setActive: (active: boolean) => void;
   addText: (coordinates: { lng: number; lat: number }) => void;
   updateText: (id: string, attributes: Partial<TextAttributes>) => void;
@@ -22,7 +22,7 @@ interface TextToolState {
   reset: () => void;
 }
 
-export const useTextToolStore = create<TextToolState>(set => ({
+export const useTextToolStore = create<TextToolState>((set) => ({
   texts: [],
   selectedText: null,
   isActive: false,
@@ -50,7 +50,7 @@ export const useTextToolStore = create<TextToolState>(set => ({
     }));
   },
 
-  updateText: (id, attributes) =>
+  updateText: (id, attributes) => {
     set(state => ({
       texts: state.texts.map(text =>
         text.id === id ? { ...text, ...attributes } : text,
@@ -59,14 +59,16 @@ export const useTextToolStore = create<TextToolState>(set => ({
         state.selectedText?.id === id
           ? { ...state.selectedText, ...attributes }
           : state.selectedText,
-    })),
+    }));
+  },
 
-  deleteText: id =>
+  deleteText: id => {
     set(state => ({
       texts: state.texts.filter(text => text.id !== id),
       selectedText: state.selectedText?.id === id ? null : state.selectedText,
       isPanelOpen: state.selectedText?.id === id ? false : state.isPanelOpen,
-    })),
+    }));
+  },
 
   selectText: text =>
     set({
@@ -82,11 +84,12 @@ export const useTextToolStore = create<TextToolState>(set => ({
       selectedText: null,
     }),
 
-  reset: () =>
+  reset: () => {
     set({
       texts: [],
       selectedText: null,
       isActive: false,
       isPanelOpen: false,
-    }),
+    });
+  },
 }));

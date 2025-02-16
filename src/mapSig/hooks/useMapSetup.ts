@@ -1,66 +1,75 @@
 // Path: mapSig\hooks\useMapSetup.ts
 import { useEffect } from 'react';
 
+import { defaultMapStyle } from '@/shared/config/baseMapStyles';
 import { useMapsStore } from '@/shared/store/mapsStore';
 
 import { type MapState } from '../types';
 
 const defaultMapConfig: MapState = {
   zoom: 4,
+  minZoom: 11,
+  maxZoom: 17.9,
+  maxPitch: 75,
   center: {
     lat: -14.235004,
     lng: -51.92528,
   },
   bounds: {
-    north: 5.271841,
-    south: -33.752081,
-    east: -34.793186,
-    west: -73.982817,
+    north: -21.30216,
+    south: -22.6995,
+    east: -43.92333,
+    west: -45.82515,
   },
 };
 
-interface UseMapSetupOptions {
+interface MapSetupOptions {
   containerId: string;
   initialState?: Partial<MapState>;
 }
 
-export function useMapSetup({ containerId, initialState }: UseMapSetupOptions) {
-  const { setMapLibregl, setMap } = useMapsStore();
+export function useMapSetup({ containerId, initialState }: MapSetupOptions) {
+  const { map, setMap, setMapLibregl } = useMapsStore();
 
   useEffect(() => {
     const config = {
       ...defaultMapConfig,
       ...initialState,
     };
-
-    const lib = window.maplibregl;
-    if (!lib) {
+    const maplibreglInstance = window.maplibregl;
+    if (!maplibreglInstance) {
       console.error(
         "MapLibre GL library not found in global scope (window.maplibregl). Make sure it's correctly loaded in index.html.",
       );
       return;
     }
 
-    setMapLibregl(lib);
+    setMapLibregl(maplibreglInstance);
 
-    const map = new lib.Map({
+    const map = new maplibreglInstance.Map({
       container: containerId,
-      style: 'mapbox://styles/mapbox/streets-v11',
+      style: defaultMapStyle,
       center: [config.center.lng, config.center.lat],
       zoom: config.zoom,
+      minZoom: config.minZoom,
+      maxZoom: config.maxZoom,
+      maxPitch: config.maxPitch,
       maxBounds: [
         [config.bounds.west, config.bounds.south],
         [config.bounds.east, config.bounds.north],
       ],
     });
 
-    map.on('load', () => {
-      setMap(map);
-    });
+    setMap(map);
 
+    // Cleanup function
     return () => {
-      map.remove();
-      setMap(null);
+      if (map) {
+        setMap(null);
+        map.remove();
+      }
     };
   }, [containerId, initialState, setMap, setMapLibregl]);
+
+  return map;
 }

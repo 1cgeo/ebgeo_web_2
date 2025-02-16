@@ -9,7 +9,7 @@ interface StyledIconButtonProps {
 }
 
 export const StyledIconButton = styled(IconButton, {
-  shouldForwardProp: prop => !prop.startsWith('$'),
+  shouldForwardProp: prop => !String(prop).startsWith('$'),
 })<StyledIconButtonProps>(({ theme, $active, $disabled, $drawerMode }) => ({
   width: $drawerMode ? 24 : 32,
   height: $drawerMode ? 24 : 32,

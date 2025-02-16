@@ -1,17 +1,45 @@
 // Path: mapSig\features\textTool\TextControl\index.tsx
-import { type FC } from 'react';
+import { type FC, useEffect } from 'react';
+
+import { useMapsStore } from '@/shared/store/mapsStore';
 
 import { Tool } from '@/mapSig/components/Tool';
 
 import { TextAttributesPanel } from '../TextAttributesPanel';
 import { useTextToolStore } from '../store';
+import { useTextLayer } from '../useTextLayer';
 
-interface TextControlProps {
-  disabled?: boolean;
-}
+export const TextControl: FC = () => {
+  const { map } = useMapsStore();
+  const { isActive, isPanelOpen, texts, setActive, addText } =
+    useTextToolStore();
+  const { updateLayer } = useTextLayer();
 
-export const TextControl: FC<TextControlProps> = ({ disabled }) => {
-  const { isPanelOpen } = useTextToolStore();
+  // Atualiza a camada sempre que os textos mudarem
+  useEffect(() => {
+    updateLayer(texts);
+  }, [texts, updateLayer]);
+
+  // Gerencia clicks no mapa
+  useEffect(() => {
+    if (!map) return;
+
+    const handleMapClick = (e: any) => {
+      if (!isActive) return;
+
+      const coordinates = map.unproject([e.originalEvent.x, e.originalEvent.y]);
+      addText(coordinates);
+      setActive(false);
+    };
+
+    if (isActive) {
+      map.on('click', handleMapClick);
+    }
+
+    return () => {
+      map.off('click', handleMapClick);
+    };
+  }, [map, isActive, addText, setActive]);
 
   return (
     <>
@@ -19,7 +47,7 @@ export const TextControl: FC<TextControlProps> = ({ disabled }) => {
         id="textTool"
         image="/images/icon_text_black.svg"
         tooltip="Adicionar texto"
-        disabled={disabled}
+        onClick={() => setActive(!isActive)}
       />
 
       <TextAttributesPanel open={isPanelOpen} />

@@ -1,5 +1,5 @@
-// Path: mapSig\features\baseMapToggle\baseMapStyles\ortoBaseMapStyles.ts
-import { type OrtoStyle } from '../types';
+// Path: shared\config\baseMapStyles\ortoBaseMapStyles.ts
+import { type OrtoStyle } from '../../types';
 
 export const ortoBaseMapStyle: OrtoStyle = {
   version: 8,

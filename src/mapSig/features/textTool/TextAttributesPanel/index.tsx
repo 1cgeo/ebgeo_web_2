@@ -43,13 +43,13 @@ export const TextAttributesPanel: FC<TextAttributesPanelProps> = ({ open }) => {
         onChange={(_, value) =>
           updateText(selectedText.id, { size: value as number })
         }
-        min={8}
-        max={72}
+        min={1}
+        max={100}
         step={1}
         marks={[
-          { value: 8, label: '8' },
-          { value: 38, label: '38' },
-          { value: 72, label: '72' },
+          { value: 1, label: '1' },
+          { value: 50, label: '50' },
+          { value: 100, label: '100' },
         ]}
       />
 
@@ -73,12 +73,28 @@ export const TextAttributesPanel: FC<TextAttributesPanelProps> = ({ open }) => {
         margin="normal"
       />
 
+      <Typography gutterBottom>Rotação</Typography>
+      <Slider
+        value={selectedText.rotation}
+        onChange={(_, value) =>
+          updateText(selectedText.id, { rotation: value as number })
+        }
+        min={-180}
+        max={180}
+        step={1}
+        marks={[
+          { value: -180, label: '-180°' },
+          { value: 0, label: '0°' },
+          { value: 180, label: '180°' },
+        ]}
+      />
+
       <Select
         fullWidth
-        value={selectedText.align}
+        value={selectedText.justify}
         onChange={e =>
           updateText(selectedText.id, {
-            align: e.target.value as 'left' | 'center' | 'right',
+            justify: e.target.value as 'left' | 'center' | 'right',
           })
         }
         margin="dense"

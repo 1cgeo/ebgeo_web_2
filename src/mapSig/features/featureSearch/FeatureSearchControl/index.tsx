@@ -5,21 +5,23 @@ import { Tooltip } from '@mui/material';
 import { type FC } from 'react';
 
 import { FeatureSearchPanel } from '../FeatureSearchPanel';
+import { SearchInput } from '../SearchInput';
 import { useFeatureSearchStore } from '../store';
 import { StyledIconButton } from './styles';
 
 export const FeatureSearchControl: FC = () => {
-  const { isPanelOpen, openPanel, closePanel } = useFeatureSearchStore();
+  const { isInputVisible, isPanelOpen, toggleInput } = useFeatureSearchStore();
 
   return (
     <>
-      <Tooltip title="Buscar feições" placement="left">
-        <StyledIconButton onClick={openPanel} $active={isPanelOpen}>
+      <Tooltip title="Buscar por nomes geográficos" placement="left">
+        <StyledIconButton onClick={toggleInput}>
           <SearchIcon />
         </StyledIconButton>
       </Tooltip>
 
-      <FeatureSearchPanel open={isPanelOpen} onClose={closePanel} />
+      {isInputVisible && <SearchInput />}
+      <FeatureSearchPanel open={isPanelOpen} />
     </>
   );
 };

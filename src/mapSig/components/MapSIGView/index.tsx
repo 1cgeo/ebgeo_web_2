@@ -1,8 +1,9 @@
 // Path: mapSig\components\MapSIGView\index.tsx
 import { type FC, memo } from 'react';
 
+import { useMapsStore } from '@/shared/store/mapsStore';
+
 import { useMapSetup } from '../../hooks/useMapSetup';
-import { useMapSigStore } from '../../store';
 import { type MapState } from '../../types';
 import { RightSideToolBar } from '../RightSideToolBar';
 import { MapContainer } from './styles';
@@ -12,7 +13,7 @@ interface MapSIGViewProps {
 }
 
 const MapSIGView: FC<MapSIGViewProps> = ({ initialState }) => {
-  const map = useMapSigStore(state => state.map);
+  const map = useMapsStore.getState().map;
 
   useMapSetup({
     containerId: 'map-sig',

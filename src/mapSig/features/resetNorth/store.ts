@@ -6,14 +6,12 @@ import { type ResetOptions, defaultResetOptions } from './types';
 
 interface ResetNorthState {
   options: ResetOptions;
-  isResetting: boolean;
   setOptions: (options: Partial<ResetOptions>) => void;
   resetBearing: () => void;
 }
 
 export const useResetNorthStore = create<ResetNorthState>(set => ({
   options: defaultResetOptions,
-  isResetting: false,
 
   setOptions: newOptions =>
     set(state => ({
@@ -24,17 +22,12 @@ export const useResetNorthStore = create<ResetNorthState>(set => ({
     const map = getMap();
     if (!map) return;
 
-    set({ isResetting: true });
-
-    const { bearing, pitch, camera } = defaultResetOptions;
+    const { bearing, pitch } = defaultResetOptions;
 
     map.easeTo({
       bearing,
       pitch,
-      duration: camera.duration,
-      easing: camera.easing,
-      offset: camera.offset,
-      complete: () => set({ isResetting: false }),
+      duration: 1000,
     });
   },
 }));

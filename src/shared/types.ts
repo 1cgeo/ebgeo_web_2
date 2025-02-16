@@ -1,4 +1,4 @@
-// Path: mapSig\features\baseMapToggle\types.ts
+// Path: shared\types.ts
 import { z } from 'zod';
 
 // Schema para fonte orto
@@ -84,9 +84,7 @@ const _topoStyleSchema = z.object({
 });
 
 // Types inferidos
-export type OrtoSource = z.infer<typeof _ortoSourceSchema>;
 export type OrtoStyle = z.infer<typeof _ortoStyleSchema>;
-export type TopoSource = z.infer<typeof _topoSourceSchema>;
 export type TopoStyle = z.infer<typeof _topoStyleSchema>;
 
 // Tipos de mapa base

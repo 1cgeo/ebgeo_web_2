@@ -3,13 +3,14 @@ import { Box } from '@mui/material';
 
 import { type FC } from 'react';
 
+import { useMapsStore } from '@/shared/store/mapsStore';
+
 import { useMapSigFeatures } from '../../features/registry';
-import { useMapSigStore } from '../../store';
 import { ToolbarContainer } from './styles';
 
 export const RightSideToolBar: FC = () => {
   const features = useMapSigFeatures({ showInToolbar: true });
-  const map = useMapSigStore(state => state.map);
+  const map = useMapsStore.getState().map;
 
   // Se não houver mapa, não renderizamos a toolbar
   if (!map) return null;

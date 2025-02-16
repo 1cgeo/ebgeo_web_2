@@ -1,36 +1,55 @@
 // Path: mapSig\features\vectorInfo\types.ts
 import { z } from 'zod';
 
-// Schema para camada vetorial
-export const vectorLayerSchema = z.object({
-  id: z.string(),
-  name: z.string(),
-  sourceLayer: z.string(),
-  type: z.enum(['fill', 'line', 'symbol', 'circle']),
-  minzoom: z.number().optional(),
-  maxzoom: z.number().optional(),
-  visible: z.boolean(),
-});
+// Schema para geometria
+export const geometryTypeSchema = z.enum([
+  'Point',
+  'MultiPoint',
+  'LineString',
+  'MultiLineString',
+  'Polygon',
+  'MultiPolygon',
+]);
 
 // Schema para feature vetorial
 export const vectorFeatureSchema = z.object({
   id: z.string(),
-  layerId: z.string(),
-  properties: z.record(z.unknown()),
+  source: z.string().optional(),
   geometry: z.object({
-    type: z.string(),
+    type: geometryTypeSchema,
     coordinates: z.array(z.number()).or(z.array(z.array(z.number()))),
   }),
+  properties: z.record(z.unknown()),
 });
 
 // Types inferidos
-export type VectorLayer = z.infer<typeof vectorLayerSchema>;
+export type GeometryType = z.infer<typeof geometryTypeSchema>;
 export type VectorFeature = z.infer<typeof vectorFeatureSchema>;
 
-// Labels para tipos de camadas
-export const layerTypeLabels: Record<VectorLayer['type'], string> = {
-  fill: 'Polígono',
-  line: 'Linha',
-  symbol: 'Símbolo',
-  circle: 'Ponto',
-};
+// Constantes
+export const GEOMETRY_PREFERENCE_ORDER: GeometryType[] = [
+  'Point',
+  'MultiPoint',
+  'LineString',
+  'MultiLineString',
+  'Polygon',
+  'MultiPolygon',
+];
+
+export const PROPERTY_BLACKLIST = [
+  'id',
+  'vector_type',
+  'tilequery',
+  'mapbox_clip_start',
+  'mapbox_clip_end',
+  'justificativa_txt_value',
+  'visivel_value',
+  'exibir_linha_rotulo_value',
+  'suprimir_bandeira_value',
+  'posicao_rotulo_value',
+  'direcao_fixada_value',
+  'exibir_ponta_simbologia_value',
+  'exibir_lado_simbologia_value',
+];
+
+export const BLACKLIST_SUFFIXES = ['_code'];

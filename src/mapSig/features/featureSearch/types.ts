@@ -4,7 +4,7 @@ import { z } from 'zod';
 // Schema para coordenadas
 const coordinateSchema = z.object({
   lat: z.number(),
-  lon: z.number(),
+  lng: z.number(),
 });
 
 // Schema para feature individual
@@ -25,7 +25,7 @@ export const searchResultSchema = z.object({
 });
 
 // Schema para parâmetros de busca
-const _searchParamsSchema = z.object({
+export const searchParamsSchema = z.object({
   query: z.string(),
   page: z.number().min(1).default(1),
   pageSize: z.number().min(1).default(10),
@@ -35,4 +35,7 @@ const _searchParamsSchema = z.object({
 export type Coordinate = z.infer<typeof coordinateSchema>;
 export type SearchFeature = z.infer<typeof searchFeatureSchema>;
 export type SearchResult = z.infer<typeof searchResultSchema>;
-export type SearchParams = z.infer<typeof _searchParamsSchema>;
+export type SearchParams = z.infer<typeof searchParamsSchema>;
+
+// Type para o marcador do mapa
+export type MapMarker = any; // tipo específico do maplibre

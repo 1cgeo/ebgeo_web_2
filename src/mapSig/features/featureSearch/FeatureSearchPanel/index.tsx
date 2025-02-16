@@ -1,103 +1,62 @@
 // Path: mapSig\features\featureSearch\FeatureSearchPanel\index.tsx
 import {
-  CircularProgress,
+  Box,
+  Button,
+  List,
   ListItem,
   ListItemText,
-  TextField,
   Typography,
 } from '@mui/material';
-import debounce from 'lodash/debounce';
 
-import { type FC, useMemo, useState } from 'react';
+import { type FC } from 'react';
 
-import { useQuery } from '@tanstack/react-query';
-
-import { searchFeatures } from '../api';
 import { useFeatureSearchStore } from '../store';
-import {
-  LoadingWrapper,
-  NoResultsMessage,
-  ResultsList,
-  SearchBox,
-  StyledPanel,
-} from './styles';
+import { useFeatureMarker } from '../useFeatureMarker';
+import { StyledPanel } from './styles';
 
 interface FeatureSearchPanelProps {
   open: boolean;
-  onClose: () => void;
 }
 
-export const FeatureSearchPanel: FC<FeatureSearchPanelProps> = ({
-  open,
-  onClose,
-}) => {
-  const [searchTerm, setSearchTerm] = useState('');
-  const { selectFeature } = useFeatureSearchStore();
+export const FeatureSearchPanel: FC<FeatureSearchPanelProps> = ({ open }) => {
+  const { selectedFeature, closePanel } = useFeatureSearchStore();
+  const { clearMarker } = useFeatureMarker();
 
-  const { data, isLoading, error } = useQuery({
-    queryKey: ['featureSearch', searchTerm],
-    queryFn: () =>
-      searchFeatures({
-        query: searchTerm,
-        page: 1,
-        pageSize: 10,
-      }),
-    enabled: searchTerm.length >= 3,
-  });
+  if (!open || !selectedFeature) return null;
 
-  const debouncedSetSearchTerm = useMemo(
-    () =>
-      debounce((value: string) => {
-        setSearchTerm(value);
-      }, 300),
-    [],
-  );
+  const displayProperties = [
+    { key: 'Nome', value: selectedFeature.nome },
+    { key: 'Latitude', value: selectedFeature.coordinates.lat },
+    { key: 'Longitude', value: selectedFeature.coordinates.lng },
+    { key: 'Classe', value: selectedFeature.tipo },
+    { key: 'Município', value: selectedFeature.municipio },
+    { key: 'Estado', value: selectedFeature.estado },
+  ];
 
-  if (!open) return null;
+  const handleClose = () => {
+    clearMarker();
+    closePanel();
+  };
 
   return (
     <StyledPanel>
-      <SearchBox>
-        <TextField
-          fullWidth
-          placeholder="Buscar feições..."
-          value={searchTerm}
-          onChange={e => debouncedSetSearchTerm(e.target.value)}
-          variant="outlined"
-          size="small"
-        />
-      </SearchBox>
+      <Typography variant="h6" gutterBottom>
+        Resultado da busca
+      </Typography>
 
-      <ResultsList>
-        {isLoading && (
-          <LoadingWrapper>
-            <CircularProgress size={24} />
-          </LoadingWrapper>
-        )}
-
-        {error && <NoResultsMessage>Erro ao buscar feições</NoResultsMessage>}
-
-        {!isLoading && !error && data?.features.length === 0 && (
-          <NoResultsMessage>Nenhuma feição encontrada</NoResultsMessage>
-        )}
-
-        {data?.features.map(feature => (
-          <ListItem
-            key={feature.id}
-            component="button"
-            onClick={() => selectFeature(feature)}
-          >
-            <ListItemText
-              primary={feature.nome}
-              secondary={
-                <Typography variant="body2" color="text.secondary">
-                  {feature.tipo} - {feature.municipio}, {feature.estado}
-                </Typography>
-              }
-            />
+      <List dense>
+        {displayProperties.map(({ key, value }) => (
+          <ListItem key={key}>
+            <ListItemText primary={`${key}: ${value}`} />
           </ListItem>
         ))}
-      </ResultsList>
+      </List>
+
+      <Box sx={{ mt: 2, display: 'flex', justifyContent: 'flex-end' }}>
+        <Button variant="contained" onClick={handleClose}>
+          Fechar
+        </Button>
+      </Box>
     </StyledPanel>
   );
 };

@@ -8,15 +8,11 @@ import { useResetNorthStore } from '../store';
 import { StyledIconButton } from './styles';
 
 export const ResetNorthControl: FC = () => {
-  const { resetBearing, isResetting } = useResetNorthStore();
+  const { resetBearing } = useResetNorthStore();
 
   return (
     <Tooltip title="Apontar para o Norte" placement="left">
-      <StyledIconButton
-        onClick={resetBearing}
-        disabled={isResetting}
-        $isResetting={isResetting}
-      >
+      <StyledIconButton onClick={resetBearing}>
         <ExploreIcon />
       </StyledIconButton>
     </Tooltip>

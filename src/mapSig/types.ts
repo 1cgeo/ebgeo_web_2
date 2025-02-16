@@ -25,6 +25,9 @@ export const boundsSchema = z
 // Schema para estado básico do mapa
 export const mapStateSchema = z.object({
   zoom: z.number().min(0).max(22),
+  minZoom: z.number().min(0).max(22),
+  maxZoom: z.number().min(0).max(22),
+  maxPitch: z.number().min(0).max(100),
   center: coordinatesSchema,
   bounds: boundsSchema,
 });

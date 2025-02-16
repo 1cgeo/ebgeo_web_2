@@ -1,5 +1,5 @@
-// Path: mapSig\features\baseMapToggle\baseMapStyles\topoBaseMapStyles.ts
-import { type TopoStyle } from '../types';
+// Path: shared\config\baseMapStyles\topoBaseMapStyles.ts
+import { type TopoStyle } from '../../types';
 
 export const topoBaseMapStyle: TopoStyle = {
   version: 8,

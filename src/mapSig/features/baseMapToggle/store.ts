@@ -1,8 +1,12 @@
 // Path: mapSig\features\baseMapToggle\store.ts
 import { create } from 'zustand';
 
+import {
+  type BaseMapStyleType,
+  baseMapStyles,
+} from '@/shared/config/baseMapStyles';
+
 import { getMap } from '../../store';
-import { type BaseMapStyleType, baseMapStyles } from './baseMapStyles';
 
 interface BaseMapState {
   currentStyle: BaseMapStyleType;

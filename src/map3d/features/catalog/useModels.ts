@@ -69,8 +69,8 @@ export function useModels() {
 
         const entity = cesiumMap.entities.add({
           name: model.nome,
-          position: position,
-          orientation: orientation,
+          position,
+          orientation,
           model: {
             uri: getModelUrl(model),
           },
@@ -89,7 +89,7 @@ export function useModels() {
 
         const tileset = new cesium.Cesium3DTileset({
           url: getModelUrl(model),
-          pointCloudShading: pointCloudShading,
+          pointCloudShading,
         });
 
         if (model.estilo) {

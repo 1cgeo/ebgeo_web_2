@@ -7,7 +7,7 @@ import {
   type SearchParams,
   catalogResponseSchema,
   searchParamsSchema,
-} from './types';
+} from '../types';
 
 const CATALOG_ENDPOINT = `${env.VITE_API_URL}/catalogo3d`;
 const MODELS_BASE_URL = env.VITE_SOURCE_MODELS_URL;

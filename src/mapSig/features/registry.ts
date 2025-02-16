@@ -44,6 +44,7 @@ const featuresConfig = [
     name: 'Mapa Base',
     component: BaseMapToggleControl,
     order: 1,
+    showInToolbar: false,
     description: 'Alterna entre diferentes estilos de mapa base',
   },
   {

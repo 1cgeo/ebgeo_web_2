@@ -1,41 +1,46 @@
 // Path: mapSig\features\featureSearch\store.ts
 import { create } from 'zustand';
 
-import { getMap } from '../../store';
 import { type SearchFeature } from './types';
 
 interface FeatureSearchState {
+  isInputVisible: boolean;
   isPanelOpen: boolean;
   selectedFeature: SearchFeature | null;
+
+  // UI Actions
+  toggleInput: () => void;
   openPanel: () => void;
   closePanel: () => void;
+
+  // Feature Actions
   selectFeature: (feature: SearchFeature | null) => void;
-  flyToFeature: (feature: SearchFeature) => void;
 }
 
-export const useFeatureSearchStore = create<FeatureSearchState>((set, get) => ({
+export const useFeatureSearchStore = create<FeatureSearchState>(set => ({
+  isInputVisible: false,
   isPanelOpen: false,
   selectedFeature: null,
 
+  toggleInput: () =>
+    set(state => ({
+      isInputVisible: !state.isInputVisible,
+      isPanelOpen: false,
+      selectedFeature: null,
+    })),
+
   openPanel: () => set({ isPanelOpen: true }),
-  closePanel: () => set({ isPanelOpen: false }),
+  closePanel: () =>
+    set({
+      isPanelOpen: false,
+      selectedFeature: null,
+    }),
 
   selectFeature: feature => {
-    set({ selectedFeature: feature });
-    if (feature) {
-      get().flyToFeature(feature);
-      get().openPanel();
-    }
-  },
-
-  flyToFeature: feature => {
-    const map = getMap();
-    if (!map) return;
-
-    map.flyTo({
-      center: [feature.coordinates.lon, feature.coordinates.lat],
-      zoom: 15,
-      duration: 1500,
+    set({
+      selectedFeature: feature,
+      isPanelOpen: !!feature,
+      isInputVisible: false,
     });
   },
 }));
