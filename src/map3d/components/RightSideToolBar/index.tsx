@@ -1,0 +1,36 @@
+import { type FC } from 'react';
+import { Box } from '@mui/material';
+import { ToolbarContainer } from './styles';
+import { type Map3DFeature } from '../../features/registry';
+
+interface RightSideToolBarProps {
+  features: Map3DFeature[];
+  enabled: boolean;
+}
+
+export const RightSideToolBar: FC<RightSideToolBarProps> = ({ 
+  features,
+  enabled 
+}) => {
+  return (
+    <ToolbarContainer
+      sx={{
+        display: {
+          sm: 'flex',
+          xs: 'none',
+        },
+      }}
+    >
+      {features.map(feature => {
+        const FeatureComponent = feature.component;
+        const isDisabled = feature.requiresModel && !enabled;
+
+        return (
+          <Box key={feature.id}>
+            <FeatureComponent disabled={isDisabled} />
+          </Box>
+        );
+      })}
+    </ToolbarContainer>
+  );
+};

@@ -1,9 +1,0 @@
-#map-3d > div.cesium-viewer > div.cesium-viewer-toolbar > span > div {
-  position: absolute;
-  right: 60px;
-}
-
-#map-3d > div.cesium-viewer > div.cesium-viewer-toolbar {
-  top: 80px;
-  position: fixed;
-}

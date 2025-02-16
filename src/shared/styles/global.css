@@ -1,0 +1,16 @@
+#map-3d > div.cesium-viewer > div.cesium-viewer-toolbar > span > div {
+    position: absolute;
+    right: 60px;
+  }
+  
+  #map-3d > div.cesium-viewer > div.cesium-viewer-toolbar {
+    top: 80px;
+    position: fixed;
+  }
+  
+  :root {
+    --ebgeo-primary: #315730;
+    --ebgeo-main: #508D4E;
+    --ebgeo-dark: #1d361c;
+    --ebgeo-light: #69bd66;
+  }
