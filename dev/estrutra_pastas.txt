@@ -140,6 +140,16 @@ mapSig\features\featureSearch\SearchInput\styles.ts
 mapSig\features\featureSearch\store.ts
 mapSig\features\featureSearch\types.ts
 mapSig\features\featureSearch\useFeatureMarker.ts
+mapSig\features\mouseCoordinates\
+mapSig\features\mouseCoordinates\FormatSelector\
+mapSig\features\mouseCoordinates\FormatSelector\index.tsx
+mapSig\features\mouseCoordinates\FormatSelector\styles.ts
+mapSig\features\mouseCoordinates\MouseCoordinatesDisplay\
+mapSig\features\mouseCoordinates\MouseCoordinatesDisplay\index.tsx
+mapSig\features\mouseCoordinates\MouseCoordinatesDisplay\styles.ts
+mapSig\features\mouseCoordinates\store.ts
+mapSig\features\mouseCoordinates\types.ts
+mapSig\features\mouseCoordinates\utils.ts
 mapSig\features\registry.ts
 mapSig\features\resetNorth\
 mapSig\features\resetNorth\ResetNorthControl\

@@ -15,6 +15,9 @@ export const TextControl: FC = () => {
     useTextToolStore();
   const { updateLayer } = useTextLayer();
 
+  // Inicializa e gerencia camada de texto
+  useTextLayer();
+
   // Atualiza a camada sempre que os textos mudarem
   useEffect(() => {
     updateLayer(texts);

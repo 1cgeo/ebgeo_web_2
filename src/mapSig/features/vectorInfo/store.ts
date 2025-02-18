@@ -22,7 +22,7 @@ interface VectorInfoState {
   setActive: (active: boolean) => void;
 }
 
-export const useVectorInfoStore = create<VectorInfoState>((set) => ({
+export const useVectorInfoStore = create<VectorInfoState>(set => ({
   isPanelOpen: false,
   isActive: false,
   selectedFeature: null,

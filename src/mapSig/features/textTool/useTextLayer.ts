@@ -56,6 +56,22 @@ export function useTextLayer() {
         source: TEXT_SOURCE_ID,
         ...textLayerStyle,
       });
+
+      // Adiciona eventos de mouse para hover
+      map.on('mouseenter', TEXT_LAYER_ID, () => {
+        if (
+          !map.getCanvas().style.cursor ||
+          map.getCanvas().style.cursor === ''
+        ) {
+          map.getCanvas().style.cursor = 'pointer';
+        }
+      });
+
+      map.on('mouseleave', TEXT_LAYER_ID, () => {
+        if (map.getCanvas().style.cursor === 'pointer') {
+          map.getCanvas().style.cursor = '';
+        }
+      });
     }
   };
 
@@ -72,6 +88,8 @@ export function useTextLayer() {
     if (!map) return;
 
     if (map.getLayer(TEXT_LAYER_ID)) {
+      map.off('mouseenter', TEXT_LAYER_ID);
+      map.off('mouseleave', TEXT_LAYER_ID);
       map.removeLayer(TEXT_LAYER_ID);
     }
     if (map.getSource(TEXT_SOURCE_ID)) {

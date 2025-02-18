@@ -1,5 +1,12 @@
 // Path: mapSig\features\textTool\TextAttributesPanel\index.tsx
-import { MenuItem, Select, Slider, TextField, Typography } from '@mui/material';
+import {
+  Box,
+  MenuItem,
+  Select,
+  Slider,
+  TextField,
+  Typography,
+} from '@mui/material';
 
 import { type FC } from 'react';
 
@@ -16,10 +23,23 @@ interface TextAttributesPanelProps {
 }
 
 export const TextAttributesPanel: FC<TextAttributesPanelProps> = ({ open }) => {
-  const { selectedText, updateText, deleteText, closePanel } =
-    useTextToolStore();
+  const {
+    selectedText,
+    updateText,
+    deleteText,
+    closePanel,
+    discardChanges,
+    setAsDefault,
+  } = useTextToolStore();
 
   if (!open || !selectedText) return null;
+
+  const handleSetAsDefault = () => {
+    if (selectedText) {
+      const { id, coordinates, ...attributesToSet } = selectedText;
+      setAsDefault(attributesToSet);
+    }
+  };
 
   return (
     <PanelContainer>
@@ -108,6 +128,15 @@ export const TextAttributesPanel: FC<TextAttributesPanelProps> = ({ open }) => {
         <StyledButton variant="contained" color="primary" onClick={closePanel}>
           Concluir
         </StyledButton>
+
+        <StyledButton
+          variant="outlined"
+          color="warning"
+          onClick={discardChanges}
+        >
+          Descartar
+        </StyledButton>
+
         <StyledButton
           variant="outlined"
           color="error"
@@ -116,6 +145,17 @@ export const TextAttributesPanel: FC<TextAttributesPanelProps> = ({ open }) => {
           Excluir
         </StyledButton>
       </ActionButtons>
+
+      <Box mt={2}>
+        <StyledButton
+          variant="text"
+          color="secondary"
+          onClick={handleSetAsDefault}
+          fullWidth
+        >
+          Definir como Padrão
+        </StyledButton>
+      </Box>
     </PanelContainer>
   );
 };

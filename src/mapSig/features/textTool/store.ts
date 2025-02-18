@@ -8,6 +8,7 @@ import { type TextAttributes, defaultTextAttributes } from './types';
 interface TextToolState {
   texts: TextAttributes[];
   selectedText: TextAttributes | null;
+  initialSelectedText: TextAttributes | null;
   isActive: boolean;
   isPanelOpen: boolean;
 
@@ -20,11 +21,19 @@ interface TextToolState {
   openPanel: () => void;
   closePanel: () => void;
   reset: () => void;
+
+  // Novas ações
+  discardChanges: () => void;
+  setAsDefault: (attributes: Partial<TextAttributes>) => void;
 }
 
-export const useTextToolStore = create<TextToolState>((set) => ({
+// Variável para armazenar as configurações padrão
+let currentDefaultAttributes = { ...defaultTextAttributes };
+
+export const useTextToolStore = create<TextToolState>((set, get) => ({
   texts: [],
   selectedText: null,
+  initialSelectedText: null,
   isActive: false,
   isPanelOpen: false,
 
@@ -39,13 +48,14 @@ export const useTextToolStore = create<TextToolState>((set) => ({
   addText: coordinates => {
     const newText: TextAttributes = {
       id: nanoid(),
-      ...defaultTextAttributes,
+      ...currentDefaultAttributes,
       coordinates,
     };
 
     set(state => ({
       texts: [...state.texts, newText],
       selectedText: newText,
+      initialSelectedText: { ...newText },
       isPanelOpen: true,
     }));
   },
@@ -66,6 +76,8 @@ export const useTextToolStore = create<TextToolState>((set) => ({
     set(state => ({
       texts: state.texts.filter(text => text.id !== id),
       selectedText: state.selectedText?.id === id ? null : state.selectedText,
+      initialSelectedText:
+        state.initialSelectedText?.id === id ? null : state.initialSelectedText,
       isPanelOpen: state.selectedText?.id === id ? false : state.isPanelOpen,
     }));
   },
@@ -73,6 +85,7 @@ export const useTextToolStore = create<TextToolState>((set) => ({
   selectText: text =>
     set({
       selectedText: text,
+      initialSelectedText: text ? { ...text } : null,
       isPanelOpen: !!text,
     }),
 
@@ -82,14 +95,38 @@ export const useTextToolStore = create<TextToolState>((set) => ({
     set({
       isPanelOpen: false,
       selectedText: null,
+      initialSelectedText: null,
     }),
 
   reset: () => {
     set({
       texts: [],
       selectedText: null,
+      initialSelectedText: null,
       isActive: false,
       isPanelOpen: false,
     });
+  },
+
+  // Implementação das novas ações
+  discardChanges: () => {
+    const { initialSelectedText } = get();
+    if (initialSelectedText) {
+      set(state => ({
+        texts: state.texts.map(text =>
+          text.id === initialSelectedText.id
+            ? { ...initialSelectedText }
+            : text,
+        ),
+        selectedText: { ...initialSelectedText },
+      }));
+    }
+  },
+
+  setAsDefault: attributes => {
+    currentDefaultAttributes = {
+      ...currentDefaultAttributes,
+      ...attributes,
+    };
   },
 }));

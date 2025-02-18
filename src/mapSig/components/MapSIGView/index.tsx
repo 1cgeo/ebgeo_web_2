@@ -3,6 +3,8 @@ import { type FC, memo } from 'react';
 
 import { useMapsStore } from '@/shared/store/mapsStore';
 
+import { MouseCoordinatesDisplay } from '@/mapSig/features/mouseCoordinates/MouseCoordinatesDisplay';
+
 import { useMapSetup } from '../../hooks/useMapSetup';
 import { type MapState } from '../../types';
 import { RightSideToolBar } from '../RightSideToolBar';
@@ -25,9 +27,9 @@ const MapSIGView: FC<MapSIGViewProps> = ({ initialState }) => {
   return (
     <MapContainer id="map-sig">
       <RightSideToolBar />
+      <MouseCoordinatesDisplay />
     </MapContainer>
   );
 };
 
-// Memorizamos o componente para evitar re-renders desnecessários
 export default memo(MapSIGView);
