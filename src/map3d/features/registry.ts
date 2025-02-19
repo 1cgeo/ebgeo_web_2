@@ -40,7 +40,7 @@ export const featureSchema = z.object({
 // Type inferido
 export type Map3DFeature = z.infer<typeof featureSchema>;
 
-// Registro de features
+// Registro de features com valores padrão para propriedades opcionais
 const featuresConfig = [
   {
     id: 'catalog',
@@ -50,6 +50,8 @@ const featuresConfig = [
     requiresModel: false,
     description: 'Adiciona modelos 3D do catálogo',
     image: '/images/catalog.svg',
+    showInDrawer: true,
+    showInToolbar: true,
   },
   {
     id: 'clean',
@@ -59,6 +61,8 @@ const featuresConfig = [
     requiresModel: false,
     description: 'Limpa as medições e análises do mapa',
     image: '/images/icon-clear.svg',
+    showInDrawer: true,
+    showInToolbar: true,
   },
   {
     id: 'area',
@@ -68,6 +72,8 @@ const featuresConfig = [
     requiresModel: true,
     description: 'Mede a área de uma região',
     image: '/images/icon-area.svg',
+    showInDrawer: true,
+    showInToolbar: true,
   },
   {
     id: 'distance',
@@ -77,6 +83,8 @@ const featuresConfig = [
     requiresModel: true,
     description: 'Mede a distância entre pontos',
     image: '/images/icon-distance.svg',
+    showInDrawer: true,
+    showInToolbar: true,
   },
   {
     id: 'viewshed',
@@ -86,6 +94,8 @@ const featuresConfig = [
     requiresModel: true,
     description: 'Análise de visibilidade a partir de um ponto',
     image: '/images/icon-viewshed.svg',
+    showInDrawer: true,
+    showInToolbar: true,
   },
   {
     id: 'identify',
@@ -95,6 +105,8 @@ const featuresConfig = [
     requiresModel: true,
     description: 'Identifica elementos no mapa',
     image: '/images/information_circle.svg',
+    showInDrawer: true,
+    showInToolbar: true,
   },
   {
     id: 'label',
@@ -104,10 +116,12 @@ const featuresConfig = [
     requiresModel: true,
     description: 'Adiciona etiquetas ao mapa',
     image: '/images/icon_text_black.svg',
+    showInDrawer: true,
+    showInToolbar: true,
   },
 ] as const;
 
-// Exportamos sem validação completa até implementar todos os componentes
+// Exportamos as features com valores padrão
 export const features = featuresConfig;
 
 // Hook para obter features filtradas

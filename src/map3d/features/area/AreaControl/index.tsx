@@ -1,5 +1,6 @@
 // Path: map3d\features\area\AreaControl\index.tsx
-import { FC, useEffect } from 'react';
+import type { FC } from 'react';
+import { useEffect } from 'react';
 
 import { Tool } from '../../../components/Tool';
 import { useMap3DToolState } from '../../../store';

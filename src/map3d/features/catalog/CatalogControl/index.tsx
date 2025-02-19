@@ -57,5 +57,4 @@ export const CatalogControl: FC = () => {
     </>
   );
 };
-
-export default CatalogControl;
+0;

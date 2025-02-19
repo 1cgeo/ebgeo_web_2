@@ -115,5 +115,3 @@ export const ModelList: FC = () => {
     </ListContainer>
   );
 };
-
-export default ModelList;

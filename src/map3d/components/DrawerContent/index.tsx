@@ -1,15 +1,13 @@
 // Path: map3d\components\DrawerContent\index.tsx
-import { ListItemButton, ListItemIcon } from '@mui/material';
-import Divider from '@mui/material/Divider';
-import List from '@mui/material/List';
-import ListItem from '@mui/material/ListItem';
-import Toolbar from '@mui/material/Toolbar';
+import { Divider, ListItemButton, ListItemIcon, Toolbar } from '@mui/material';
 import { styled } from '@mui/material/styles';
 
-import { FC, useState } from 'react';
+import type { FC } from 'react';
+import { useState } from 'react';
 
 import { Model3DCatalog } from '../../features/catalog/Catalog';
 import { useMap3DFeatures } from '../../features/registry';
+import { DrawerItem, DrawerList, FeatureButton } from './styles';
 
 const StyledIcon = styled('img')({
   width: 24,
@@ -43,9 +41,9 @@ export const DrawerContent: FC<DrawerContentProps> = ({ onClose }) => {
     <div>
       <Toolbar />
       <Divider />
-      <List>
+      <DrawerList>
         {drawerFeatures.map(feature => (
-          <ListItem key={feature.id} disablePadding>
+          <DrawerItem key={feature.id} disablePadding>
             <ListItemButton onClick={() => handleFeatureClick(feature.id)}>
               <ListItemIcon>
                 <StyledIcon
@@ -53,11 +51,11 @@ export const DrawerContent: FC<DrawerContentProps> = ({ onClose }) => {
                   alt={feature.name}
                 />
               </ListItemIcon>
-              {feature.name}
+              <FeatureButton>{feature.name}</FeatureButton>
             </ListItemButton>
-          </ListItem>
+          </DrawerItem>
         ))}
-      </List>
+      </DrawerList>
       <Model3DCatalog
         open={catalogOpen}
         onClose={() => setCatalogOpen(false)}

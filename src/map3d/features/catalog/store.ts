@@ -92,7 +92,7 @@ export const useCatalogStore = create<CatalogState>((set, get) => ({
 
   // Model actions
   addModel: async model => {
-    const { loadedModels, loadingStates, setModelLoadingState } = get();
+    const { loadedModels, setModelLoadingState } = get();
 
     // Check if model is already loaded
     if (loadedModels.has(model.id)) {
@@ -357,11 +357,11 @@ async function loadModelos3D(Cesium: any, viewer: any, model: Modelos3D) {
     hpr,
   );
 
-  const entity = viewer.entities.add({
+  viewer.entities.add({
     id: `model-${model.id}`,
     name: model.name,
-    position: position,
-    orientation: orientation,
+    position,
+    orientation,
     model: {
       uri: `${getModelUrl(model.type)}${model.url}`,
     },

@@ -2,12 +2,12 @@
 import { EventEmitter } from '@/map3d/utils/events';
 
 export function useLabel() {
-  var isActive: any = null;
-  var selectedLabel: any = null;
+  let isActive: any = null;
+  let selectedLabel: any = null;
 
   const setup = (Cesium: any, _viewer: any) => {
-    var _handler = new Cesium.ScreenSpaceEventHandler(_viewer.scene.canvas);
-    var _drawLayer = new Cesium.CustomDataSource('label');
+    const _handler = new Cesium.ScreenSpaceEventHandler(_viewer.scene.canvas);
+    const _drawLayer = new Cesium.CustomDataSource('label');
     _viewer.dataSources.add(_drawLayer);
 
     _handler.setInputAction((movement: any) => {
@@ -16,27 +16,27 @@ export function useLabel() {
         selectedLabel.point = getPointStyle('default');
         selectedLabel = null;
       }
-      var pickedObject = _viewer.scene.pick(movement.position);
+      const pickedObject = _viewer.scene.pick(movement.position);
       if (Cesium.defined(pickedObject) && Cesium.defined(pickedObject.id)) {
-        var entity = pickedObject.id;
+        const entity = pickedObject.id;
         entity.point = getPointStyle('select');
         selectedLabel = entity;
         EventEmitter.dispatch('3d-label-select', selectedLabel);
       } else {
-        var cartesian = getCatesian3FromPX(movement.position);
+        const cartesian = getCatesian3FromPX(movement.position);
         _addLabel(cartesian);
       }
     }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
 
     function getCatesian3FromPX(px: any) {
       if (px) {
-        var picks = _viewer.scene.drillPick(px);
-        var cartesian = null;
-        var isOn3dtiles = false,
+        const picks = _viewer.scene.drillPick(px);
+        let cartesian = null;
+        let isOn3dtiles = false,
           isOnTerrain = false;
         // drillPick
-        for (let i in picks) {
-          let pick = picks[i];
+        for (const i in picks) {
+          const pick = picks[i];
 
           if (
             (pick && pick.primitive instanceof Cesium.Cesium3DTileFeature) ||
@@ -50,15 +50,15 @@ export function useLabel() {
             _viewer.scene.pick(px); // pick
             cartesian = _viewer.scene.pickPosition(px);
             if (cartesian) {
-              let cartographic = Cesium.Cartographic.fromCartesian(cartesian);
+              const cartographic = Cesium.Cartographic.fromCartesian(cartesian);
               if (cartographic.height < 0) cartographic.height = 0;
-              let lon = Cesium.Math.toDegrees(cartographic.longitude),
+              const lon = Cesium.Math.toDegrees(cartographic.longitude),
                 lat = Cesium.Math.toDegrees(cartographic.latitude),
                 height = cartographic.height;
               cartesian = transformWGS84ToCartesian(
                 {
                   lng: lon,
-                  lat: lat,
+                  lat,
                   alt: height,
                 },
                 null,
@@ -66,11 +66,11 @@ export function useLabel() {
             }
           }
         }
-        let boolTerrain =
+        const boolTerrain =
           _viewer.terrainProvider instanceof Cesium.EllipsoidTerrainProvider;
         // Terrain
         if (!isOn3dtiles && !boolTerrain) {
-          var ray = _viewer.scene.camera.getPickRay(px);
+          const ray = _viewer.scene.camera.getPickRay(px);
           if (!ray) return null;
           cartesian = _viewer.scene.globe.pick(ray, _viewer.scene);
           isOnTerrain = true;
@@ -82,7 +82,7 @@ export function useLabel() {
           );
         }
         if (cartesian) {
-          let position = transformCartesianToWGS84(cartesian);
+          const position = transformCartesianToWGS84(cartesian);
           if (position && position.alt < 0) {
             cartesian = transformWGS84ToCartesian(position, 0.1);
           }
@@ -105,8 +105,8 @@ export function useLabel() {
 
     function transformCartesianToWGS84(cartesian: any) {
       if (cartesian) {
-        var ellipsoid = Cesium.Ellipsoid.WGS84;
-        var cartographic = ellipsoid.cartesianToCartographic(cartesian);
+        const ellipsoid = Cesium.Ellipsoid.WGS84;
+        const cartographic = ellipsoid.cartesianToCartographic(cartesian);
         return {
           lng: Cesium.Math.toDegrees(cartographic.longitude),
           lat: Cesium.Math.toDegrees(cartographic.latitude),
@@ -116,7 +116,7 @@ export function useLabel() {
     }
 
     function _addLabel(position: any) {
-      var _labelEntity = new Cesium.Entity();
+      const _labelEntity = new Cesium.Entity();
       _labelEntity.position = position;
       _labelEntity.point = getPointStyle('default');
       _labelEntity.label = {

@@ -8,6 +8,10 @@ import {
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 
+interface ButtonStyleProps {
+  disabled?: boolean;
+}
+
 export const CardContainer = styled(Card)(({ theme }) => ({
   height: 320,
   width: '100%',
@@ -46,13 +50,16 @@ export const CardContent = styled(MuiCardContent)(({ theme }) => ({
   padding: theme.spacing(2),
 }));
 
-export const ActionButton = styled(Button)(({ theme }) => ({
+export const ActionButton = styled(Button, {
+  shouldForwardProp: prop => prop !== 'disabled',
+})<ButtonStyleProps>(({ theme, disabled }) => ({
   position: 'absolute',
   top: theme.spacing(1),
   right: theme.spacing(1),
-  backgroundColor: props =>
-    props.disabled ? theme.palette.primary.main : 'rgba(255, 255, 255, 0.8)',
-  color: props => (props.disabled ? 'white' : theme.palette.primary.main),
+  backgroundColor: disabled
+    ? theme.palette.primary.main
+    : 'rgba(255, 255, 255, 0.8)',
+  color: disabled ? 'white' : theme.palette.primary.main,
   opacity: 0,
   transition: '0.3s',
   '&:hover': {
@@ -79,7 +86,7 @@ export const MetaInfo = styled(Box)({
   gap: 4,
 });
 
-export const KeywordChip = styled(Chip)(({ theme }) => ({
+export const KeywordChip = styled(Chip)(({ theme: _theme }) => ({
   backgroundColor: 'rgba(255, 255, 255, 0.2)',
   color: 'white',
   fontSize: '0.7rem',

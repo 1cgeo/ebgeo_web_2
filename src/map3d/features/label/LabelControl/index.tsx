@@ -1,15 +1,20 @@
 // Path: map3d\features\label\LabelControl\index.tsx
-import { FC, useCallback, useEffect, useState } from 'react';
+import { FC, useEffect, useState } from 'react';
+
+import { useMapsStore } from '@/shared/store/mapsStore';
 
 import { Tool } from '../../../components/Tool';
-import { useMapTools } from '../../../contexts/Map3DTools';
-import { TextAttributesPanel } from '../TextAttributesPanel';
+import { useMap3DToolState } from '../../../store';
+import { TextAttributesPanel } from '../LabelPanel';
+import { useLabel } from '../useLabel';
 
 export const LabelControl: FC = () => {
-  const { setActiveTool, activeTool, areToolsEnabled, cesiumLabel } =
-    useMapTools();
+  const { isActive, isEnabled } = useMap3DToolState('label');
   const [currentProperties, setCurrentProperties] = useState<any>({});
   const [currentLabel, setCurrentLabel] = useState<any>(null);
+  const { setup } = useLabel();
+  const [labelHandler, setLabelHandler] = useState<any>(null);
+  const { cesium, cesiumMap } = useMapsStore();
 
   const defaultProperties = {
     text: 'TEXTO',
@@ -19,54 +24,76 @@ export const LabelControl: FC = () => {
     backgroundColor: '#000000A3',
   };
 
-  const handleTool = useCallback(() => {
-    setActiveTool('label');
-  }, [setActiveTool]);
-
+  // Inicializa o manipulador de label usando o setup
   useEffect(() => {
-    if (!cesiumLabel) return;
+    // Obtenha as instâncias Cesium do store global
+    if (cesium && cesiumMap && setup) {
+      const handler = setup(cesium, cesiumMap);
+      setLabelHandler(handler);
 
-    cesiumLabel.onCreated((labelEntity: any) => {
-      cesiumLabel.setLabelProperties(labelEntity, defaultProperties);
-    });
+      return () => {
+        // Limpeza
+        if (handler && handler.clean) {
+          handler.clean();
+        }
+      };
+    }
+  }, [cesium, cesiumMap, setup]);
 
-    cesiumLabel.onSelect((labelEntity: any) => {
+  // Configura os event handlers quando o manipulador estiver disponível
+  useEffect(() => {
+    if (!labelHandler) return;
+
+    const onCreated = (labelEntity: any) => {
+      labelHandler.setLabelProperties(labelEntity, defaultProperties);
+    };
+
+    const onSelect = (labelEntity: any) => {
       setCurrentProperties({
         id: labelEntity._id,
-        ...cesiumLabel.getLabelProperties(labelEntity),
+        ...labelHandler.getLabelProperties(labelEntity),
       });
       setCurrentLabel(labelEntity);
-    });
+    };
+
+    labelHandler.onCreated(onCreated);
+    labelHandler.onSelect(onSelect);
 
     return () => {
-      cesiumLabel.offCreated();
-      cesiumLabel.offSelect();
+      labelHandler.offCreated();
+      labelHandler.offSelect();
     };
-  }, [cesiumLabel, defaultProperties]);
+  }, [labelHandler, defaultProperties]);
+
+  // Ativa/desativa o manipulador de label com base no estado ativo
+  useEffect(() => {
+    if (labelHandler) {
+      labelHandler.setActive(isActive);
+    }
+  }, [isActive, labelHandler]);
 
   return (
     <>
       <Tool
+        id="label"
         image="/images/icon_text_black.svg"
-        active={true}
-        inUse={activeTool === 'label'}
-        disabled={!areToolsEnabled}
+        active={isActive}
+        disabled={!isEnabled}
         tooltip="Adicionar Texto"
-        onClick={handleTool}
       />
 
-      {currentLabel && (
+      {currentLabel && labelHandler && (
         <TextAttributesPanel
           properties={currentProperties}
           onUpdate={properties => {
-            cesiumLabel.setLabelProperties(currentLabel, properties);
+            labelHandler.setLabelProperties(currentLabel, properties);
           }}
           onDelete={() => {
-            cesiumLabel.remove(currentLabel);
+            labelHandler.remove(currentLabel);
             setCurrentLabel(null);
           }}
           onClose={() => {
-            cesiumLabel.deselectAll();
+            labelHandler.deselectAll();
             setCurrentLabel(null);
           }}
         />

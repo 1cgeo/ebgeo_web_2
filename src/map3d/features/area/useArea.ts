@@ -3,7 +3,6 @@ import { useEffect, useRef } from 'react';
 
 import { useMapsStore } from '@/shared/store/mapsStore';
 
-import { getCesium } from '../../store';
 import { useAreaStore } from './store';
 import { AreaToolState } from './types';
 
@@ -259,7 +258,9 @@ export function useArea() {
   // Converte array de Cartesian para array de WGS84
   function transformCartesianArrayToWGS84Array(cartesianArr: any[]) {
     return cartesianArr
-      ? cartesianArr.map(item => transformCartesianToWGS84(item))
+      ? cartesianArr
+          .map(item => transformCartesianToWGS84(item))
+          .filter(Boolean)
       : [];
   }
 
@@ -270,7 +271,11 @@ export function useArea() {
     try {
       // Converte posições para o formato que o turf espera
       const wgs84Positions = transformCartesianArrayToWGS84Array(positions);
-      const coordinates = wgs84Positions.map(p => [p.lng, p.lat]);
+      if (wgs84Positions.length < 3) return 0;
+
+      const coordinates = wgs84Positions.map(p =>
+        p ? [p.lng, p.lat] : [0, 0],
+      );
 
       // Cria polígono e calcula área
       const polygon = window.turf.polygon([coordinates]);

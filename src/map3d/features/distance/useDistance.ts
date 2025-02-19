@@ -3,7 +3,6 @@ import { useEffect, useRef } from 'react';
 
 import { useMapsStore } from '@/shared/store/mapsStore';
 
-import { getCesium } from '../../store';
 import { useDistanceStore } from './store';
 import { DistanceToolState } from './types';
 

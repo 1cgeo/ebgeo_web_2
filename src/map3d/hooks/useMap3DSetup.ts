@@ -1,13 +1,9 @@
 // Path: map3d\hooks\useMap3DSetup.ts
-import { useCallback, useEffect } from 'react';
+import { useEffect } from 'react';
 
 import { env } from '@/shared/config/env';
 import { useMapsStore } from '@/shared/store/mapsStore';
 
-import { useArea } from '../features/area/useArea';
-import { useDistance } from '../features/distance/useDistance';
-import { useLabel } from '../features/label/useLabel';
-import { useViewshed } from '../features/viewshed/useViewshed';
 import { type Map3DState } from '../types';
 
 const defaultMapConfig: Map3DState = {
@@ -40,14 +36,7 @@ export function useMap3DSetup({
 }: Map3DSetupOptions) {
   const { cesiumMap, setCesium, setCesiumMap } = useMapsStore();
 
-  // Configura hooks de features
-  const setupFeatureHooks = useCallback((Cesium: any, viewer: any) => {
-    useArea.setup(Cesium, viewer);
-    useDistance.setup(Cesium, viewer);
-    useViewshed.setup(Cesium, viewer);
-    useLabel.setup(Cesium, viewer);
-  }, []);
-
+  // Configura o CesiumJS
   useEffect(() => {
     const config = {
       ...defaultMapConfig,
@@ -118,9 +107,6 @@ export function useMap3DSetup({
     setCesium(Cesium);
     setCesiumMap(viewer);
 
-    // Configurar hooks de features
-    setupFeatureHooks(Cesium, viewer);
-
     // Cleanup function
     return () => {
       if (viewer && !viewer.isDestroyed()) {
@@ -128,7 +114,7 @@ export function useMap3DSetup({
         viewer.destroy();
       }
     };
-  }, [containerId, initialState, setCesium, setCesiumMap, setupFeatureHooks]);
+  }, [containerId, initialState, setCesium, setCesiumMap]);
 
   return cesiumMap;
 }

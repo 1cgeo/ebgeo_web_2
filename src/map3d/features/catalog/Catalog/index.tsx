@@ -2,10 +2,12 @@
 import SearchIcon from '@mui/icons-material/Search';
 import {
   Box,
+  Button,
   CircularProgress,
   Fade,
   InputAdornment,
   Modal,
+  Paper,
   TextField,
   Typography,
   useMediaQuery,
@@ -25,7 +27,6 @@ import {
 } from 'react';
 import InfiniteScroll from 'react-infinite-scroll-component';
 
-import { CatalogToolState } from '../types';
 import { useCatalog } from '../useCatalog';
 
 const ModelCard = lazy(() =>
@@ -56,7 +57,7 @@ export const Model3DCatalog: FC<Model3DCatalogProps> = ({ open, onClose }) => {
   const [noResults, setNoResults] = useState(false);
   const searchTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const theme = useTheme();
-  const prevColumnsCountRef = useRef<number>();
+  const prevColumnsCountRef = useRef<number | undefined>(undefined);
 
   // Determine number of columns based on breakpoint
   const isXs = useMediaQuery(theme.breakpoints.down('sm'));
@@ -120,7 +121,7 @@ export const Model3DCatalog: FC<Model3DCatalogProps> = ({ open, onClose }) => {
 
   return (
     <Modal open={open} onClose={onClose}>
-      <Box
+      <Paper
         id="catalogContainer"
         sx={{
           position: 'absolute',
@@ -130,23 +131,33 @@ export const Model3DCatalog: FC<Model3DCatalogProps> = ({ open, onClose }) => {
           width: '90%',
           maxWidth: 1200,
           maxHeight: '90vh',
-          bgcolor: 'rgba(255, 255, 255, 0.98)',
+          overflowY: 'auto',
+          backgroundColor: 'rgba(255, 255, 255, 0.98)',
           boxShadow: 24,
           p: 4,
           borderRadius: 2,
           display: 'flex',
           flexDirection: 'column',
-          overflowY: 'auto',
         }}
       >
-        <Typography
-          variant="h4"
-          component="h2"
-          gutterBottom
-          sx={{ mb: 3, color: '#315730' }}
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            mb: 3,
+          }}
         >
-          Catálogo de modelos 3D
-        </Typography>
+          <Typography
+            variant="h4"
+            component="h2"
+            gutterBottom
+            sx={{ color: '#315730' }}
+          >
+            Catálogo de modelos 3D
+          </Typography>
+        </Box>
+
         <Box sx={{ mb: 3 }}>
           <TextField
             fullWidth
@@ -164,15 +175,6 @@ export const Model3DCatalog: FC<Model3DCatalogProps> = ({ open, onClose }) => {
             sx={{
               '& .MuiOutlinedInput-root': {
                 borderRadius: '50px',
-                '& fieldset': {
-                  borderColor: 'rgba(0, 0, 0, 0.23)',
-                },
-                '&:hover fieldset': {
-                  borderColor: 'rgba(0, 0, 0, 0.23)',
-                },
-                '&.Mui-focused fieldset': {
-                  borderColor: '#315730',
-                },
               },
             }}
           />
@@ -187,6 +189,8 @@ export const Model3DCatalog: FC<Model3DCatalogProps> = ({ open, onClose }) => {
         <Box
           id="scrollableDiv"
           sx={{
+            position: 'relative',
+            minHeight: 200,
             overflow: 'auto',
             flex: 1,
             maxHeight: 'calc(90vh - 200px)',
@@ -242,7 +246,7 @@ export const Model3DCatalog: FC<Model3DCatalogProps> = ({ open, onClose }) => {
               <Grid container spacing={2}>
                 <Suspense fallback={<CircularProgress />}>
                   {models.map(model => (
-                    <Grid xs={12} sm={6} md={4} lg={3} key={model.id}>
+                    <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }} key={model.id}>
                       <ModelCard
                         model={model}
                         onAddModel={handleAddModelAndClose}
@@ -254,10 +258,23 @@ export const Model3DCatalog: FC<Model3DCatalogProps> = ({ open, onClose }) => {
               </Grid>
             </InfiniteScroll>
           )}
+
+          {hasMore && !isLoading && (
+            <Button
+              variant="contained"
+              onClick={loadNextPage}
+              disabled={isLoading}
+              sx={{
+                display: 'block',
+                margin: '24px auto',
+                minWidth: 200,
+              }}
+            >
+              Carregar mais modelos
+            </Button>
+          )}
         </Box>
-      </Box>
+      </Paper>
     </Modal>
   );
 };
-
-export default Model3DCatalog;

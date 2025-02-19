@@ -1,5 +1,5 @@
 // Path: map3d\features\clean\CleanControl\index.tsx
-import { FC } from 'react';
+import type { FC } from 'react';
 
 import { Tool } from '../../../components/Tool';
 import { useMap3DToolState } from '../../../store';
