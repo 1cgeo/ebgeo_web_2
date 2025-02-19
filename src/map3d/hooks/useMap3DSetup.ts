@@ -4,10 +4,10 @@ import { useCallback, useEffect } from 'react';
 import { env } from '@/shared/config/env';
 import { useMapsStore } from '@/shared/store/mapsStore';
 
-import { useAreaMeasurement } from '../features/area/useAreaMeasurement';
-import { useDistanceMeasurement } from '../features/distance/useDistanceMeasurement';
-import { useLabelManagement } from '../features/label/useLabelManagement';
-import { useViewshedAnalysis } from '../features/viewshed/useViewshedAnalysis';
+import { useArea } from '../features/area/useArea';
+import { useDistance } from '../features/distance/useDistance';
+import { useLabel } from '../features/label/useLabel';
+import { useViewshed } from '../features/viewshed/useViewshed';
 import { type Map3DState } from '../types';
 
 const defaultMapConfig: Map3DState = {
@@ -42,10 +42,10 @@ export function useMap3DSetup({
 
   // Configura hooks de features
   const setupFeatureHooks = useCallback((Cesium: any, viewer: any) => {
-    useAreaMeasurement.setup(Cesium, viewer);
-    useDistanceMeasurement.setup(Cesium, viewer);
-    useViewshedAnalysis.setup(Cesium, viewer);
-    useLabelManagement.setup(Cesium, viewer);
+    useArea.setup(Cesium, viewer);
+    useDistance.setup(Cesium, viewer);
+    useViewshed.setup(Cesium, viewer);
+    useLabel.setup(Cesium, viewer);
   }, []);
 
   useEffect(() => {
@@ -54,7 +54,7 @@ export function useMap3DSetup({
       ...initialState,
     };
 
-    const Cesium = window?.Cesium;
+    const Cesium = window?.cesium;
     if (!Cesium) {
       console.error(
         "Cesium library not found in global scope (window.Cesium). Make sure it's correctly loaded in index.html.",

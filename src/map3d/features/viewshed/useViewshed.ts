@@ -6,7 +6,7 @@ import { useMapsStore } from '@/shared/store/mapsStore';
 import { useViewshedStore } from './store';
 import { ViewshedToolState } from './types';
 
-export default function useViewshed() {
+export function useViewshed() {
   const cesiumMap = useMapsStore(state => state.cesiumMap);
   const cesium = useMapsStore(state => state.cesium);
   const {

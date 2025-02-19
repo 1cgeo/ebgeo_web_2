@@ -7,7 +7,7 @@ import { getCesium } from '../../store';
 import { useAreaStore } from './store';
 import { AreaToolState } from './types';
 
-export default function useArea() {
+export function useArea() {
   const cesiumMap = useMapsStore(state => state.cesiumMap);
   const cesium = useMapsStore(state => state.cesium);
   const {

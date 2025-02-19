@@ -7,7 +7,7 @@ import { getCesium } from '../../store';
 import { useDistanceStore } from './store';
 import { DistanceToolState } from './types';
 
-export default function useDistance() {
+export function useDistance() {
   const cesiumMap = useMapsStore(state => state.cesiumMap);
   const cesium = useMapsStore(state => state.cesium);
   const {

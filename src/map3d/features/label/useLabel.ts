@@ -1,7 +1,7 @@
 // Path: map3d\features\label\useLabel.ts
 import { EventEmitter } from '@/map3d/utils/events';
 
-export default function useLabel() {
+export function useLabel() {
   var isActive: any = null;
   var selectedLabel: any = null;
 
