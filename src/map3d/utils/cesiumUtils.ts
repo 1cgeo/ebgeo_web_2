@@ -1,7 +1,7 @@
 // Path: map3d\utils\cesiumUtils.ts
 import { useMapsStore } from '@/shared/store/mapsStore';
 
-import { type Cartesian } from '../schemas';
+import { type Cartesian } from '../types';
 
 interface PickResult {
   position: Cartesian;

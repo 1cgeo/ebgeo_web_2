@@ -7,16 +7,19 @@ import {
   IconButton,
   InputAdornment,
   Modal,
+  Tab,
+  Tabs,
   TextField,
   Typography,
 } from '@mui/material';
 
-import { type FC, Suspense } from 'react';
+import { type FC, Suspense, useState } from 'react';
 
 import { useMap3DStore } from '@/map3d/store';
 
 import { ModelCard } from '../ModelCard';
 import { useCatalogStore } from '../store';
+// Import from useQueries instead of queries
 import { usePaginatedCatalog } from '../useQueries';
 import {
   HeaderContainer,
@@ -39,8 +42,17 @@ export const CatalogPanel: FC = () => {
 
   const { models } = useMap3DStore();
 
-  const { data, isLoading, error, hasNextPage, page, setPage, totalPages } =
-    usePaginatedCatalog();
+  // Use the paginated catalog hook from useQueries.ts
+  const {
+    data,
+    isLoading,
+    error,
+    hasNextPage,
+    hasPreviousPage,
+    page,
+    totalPages,
+    setPage,
+  } = usePaginatedCatalog();
 
   const isModelLoaded = (modelId: string) => {
     return models.some(m => m.id === modelId);
@@ -144,6 +156,17 @@ export const CatalogPanel: FC = () => {
               disabled={isLoading}
             >
               {isLoading ? 'Carregando...' : 'Carregar mais'}
+            </LoadMoreButton>
+          )}
+
+          {hasPreviousPage && (
+            <LoadMoreButton
+              variant="outlined"
+              onClick={() => setPage(page - 1)}
+              disabled={isLoading}
+              sx={{ mt: 1 }}
+            >
+              Página anterior
             </LoadMoreButton>
           )}
         </ResultsContainer>

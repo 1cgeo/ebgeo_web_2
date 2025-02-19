@@ -3,7 +3,7 @@ import { Box, Divider, Toolbar, Typography } from '@mui/material';
 
 import { type FC } from 'react';
 
-import { useFeatures } from '../../features/registry';
+import { getFeatures } from '../../features/registry';
 import { DrawerItem, DrawerList, FeatureButton } from './styles';
 
 interface DrawerContentProps {
@@ -12,7 +12,7 @@ interface DrawerContentProps {
 
 export const DrawerContent: FC<DrawerContentProps> = ({ onClose }) => {
   // Obtém apenas features que devem aparecer no drawer
-  const features = useFeatures({ showInDrawer: true });
+  const features = getFeatures({ showInDrawer: true });
 
   return (
     <Box component="nav" aria-label="Ferramentas do mapa">

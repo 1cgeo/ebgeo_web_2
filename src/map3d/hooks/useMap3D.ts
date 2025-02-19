@@ -3,10 +3,19 @@ import { useCallback, useEffect, useState } from 'react';
 
 import { useMapsStore } from '@/shared/store/mapsStore';
 
-import { type Map3DConfig } from '../config';
-import { type Camera3D, validateCamera } from '../types';
+import { config } from '@/map3d/config';
+import {
+  type Camera3D,
+  type ViewRectangle,
+  validateCamera,
+} from '@/map3d/types';
+
+import { useMap3DSetup } from './useMap3DSetup';
 
 interface UseMap3DOptions {
+  containerId?: string;
+  initialView?: Partial<ViewRectangle>;
+  initialCamera?: Partial<Camera3D>;
   onViewerReady?: (viewer: any) => void;
   onError?: (error: Error) => void;
 }
@@ -17,14 +26,40 @@ interface UseMap3DResult {
   getCameraPosition: () => Camera3D | null;
   setCameraPosition: (position: Camera3D) => void;
   flyToPosition: (position: Camera3D, duration?: number) => void;
+  flyToView: (rectangle: ViewRectangle, duration?: number) => void;
 }
 
-export function useMap3D(
-  config: Map3DConfig,
-  options?: UseMap3DOptions,
-): UseMap3DResult {
-  const { cesium, cesiumMap, setCesiumMap } = useMapsStore();
+export function useMap3D({
+  containerId = 'map-3d',
+  initialView,
+  initialCamera,
+  onViewerReady,
+  onError,
+}: UseMap3DOptions = {}): UseMap3DResult {
+  // Use o hook de setup para inicialização do mapa
+  const cesiumMap = useMap3DSetup({
+    containerId,
+    initialView,
+    initialCamera,
+  });
 
+  const { cesium } = useMapsStore();
+  const [isReady, setIsReady] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
+
+  // Notificar quando o viewer estiver pronto ou ocorrer erro
+  useEffect(() => {
+    if (cesiumMap) {
+      setIsReady(true);
+      onViewerReady?.(cesiumMap);
+    } else if (cesium && !cesiumMap) {
+      const err = new Error('Falha ao inicializar o mapa Cesium');
+      setError(err);
+      onError?.(err);
+    }
+  }, [cesium, cesiumMap, onViewerReady, onError]);
+
+  // Método para obter a posição atual da câmera
   const getCameraPosition = useCallback((): Camera3D | null => {
     if (!cesium || !cesiumMap) return null;
 
@@ -41,6 +76,7 @@ export function useMap3D(
     });
   }, [cesium, cesiumMap]);
 
+  // Método para definir a posição da câmera imediatamente
   const setCameraPosition = useCallback(
     (position: Camera3D) => {
       if (!cesium || !cesiumMap) return;
@@ -65,6 +101,7 @@ export function useMap3D(
     [cesium, cesiumMap],
   );
 
+  // Método para voar suavemente para uma posição
   const flyToPosition = useCallback(
     (position: Camera3D, duration: number = 2) => {
       if (!cesium || !cesiumMap) return;
@@ -90,53 +127,25 @@ export function useMap3D(
     [cesium, cesiumMap],
   );
 
-  // Estado local
-  const [isReady, setIsReady] = useState(false);
-  const [error, setError] = useState<Error | null>(null);
+  // Método para voar para uma visão retangular
+  const flyToView = useCallback(
+    (rectangle: ViewRectangle, duration: number = 2) => {
+      if (!cesium || !cesiumMap) return;
 
-  // Setup do viewer
-  useEffect(() => {
-    if (!cesium) return;
-
-    try {
-      const viewer = new cesium.Viewer('map-3d', config.viewer.cesiumOptions);
-
-      // Configura imagem base
-      viewer.imageryLayers.addImageryProvider(
-        new cesium.UrlTemplateImageryProvider(config.imagery),
-      );
-
-      // Configura terreno
-      viewer.terrainProvider = new cesium.CesiumTerrainProvider(config.terrain);
-
-      // Configura view inicial
-      const { defaultView } = config.viewer;
       const rect = cesium.Rectangle.fromDegrees(
-        defaultView.west,
-        defaultView.south,
-        defaultView.east,
-        defaultView.north,
+        rectangle.west,
+        rectangle.south,
+        rectangle.east,
+        rectangle.north,
       );
-      viewer.camera.setView({ destination: rect });
 
-      // Salva referência
-      setCesiumMap(viewer);
-      setIsReady(true);
-      options?.onViewerReady?.(viewer);
-    } catch (err) {
-      const error =
-        err instanceof Error ? err : new Error('Erro ao inicializar Cesium');
-      setError(error);
-      options?.onError?.(error);
-    }
-
-    return () => {
-      if (cesiumMap) {
-        cesiumMap.destroy();
-        setCesiumMap(null);
-      }
-    };
-  }, [cesium, config]);
+      cesiumMap.camera.flyTo({
+        destination: rect,
+        duration,
+      });
+    },
+    [cesium, cesiumMap],
+  );
 
   return {
     isReady,
@@ -144,5 +153,6 @@ export function useMap3D(
     getCameraPosition,
     setCameraPosition,
     flyToPosition,
+    flyToView,
   };
 }

@@ -2,9 +2,9 @@
 import { useCallback, useEffect } from 'react';
 
 import { useMapsStore } from '@/shared/store/mapsStore';
-import { EventEmitter } from '@/shared/utils/events';
 
 import { useMap3DStore } from '@/map3d/store';
+import { EventEmitter } from '@/map3d/utils/events';
 
 import { useLabelStore } from './store';
 import { type LabelPosition } from './types';

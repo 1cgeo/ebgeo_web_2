@@ -7,8 +7,8 @@ import { Layout } from '@/shared/components/Layout';
 const Map3DView = lazy(() => import('./components/Map3DView'));
 
 const routes: RouteObject = {
-  path: 'map-3d',
   element: <Layout />,
+  path: 'map-3d',
   children: [
     {
       index: true,

@@ -1,4 +1,4 @@
-// Path: map3d\features\catalog\types.ts
+// Path: map3d\types.ts
 import { z } from 'zod';
 
 // SCHEMAS BÁSICOS

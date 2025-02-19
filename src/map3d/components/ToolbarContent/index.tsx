@@ -3,14 +3,15 @@ import { Box } from '@mui/material';
 
 import { type FC } from 'react';
 
-import { useFeatures } from '../../features/registry';
+import { getFeatures } from '../../features/registry';
 import { useMap3DStore } from '../../store';
 import { ToolbarContainer } from './styles';
 
 export const ToolbarContent: FC = () => {
   // Obtém apenas features que devem aparecer na toolbar
-  const features = useFeatures({ showInToolbar: true });
-  const { activeTool } = useMap3DStore();
+  const features = getFeatures({ showInToolbar: true });
+  const { activeTool, models } = useMap3DStore();
+  const hasModels = models.length > 0;
 
   return (
     <ToolbarContainer>
@@ -22,7 +23,7 @@ export const ToolbarContent: FC = () => {
           <Box key={feature.id} sx={{ position: 'relative' }}>
             <FeatureComponent
               active={isActive}
-              isEnabled={feature.requiresModel ? hasModels : true}
+              disabled={feature.requiresModel && !hasModels}
             />
           </Box>
         );

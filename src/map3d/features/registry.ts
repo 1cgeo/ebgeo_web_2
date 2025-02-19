@@ -1,9 +1,10 @@
 // Path: map3d\features\registry.ts
 import { z } from 'zod';
 
+import { useEffect, useState } from 'react';
+
 import { AreaControl } from './area/AreaControl';
 import { Model3DCatalogButton } from './catalog/CatalogButton';
-// Import de todos os controles
 import { CleanControl } from './clean/CleanControl';
 import { DistanceControl } from './distance/DistanceControl';
 import { IdentifyControl } from './identify/IdentifyControl';
@@ -104,6 +105,21 @@ export function getFeatures(options?: {
       return true;
     })
     .sort((a, b) => a.order - b.order);
+}
+
+// Hook to use features
+export function useFeatures(options?: {
+  showInDrawer?: boolean;
+  showInToolbar?: boolean;
+  requiresModel?: boolean;
+}) {
+  const [filteredFeatures, setFilteredFeatures] = useState<Map3DFeature[]>([]);
+
+  useEffect(() => {
+    setFilteredFeatures(getFeatures(options));
+  }, [options?.showInDrawer, options?.showInToolbar, options?.requiresModel]);
+
+  return filteredFeatures;
 }
 
 // Helper para obter uma feature específica

@@ -1,7 +1,7 @@
 // Path: map3d\utils\modelUtils.ts
 import { env } from '@/shared/config/env';
 
-import { type Model3D } from '../schemas';
+import { type Model3D } from '../types';
 
 export function getModelUrl(type: Model3D['type'], path: string): string {
   const baseUrl = env.VITE_SOURCE_MODELS_URL;
