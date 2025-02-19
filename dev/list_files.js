@@ -71,7 +71,7 @@ function main() {
 
     console.log(`Running script from src folder: ${srcDirPath}`);
 
-    const outputFile = 'estrutra_pastas.txt';
+    const outputFile = 'estrutura_pastas.txt';
     const ig = readGitignore(projectRoot); // Gitignore from project root
     const result = listFiles(srcDirPath, srcDirPath, ig); // Start listing from srcDir, removed level parameters
 
