@@ -1,136 +1,134 @@
 // Path: map3d\hooks\useMap3DSetup.ts
-import { useEffect } from 'react';
+import { useCallback, useEffect } from 'react';
 
+import { env } from '@/shared/config/env';
 import { useMapsStore } from '@/shared/store/mapsStore';
 
-import { config } from '@/map3d/config';
-import { useMap3DStore } from '@/map3d/store';
-import {
-  type Camera3D,
-  type ViewRectangle,
-  camera3DSchema,
-  viewRectangleSchema,
-} from '@/map3d/types';
+import { useAreaMeasurement } from '../features/area/useAreaMeasurement';
+import { useDistanceMeasurement } from '../features/distance/useDistanceMeasurement';
+import { useLabelManagement } from '../features/label/useLabelManagement';
+import { useViewshedAnalysis } from '../features/viewshed/useViewshedAnalysis';
+import { type Map3DState } from '../types';
+
+const defaultMapConfig: Map3DState = {
+  center: {
+    lng: -44.4481491,
+    lat: -22.4546061,
+    height: 424.7,
+  },
+  orientation: {
+    heading: 164,
+    pitch: -2,
+    roll: -1,
+  },
+  bounds: {
+    north: -22.45592,
+    south: -22.455922,
+    east: -44.449654,
+    west: -44.449656,
+  },
+};
 
 interface Map3DSetupOptions {
   containerId: string;
-  initialView?: Partial<ViewRectangle>;
-  initialCamera?: Partial<Camera3D>;
+  initialState?: Partial<Map3DState>;
 }
 
 export function useMap3DSetup({
   containerId,
-  initialView,
-  initialCamera,
+  initialState,
 }: Map3DSetupOptions) {
   const { cesiumMap, setCesium, setCesiumMap } = useMapsStore();
-  const { setCameraPosition } = useMap3DStore();
+
+  // Configura hooks de features
+  const setupFeatureHooks = useCallback((Cesium: any, viewer: any) => {
+    useAreaMeasurement.setup(Cesium, viewer);
+    useDistanceMeasurement.setup(Cesium, viewer);
+    useViewshedAnalysis.setup(Cesium, viewer);
+    useLabelManagement.setup(Cesium, viewer);
+  }, []);
 
   useEffect(() => {
-    // Get Cesium instance from window
-    const cesiumInstance = window.cesium;
-    if (!cesiumInstance) {
+    const config = {
+      ...defaultMapConfig,
+      ...initialState,
+    };
+
+    const Cesium = window?.Cesium;
+    if (!Cesium) {
       console.error(
         "Cesium library not found in global scope (window.Cesium). Make sure it's correctly loaded in index.html.",
       );
       return;
     }
 
-    // Set Cesium instance in the store
-    setCesium(cesiumInstance);
-
-    // Merge default view with provided initial view
-    const view = {
-      ...config.viewer.defaultView,
-      ...initialView,
-    };
-
-    // Validate the view rectangle
-    const validatedView = viewRectangleSchema.parse(view);
-
-    // Set default view rectangle for Cesium
-    const extent = cesiumInstance.Rectangle.fromDegrees(
-      validatedView.west,
-      validatedView.south,
-      validatedView.east,
-      validatedView.north,
+    // Configurar a visualização padrão
+    const extent = Cesium.Rectangle.fromDegrees(
+      config.bounds?.west || -44.449656,
+      config.bounds?.south || -22.455922,
+      config.bounds?.east || -44.449654,
+      config.bounds?.north || -22.45592,
     );
-    cesiumInstance.Camera.DEFAULT_VIEW_RECTANGLE = extent;
-    cesiumInstance.Camera.DEFAULT_VIEW_FACTOR = 0;
+    Cesium.Camera.DEFAULT_VIEW_RECTANGLE = extent;
+    Cesium.Camera.DEFAULT_VIEW_FACTOR = 0;
 
-    // Create Cesium viewer with configuration from config
-    const viewer = new cesiumInstance.Viewer(containerId, {
-      ...config.viewer.cesiumOptions,
-      imageryProvider: new cesiumInstance.UrlTemplateImageryProvider(
-        config.imagery,
-      ),
-      terrainProvider: new cesiumInstance.CesiumTerrainProvider(config.terrain),
+    // Criar o viewer do Cesium
+    const viewer = new Cesium.Viewer(containerId, {
+      infoBox: false,
+      shouldAnimate: false,
+      vrButton: false,
+      geocoder: false,
+      homeButton: false,
+      sceneModePicker: false,
+      baseLayerPicker: false,
+      navigationHelpButton: true,
+      animation: false,
+      timeline: false,
+      fullscreenButton: false,
+      imageryProvider: new Cesium.UrlTemplateImageryProvider({
+        url: env.VITE_IMAGERY_PROVIDER_URL,
+        credit: 'Diretoria de Serviço Geográfico - Exército Brasileiro',
+      }),
+      terrainProvider: new Cesium.CesiumTerrainProvider({
+        url: env.VITE_TERRAIN_PROVIDER_URL,
+      }),
     });
 
-    // Apply global settings
-    viewer.scene.globe.baseColor = cesiumInstance.Color.BLACK;
-    viewer.scene.skyAtmosphere.show = config.viewer.defaultOptions.atmosphere;
-    viewer.scene.skyBox.show = config.viewer.defaultOptions.atmosphere;
+    // Configurar o globo
+    viewer.scene.globe.baseColor = Cesium.Color.BLACK;
+    viewer.scene.skyAtmosphere.show = true;
+    viewer.scene.skyBox.show = true;
     viewer.bottomContainer.style.display = 'none';
 
-    // If initial camera is provided, set the camera position
-    if (initialCamera) {
-      const camera = {
-        ...config.viewer.defaultCamera,
-        ...initialCamera,
-      };
+    // Configurar posição e orientação iniciais
+    const position = Cesium.Cartesian3.fromDegrees(
+      config.center.lng,
+      config.center.lat,
+      config.center.height || 424.7,
+    );
 
-      // Validate camera position
-      const validatedCamera = camera3DSchema.parse(camera);
+    const heading = Cesium.Math.toRadians(config.orientation.heading);
+    const pitch = Cesium.Math.toRadians(config.orientation.pitch);
+    const roll = Cesium.Math.toRadians(config.orientation.roll);
 
-      // Set initial camera position
-      const position = cesiumInstance.Cartesian3.fromDegrees(
-        validatedCamera.longitude,
-        validatedCamera.latitude,
-        validatedCamera.height,
-      );
+    const hpr = new Cesium.HeadingPitchRoll(heading, pitch, roll);
+    Cesium.Transforms.headingPitchRollQuaternion(position, hpr);
 
-      const heading = cesiumInstance.Math.toRadians(validatedCamera.heading);
-      const pitch = cesiumInstance.Math.toRadians(validatedCamera.pitch);
-      const roll = cesiumInstance.Math.toRadians(validatedCamera.roll);
-
-      viewer.camera.setView({
-        destination: position,
-        orientation: {
-          heading,
-          pitch,
-          roll,
-        },
-      });
-
-      // Update camera position in store
-      setCameraPosition(validatedCamera);
-    }
-
-    // Save viewer reference to store
+    // Salvar as instâncias no store global
+    setCesium(Cesium);
     setCesiumMap(viewer);
 
-    // Apply performance settings
-    if (viewer.scene.primitives) {
-      viewer.scene.primitives.maximumScreenSpaceError =
-        config.performance.maximumScreenSpaceError;
-    }
+    // Configurar hooks de features
+    setupFeatureHooks(Cesium, viewer);
 
     // Cleanup function
     return () => {
-      if (viewer) {
+      if (viewer && !viewer.isDestroyed()) {
         setCesiumMap(null);
         viewer.destroy();
       }
     };
-  }, [
-    containerId,
-    initialView,
-    initialCamera,
-    setCesium,
-    setCesiumMap,
-    setCameraPosition,
-  ]);
+  }, [containerId, initialState, setCesium, setCesiumMap, setupFeatureHooks]);
 
   return cesiumMap;
 }

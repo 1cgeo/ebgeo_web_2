@@ -1,113 +1,81 @@
 // Path: map3d\features\viewshed\store.ts
-import { nanoid } from 'nanoid';
 import { create } from 'zustand';
 
-import { useMap3DStore } from '@/map3d/store';
-
-import {
-  type Cartesian,
-  type ViewshedOptions,
-  type ViewshedStyle,
-  defaultViewshedOptions,
-  defaultViewshedStyle,
-  viewshedOptionsSchema,
-} from './types';
+import { getCesium } from '../../store';
+import { ViewshedToolState } from './types';
 
 interface ViewshedState {
-  currentViewshed: ViewshedOptions | null;
-  viewsheds: ViewshedOptions[];
-  style: ViewshedStyle;
+  // Estado
+  toolState: ViewshedToolState;
+  viewshedInstance: any | null;
 
-  // Actions
-  startNewViewshed: () => void;
-  setViewshedPoint: (point: Cartesian) => void;
-  updateViewshedOptions: (options: Partial<ViewshedOptions>) => void;
-  completeViewshed: () => void;
-  removeViewshed: (id: string) => void;
-  clearViewsheds: () => void;
-  updateStyle: (style: Partial<ViewshedStyle>) => void;
-  reset: () => void;
+  // Ações
+  startViewshedAnalysis: () => void;
+  cancelViewshedAnalysis: () => void;
+  setViewshedInstance: (instance: any) => void;
+  clearViewshed: () => void;
 }
 
-export const useViewshedStore = create<ViewshedState>((set, get) => ({
-  currentViewshed: null,
-  viewsheds: [],
-  style: defaultViewshedStyle,
+export const useViewshedStore = create<ViewshedState>(set => ({
+  // Estado inicial
+  toolState: ViewshedToolState.INACTIVE,
+  viewshedInstance: null,
 
-  startNewViewshed: () => {
-    const newViewshed = viewshedOptionsSchema.parse({
-      id: nanoid(),
-      ...defaultViewshedOptions,
-    });
-
-    set({ currentViewshed: newViewshed });
+  // Ações
+  startViewshedAnalysis: () => {
+    set({ toolState: ViewshedToolState.ACTIVE });
   },
 
-  setViewshedPoint: point =>
-    set(state => {
-      if (!state.currentViewshed) return state;
+  cancelViewshedAnalysis: () => {
+    const cesium = getCesium();
+    if (!cesium) return;
 
-      const updatedViewshed = viewshedOptionsSchema.parse({
-        ...state.currentViewshed,
-        point,
-      });
-
-      return { currentViewshed: updatedViewshed };
-    }),
-
-  updateViewshedOptions: options =>
-    set(state => {
-      if (!state.currentViewshed) return state;
-
-      const updatedViewshed = viewshedOptionsSchema.parse({
-        ...state.currentViewshed,
-        ...options,
-      });
-
-      return { currentViewshed: updatedViewshed };
-    }),
-
-  completeViewshed: () => {
-    const state = get();
-    if (!state.currentViewshed) return;
-
-    const completedViewshed = viewshedOptionsSchema.parse({
-      ...state.currentViewshed,
-      isComplete: true,
-    });
+    const { viewshedInstance } = useViewshedStore.getState();
+    if (viewshedInstance) {
+      try {
+        viewshedInstance.clear();
+      } catch (error) {
+        console.error('Erro ao cancelar análise de visibilidade:', error);
+      }
+    }
 
     set({
-      viewsheds: [...state.viewsheds, completedViewshed],
-      currentViewshed: null,
+      toolState: ViewshedToolState.INACTIVE,
     });
-
-    useMap3DStore.getState().clearActiveTool();
   },
 
-  removeViewshed: id =>
-    set(state => ({
-      viewsheds: state.viewsheds.filter(vs => vs.id !== id),
-    })),
-
-  clearViewsheds: () => {
-    set({
-      viewsheds: [],
-      currentViewshed: null,
-    });
-    useMap3DStore.getState().clearActiveTool();
+  setViewshedInstance: instance => {
+    set({ viewshedInstance: instance });
   },
 
-  updateStyle: newStyle =>
-    set(state => ({
-      style: { ...state.style, ...newStyle },
-    })),
+  clearViewshed: () => {
+    const { viewshedInstance } = useViewshedStore.getState();
+    if (viewshedInstance) {
+      try {
+        viewshedInstance.clear();
+      } catch (error) {
+        console.error('Erro ao limpar análise de visibilidade:', error);
+      }
+    }
 
-  reset: () => {
     set({
-      currentViewshed: null,
-      viewsheds: [],
-      style: defaultViewshedStyle,
+      toolState: ViewshedToolState.INACTIVE,
     });
-    useMap3DStore.getState().clearActiveTool();
   },
 }));
+
+// Helper para limpar análises de visibilidade
+export function cleanViewshedAnalyses() {
+  const { viewshedInstance } = useViewshedStore.getState();
+  if (viewshedInstance) {
+    try {
+      viewshedInstance.clear();
+    } catch (error) {
+      console.error('Erro ao limpar análises de visibilidade:', error);
+    }
+  }
+
+  useViewshedStore.setState({
+    toolState: ViewshedToolState.INACTIVE,
+  });
+}

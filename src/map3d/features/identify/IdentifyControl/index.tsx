@@ -1,38 +1,38 @@
 // Path: map3d\features\identify\IdentifyControl\index.tsx
-import { type FC, useCallback } from 'react';
+import { type FC, useEffect } from 'react';
 
 import { Tool } from '@/map3d/components/Tool';
-import { useMap3DStore } from '@/map3d/store';
+import { useMap3DToolState } from '@/map3d/store';
 
+import { FeatureInfoPanel } from '../IdentifyPanel';
 import { useIdentifyStore } from '../store';
+import { IdentifyToolState } from '../types';
+import { useIdentify } from '../useIdentify';
 
-interface IdentifyControlProps {
-  disabled?: boolean;
-}
+export const IdentifyControl: FC = () => {
+  const { isActive, isEnabled } = useMap3DToolState('identify');
+  const { activateTool, deactivateTool } = useIdentify();
+  const toolState = useIdentifyStore(state => state.toolState);
 
-export const IdentifyControl: FC<IdentifyControlProps> = ({ disabled }) => {
-  const { activeTool, setActiveTool, clearActiveTool } = useMap3DStore();
-  const { reset } = useIdentifyStore();
-
-  const handleClick = useCallback(() => {
-    const isActive = activeTool === 'identify';
-
-    if (isActive) {
-      clearActiveTool();
-      reset();
-    } else {
-      setActiveTool('identify');
+  // Sincroniza o estado da ferramenta com o estado do mapa
+  useEffect(() => {
+    if (isActive && toolState === IdentifyToolState.INACTIVE) {
+      activateTool();
+    } else if (!isActive && toolState !== IdentifyToolState.INACTIVE) {
+      deactivateTool();
     }
-  }, [activeTool, setActiveTool, clearActiveTool, reset]);
+  }, [isActive, toolState, activateTool, deactivateTool]);
 
   return (
-    <Tool
-      image="/images/information_circle.svg"
-      active={true}
-      inUse={activeTool === 'identify'}
-      disabled={disabled}
-      tooltip="Identificar elementos"
-      onClick={handleClick}
-    />
+    <>
+      <Tool
+        id="identify"
+        image="/images/information_circle.svg"
+        tooltip="Identificar elementos"
+        active={isActive}
+        disabled={!isEnabled}
+      />
+      <FeatureInfoPanel />
+    </>
   );
 };

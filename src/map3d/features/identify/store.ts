@@ -1,99 +1,97 @@
 // Path: map3d\features\identify\store.ts
 import { create } from 'zustand';
 
-import { useMap3DStore } from '@/map3d/store';
-
 import {
-  type Coordinates,
   type FeatureInfo,
-  coordinatesSchema,
-  featureInfoSchema,
+  type IdentifyPosition,
+  type IdentifyStyle,
+  IdentifyToolState,
 } from './types';
 
 interface IdentifyState {
-  selectedCoordinates: Coordinates | null;
+  // Estado
+  toolState: IdentifyToolState;
   featureInfo: FeatureInfo | null;
-  isLoading: boolean;
+  lastPosition: IdentifyPosition | null;
+  style: IdentifyStyle;
   error: string | null;
-  isPanelOpen: boolean;
 
-  // Actions
-  setSelectedCoordinates: (coordinates: Coordinates | null) => void;
+  // Ações
+  activateTool: () => void;
+  deactivateTool: () => void;
   setFeatureInfo: (info: FeatureInfo | null) => void;
-  setLoading: (loading: boolean) => void;
-  setError: (error: string | null) => void;
-  openPanel: () => void;
-  closePanel: () => void;
-  reset: () => void;
+  setPosition: (position: IdentifyPosition | null) => void;
+  setLoading: () => void;
+  setError: (message: string) => void;
+  clearInfo: () => void;
+  updateStyle: (style: Partial<IdentifyStyle>) => void;
 }
 
+const defaultStyle: IdentifyStyle = {
+  panelBackgroundColor: '#ffffff',
+  panelTextColor: '#000000',
+  panelBorderColor: '#cccccc',
+  panelWidth: 300,
+};
+
 export const useIdentifyStore = create<IdentifyState>(set => ({
-  selectedCoordinates: null,
+  // Estado inicial
+  toolState: IdentifyToolState.INACTIVE,
   featureInfo: null,
-  isLoading: false,
+  lastPosition: null,
+  style: defaultStyle,
   error: null,
-  isPanelOpen: false,
 
-  setSelectedCoordinates: coordinates => {
-    if (coordinates) {
-      const validatedCoords = coordinatesSchema.parse(coordinates);
-      set({ selectedCoordinates: validatedCoords });
-    } else {
-      set({ selectedCoordinates: null });
-    }
-  },
-
-  setFeatureInfo: info => {
-    if (info) {
-      const validatedInfo = featureInfoSchema.parse(info);
-      set({
-        featureInfo: validatedInfo,
-        isLoading: false,
-        error: null,
-      });
-    } else {
-      set({
-        featureInfo: null,
-        isLoading: false,
-        error: null,
-      });
-    }
-  },
-
-  setLoading: loading =>
+  // Ações
+  activateTool: () =>
     set({
-      isLoading: loading,
-      error: null,
-    }),
-
-  setError: error =>
-    set({
-      error,
-      isLoading: false,
-      featureInfo: null,
-    }),
-
-  openPanel: () =>
-    set({
-      isPanelOpen: true,
-    }),
-
-  closePanel: () =>
-    set({
-      isPanelOpen: false,
-      selectedCoordinates: null,
+      toolState: IdentifyToolState.ACTIVE,
       featureInfo: null,
       error: null,
     }),
 
-  reset: () => {
+  deactivateTool: () =>
     set({
-      selectedCoordinates: null,
+      toolState: IdentifyToolState.INACTIVE,
       featureInfo: null,
-      isLoading: false,
+      lastPosition: null,
       error: null,
-      isPanelOpen: false,
-    });
-    useMap3DStore.getState().clearActiveTool();
-  },
+    }),
+
+  setFeatureInfo: info =>
+    set({
+      featureInfo: info,
+      toolState: IdentifyToolState.ACTIVE,
+      error: null,
+    }),
+
+  setPosition: position => set({ lastPosition: position }),
+
+  setLoading: () =>
+    set({
+      toolState: IdentifyToolState.LOADING,
+      featureInfo: null,
+      error: null,
+    }),
+
+  setError: message =>
+    set({
+      toolState: IdentifyToolState.ERROR,
+      error: message,
+      featureInfo: null,
+    }),
+
+  clearInfo: () =>
+    set({
+      featureInfo: null,
+      error: null,
+    }),
+
+  updateStyle: style =>
+    set(state => ({
+      style: {
+        ...state.style,
+        ...style,
+      },
+    })),
 }));

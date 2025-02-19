@@ -1,54 +1,33 @@
 // Path: map3d\features\distance\DistanceControl\index.tsx
-import { type FC, useCallback, useEffect } from 'react';
+import { FC, useEffect } from 'react';
 
-import { Tool } from '@/map3d/components/Tool';
-import { useMap3DStore } from '@/map3d/store';
-
+import { Tool } from '../../../components/Tool';
+import { useMap3DToolState } from '../../../store';
 import { useDistanceStore } from '../store';
-import { useDistanceDraw } from '../useDistanceDraw';
+import { DistanceToolState } from '../types';
+import { useDistance } from '../useDistance';
 
-interface DistanceControlProps {
-  disabled?: boolean;
-  active?: boolean;
-}
+export const DistanceControl: FC = () => {
+  const { isActive, isEnabled } = useMap3DToolState('distance');
+  const { startMeasuring, cancelMeasuring } = useDistance();
+  const toolState = useDistanceStore(state => state.toolState);
 
-export const DistanceControl: FC<DistanceControlProps> = ({
-  disabled,
-  active = true,
-}) => {
-  const { activeTool, setActiveTool, clearActiveTool } = useMap3DStore();
-  const { startNewLine, reset } = useDistanceStore();
-
-  // Initialize distance drawing functionality
-  const { calculateDistance } = useDistanceDraw();
-
-  const handleClick = useCallback(() => {
-    const isActive = activeTool === 'distance';
-
-    if (isActive) {
-      clearActiveTool();
-      reset();
-    } else {
-      setActiveTool('distance');
-      startNewLine();
-    }
-  }, [activeTool, setActiveTool, clearActiveTool, startNewLine, reset]);
-
-  // Ensure the distance calculation is available
+  // Sincroniza o estado da ferramenta com o estado do mapa
   useEffect(() => {
-    if (activeTool === 'distance') {
-      // The useDistanceDraw hook is now active and handling interactions
+    if (isActive && toolState !== DistanceToolState.MEASURING) {
+      startMeasuring();
+    } else if (!isActive && toolState === DistanceToolState.MEASURING) {
+      cancelMeasuring();
     }
-  }, [activeTool, calculateDistance]);
+  }, [isActive, toolState, startMeasuring, cancelMeasuring]);
 
   return (
     <Tool
+      id="distance"
       image="/images/icon-distance.svg"
-      active={active}
-      inUse={activeTool === 'distance'}
-      disabled={disabled}
       tooltip="Medir distância"
-      onClick={handleClick}
+      active={isActive}
+      disabled={!isEnabled}
     />
   );
 };

@@ -2,106 +2,114 @@
 import { nanoid } from 'nanoid';
 import { create } from 'zustand';
 
-import { useMap3DStore } from '@/map3d/store';
-
-import {
-  type Area,
-  type AreaStyle,
-  type Cartesian,
-  areaSchema,
-  cartesianSchema,
-  defaultAreaStyle,
-} from './types';
+import { getCesium } from '../../store';
+import { type AreaMeasurement, type AreaStyle, AreaToolState } from './types';
 
 interface AreaState {
-  currentArea: Area | null;
-  areas: Area[];
+  // Estado
+  toolState: AreaToolState;
+  currentMeasurement: AreaMeasurement | null;
+  measurements: AreaMeasurement[];
   style: AreaStyle;
 
-  // Actions
-  startNewArea: () => void;
-  addPoint: (point: Cartesian) => void;
-  completeArea: (finalArea: number) => void;
-  removeArea: (id: string) => void;
-  clearAreas: () => void;
+  // Ações
+  startMeasuring: () => void;
+  cancelMeasuring: () => void;
+  completeMeasurement: (
+    measurement: Omit<AreaMeasurement, 'id' | 'timestamp'>,
+  ) => void;
+  removeMeasurement: (id: string) => void;
+  clearAllMeasurements: () => void;
   updateStyle: (style: Partial<AreaStyle>) => void;
-  reset: () => void;
 }
 
+const defaultStyle: AreaStyle = {
+  fillColor: 'rgba(0, 70, 255, 0.2)',
+  outlineColor: 'rgba(0, 70, 255, 0.8)',
+  outlineWidth: 3,
+  labelBackgroundColor: 'rgba(255, 255, 255, 0.8)',
+  labelTextColor: '#000000',
+  labelFont: '14px monospace',
+};
+
 export const useAreaStore = create<AreaState>((set, get) => ({
-  currentArea: null,
-  areas: [],
-  style: defaultAreaStyle,
+  // Estado inicial
+  toolState: AreaToolState.INACTIVE,
+  currentMeasurement: null,
+  measurements: [],
+  style: defaultStyle,
 
-  startNewArea: () => {
-    const newArea = areaSchema.parse({
+  // Ações
+  startMeasuring: () => {
+    // Se já estiver medindo, não faz nada
+    if (get().toolState === AreaToolState.MEASURING) {
+      return;
+    }
+
+    // Inicia uma nova medição
+    set({
+      toolState: AreaToolState.MEASURING,
+      currentMeasurement: null,
+    });
+  },
+
+  cancelMeasuring: () => {
+    set({
+      toolState: AreaToolState.INACTIVE,
+      currentMeasurement: null,
+    });
+  },
+
+  completeMeasurement: measurement => {
+    const { positions, area } = measurement;
+    const newMeasurement: AreaMeasurement = {
       id: nanoid(),
-      points: [],
-      isComplete: false,
-    });
+      positions,
+      area,
+      timestamp: Date.now(),
+    };
 
-    set({ currentArea: newArea });
-  },
-
-  addPoint: point => {
-    // Valida o ponto antes de adicionar
-    const validatedPoint = cartesianSchema.parse(point);
-
-    set(state => {
-      if (!state.currentArea) return state;
-
-      const updatedArea = areaSchema.parse({
-        ...state.currentArea,
-        points: [...state.currentArea.points, validatedPoint],
-      });
-
-      return { currentArea: updatedArea };
-    });
-  },
-
-  completeArea: finalArea => {
-    const state = get();
-    if (!state.currentArea) return;
-
-    const completedArea = areaSchema.parse({
-      ...state.currentArea,
-      area: finalArea,
-      isComplete: true,
-    });
-
-    set({
-      areas: [...state.areas, completedArea],
-      currentArea: null,
-    });
-
-    // Limpa a ferramenta ativa após completar
-    useMap3DStore.getState().clearActiveTool();
-  },
-
-  removeArea: id =>
     set(state => ({
-      areas: state.areas.filter(area => area.id !== id),
-    })),
-
-  clearAreas: () => {
-    set({
-      areas: [],
-      currentArea: null,
-    });
-    useMap3DStore.getState().clearActiveTool();
+      toolState: AreaToolState.COMPLETED,
+      currentMeasurement: null,
+      measurements: [...state.measurements, newMeasurement],
+    }));
   },
 
-  updateStyle: newStyle =>
+  removeMeasurement: id => {
     set(state => ({
-      style: { ...state.style, ...newStyle },
-    })),
+      measurements: state.measurements.filter(m => m.id !== id),
+    }));
+  },
 
-  reset: () => {
+  clearAllMeasurements: () => {
     set({
-      currentArea: null,
-      areas: [],
-      style: defaultAreaStyle,
+      toolState: AreaToolState.INACTIVE,
+      currentMeasurement: null,
+      measurements: [],
     });
-    useMap3DStore.getState().clearActiveTool();
+  },
+
+  updateStyle: style => {
+    set(state => ({
+      style: {
+        ...state.style,
+        ...style,
+      },
+    }));
   },
 }));
+
+// Helper para limpar medições ao desmontar
+export function cleanAreaMeasurements() {
+  const cesium = getCesium();
+  if (!cesium) return;
+
+  const { viewer } = cesium;
+  const drawLayer = viewer.dataSources.getByName('measureAreaLayer')[0];
+  if (drawLayer) {
+    viewer.dataSources.remove(drawLayer);
+  }
+
+  useAreaStore.getState().clearAllMeasurements();
+}

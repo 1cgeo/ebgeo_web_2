@@ -1,46 +1,37 @@
 // Path: map3d\features\area\types.ts
 import { z } from 'zod';
 
-// Schema para ponto no espaço 3D
-export const cartesianSchema = z
-  .object({
-    x: z.number(),
-    y: z.number(),
-    z: z.number(),
-  })
-  .strict();
+// Schema para uma medição de área
+export const areaMeasurementSchema = z.object({
+  id: z.string(),
+  positions: z.array(
+    z.object({
+      x: z.number(),
+      y: z.number(),
+      z: z.number(),
+    }),
+  ),
+  area: z.number().nonnegative(),
+  timestamp: z.number(),
+});
 
-// Schema para área
-export const areaSchema = z
-  .object({
-    id: z.string(),
-    points: z.array(cartesianSchema),
-    area: z.number().optional(),
-    isComplete: z.boolean(),
-  })
-  .strict();
+// Schema para as configurações de estilo da medição
+export const areaStyleSchema = z.object({
+  fillColor: z.string().default('rgba(0, 70, 255, 0.2)'),
+  outlineColor: z.string().default('rgba(0, 70, 255, 0.8)'),
+  outlineWidth: z.number().min(1).max(10).default(3),
+  labelBackgroundColor: z.string().default('rgba(255, 255, 255, 0.8)'),
+  labelTextColor: z.string().default('#000000'),
+  labelFont: z.string().default('14px monospace'),
+});
 
-// Schema para configurações de estilo
-export const areaStyleSchema = z
-  .object({
-    color: z.string().regex(/^#([0-9A-F]{6}|[0-9A-F]{8})$/i),
-    opacity: z.number().min(0).max(1),
-    fillColor: z.string().regex(/^#([0-9A-F]{6}|[0-9A-F]{8})$/i),
-    fillOpacity: z.number().min(0).max(1),
-    width: z.number().min(1),
-  })
-  .strict();
-
-// Types inferidos
-export type Cartesian = z.infer<typeof cartesianSchema>;
-export type Area = z.infer<typeof areaSchema>;
+// Type inferidos
+export type AreaMeasurement = z.infer<typeof areaMeasurementSchema>;
 export type AreaStyle = z.infer<typeof areaStyleSchema>;
 
-// Configurações padrão
-export const defaultAreaStyle: AreaStyle = {
-  color: '#0000FF',
-  opacity: 0.8,
-  fillColor: '#4444FF',
-  fillOpacity: 0.3,
-  width: 2,
-};
+// Estado da ferramenta
+export enum AreaToolState {
+  INACTIVE = 'inactive',
+  MEASURING = 'measuring',
+  COMPLETED = 'completed',
+}

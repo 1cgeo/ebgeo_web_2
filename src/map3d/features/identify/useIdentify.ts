@@ -1,54 +1,49 @@
 // Path: map3d\features\identify\useIdentify.ts
 import { useCallback, useEffect } from 'react';
 
-import { useQuery } from '@tanstack/react-query';
-
 import { useMapsStore } from '@/shared/store/mapsStore';
-
-import { useMap3DStore } from '@/map3d/store';
 
 import { fetchFeatureInfo } from './api';
 import { useIdentifyStore } from './store';
-import { type Coordinates } from './types';
+import { type IdentifyPosition, IdentifyToolState } from './types';
 
 export function useIdentify() {
-  const { cesium, cesiumMap } = useMapsStore();
-  const { activeTool } = useMap3DStore();
+  const cesiumMap = useMapsStore(state => state.cesiumMap);
+  const cesium = useMapsStore(state => state.cesium);
   const {
-    selectedCoordinates,
-    setSelectedCoordinates,
+    toolState,
+    featureInfo,
+    activateTool,
+    deactivateTool,
     setFeatureInfo,
+    setPosition,
+    setLoading,
     setError,
-    openPanel,
-    closePanel,
+    clearInfo,
   } = useIdentifyStore();
 
-  const isActive = activeTool === 'identify';
+  // Função para buscar informações de feature na API
+  const handleFeatureIdentify = useCallback(
+    async (position: IdentifyPosition) => {
+      try {
+        setLoading();
+        setPosition(position);
 
-  // Query para buscar informações da feição
-  const { isLoading } = useQuery({
-    queryKey: ['featureInfo', selectedCoordinates],
-    queryFn: () =>
-      selectedCoordinates ? fetchFeatureInfo(selectedCoordinates) : null,
-    enabled: !!selectedCoordinates,
-    onSuccess: data => {
-      if (data) {
+        const data = await fetchFeatureInfo(position);
         setFeatureInfo(data);
-        openPanel();
+      } catch (error) {
+        console.error('Erro ao buscar informações da feature:', error);
+        setError((error as Error).message || 'Erro desconhecido');
       }
     },
-    onError: error => {
-      setError(
-        error instanceof Error ? error.message : 'Erro ao buscar informações',
-      );
-      openPanel();
-    },
-  });
+    [setLoading, setPosition, setFeatureInfo, setError],
+  );
 
-  // Handler para clique no mapa
+  // Função para obter coordenadas 3D a partir de um clique
   const handleMapClick = useCallback(
-    (event: any) => {
-      if (!isActive || !cesium || !cesiumMap) return;
+    (event: MouseEvent) => {
+      if (toolState !== IdentifyToolState.ACTIVE || !cesium || !cesiumMap)
+        return;
 
       const canvas = cesiumMap.scene.canvas;
       const rect = canvas.getBoundingClientRect();
@@ -62,35 +57,51 @@ export function useIdentify() {
         const cartesian = cesiumMap.scene.pickPosition(position);
         if (cesium.defined(cartesian)) {
           const cartographic = cesium.Cartographic.fromCartesian(cartesian);
-          const coordinates: Coordinates = {
-            lat: cesium.Math.toDegrees(cartographic.latitude),
-            lon: cesium.Math.toDegrees(cartographic.longitude),
-            height: cartographic.height,
-          };
+          const longitude = cesium.Math.toDegrees(cartographic.longitude);
+          const latitude = cesium.Math.toDegrees(cartographic.latitude);
+          const height = cartographic.height;
 
-          setSelectedCoordinates(coordinates);
+          handleFeatureIdentify({ longitude, latitude, height });
         }
-      } else {
-        closePanel();
       }
     },
-    [isActive, cesium, cesiumMap, setSelectedCoordinates, closePanel],
+    [toolState, cesium, cesiumMap, handleFeatureIdentify],
   );
 
-  // Setup dos event listeners
+  // Adiciona/remove o handler de click quando o estado da ferramenta muda
   useEffect(() => {
     if (!cesiumMap) return;
 
-    if (isActive) {
+    if (toolState === IdentifyToolState.ACTIVE) {
+      // Atualiza o cursor
+      cesiumMap.canvas.style.cursor = 'help';
+
+      // Adiciona o handler de click
       cesiumMap.canvas.addEventListener('click', handleMapClick);
+    } else {
+      // Restaura o cursor
+      cesiumMap.canvas.style.cursor = '';
+
+      // Remove o handler de click
+      cesiumMap.canvas.removeEventListener('click', handleMapClick);
     }
 
+    // Cleanup
     return () => {
-      cesiumMap.canvas.removeEventListener('click', handleMapClick);
+      if (cesiumMap) {
+        cesiumMap.canvas.style.cursor = '';
+        cesiumMap.canvas.removeEventListener('click', handleMapClick);
+      }
     };
-  }, [cesiumMap, isActive, handleMapClick]);
+  }, [cesiumMap, toolState, handleMapClick]);
 
   return {
-    isLoading,
+    isActive: toolState === IdentifyToolState.ACTIVE,
+    isLoading: toolState === IdentifyToolState.LOADING,
+    hasError: toolState === IdentifyToolState.ERROR,
+    featureInfo,
+    activateTool,
+    deactivateTool,
+    clearInfo,
   };
 }

@@ -1,85 +1,119 @@
 // Path: map3d\features\catalog\ModelList\index.tsx
 import { Close, Visibility, VisibilityOff, ZoomIn } from '@mui/icons-material';
-import { Avatar, IconButton, List, ListItemText, Tooltip } from '@mui/material';
+import {
+  Avatar,
+  Box,
+  IconButton,
+  List,
+  ListItem,
+  ListItemText,
+  Tooltip,
+  Typography,
+} from '@mui/material';
 
-import { type FC } from 'react';
-
-import { useMap3DStore } from '@/map3d/store';
+import { type FC, useEffect } from 'react';
 
 import { getModelThumbnailUrl } from '../api';
-import { useModels } from '../useModels';
-import { Controls, ListContainer, ListItem } from './styles';
+import { type CatalogItem } from '../types';
+import { useCatalog } from '../useCatalog';
+import { Controls, ListContainer } from './styles';
+
+interface VisibilityButtonProps {
+  isVisible: boolean;
+  onToggleVisibility: () => void;
+}
+
+const VisibilityButton: FC<VisibilityButtonProps> = ({
+  isVisible,
+  onToggleVisibility,
+}) => {
+  return (
+    <IconButton size="small" onClick={onToggleVisibility}>
+      {isVisible ? (
+        <Visibility fontSize="small" />
+      ) : (
+        <VisibilityOff fontSize="small" />
+      )}
+    </IconButton>
+  );
+};
+
+interface ModelItemProps {
+  model: CatalogItem;
+}
+
+const ModelItem: FC<ModelItemProps> = ({ model }) => {
+  const { zoomToModel, removeModel, toggleModelVisibility, isModelVisible } =
+    useCatalog();
+
+  const truncateText = (text: string, maxLength: number) => {
+    return text.length > maxLength ? text.slice(0, maxLength) + '...' : text;
+  };
+
+  return (
+    <ListItem disableGutters>
+      <Avatar
+        src={getModelThumbnailUrl(model)}
+        variant="rounded"
+        sx={{ width: 32, height: 32, mr: 1 }}
+      />
+      <Tooltip title={model.name}>
+        <ListItemText
+          primary={truncateText(model.name, 20)}
+          primaryTypographyProps={{
+            noWrap: true,
+            fontSize: '0.875rem',
+            fontWeight: 'medium',
+          }}
+        />
+      </Tooltip>
+      <Controls>
+        <VisibilityButton
+          isVisible={isModelVisible(model.id)}
+          onToggleVisibility={() => toggleModelVisibility(model.id)}
+        />
+        <IconButton size="small" onClick={() => zoomToModel(model.id)}>
+          <ZoomIn fontSize="small" />
+        </IconButton>
+        <IconButton size="small" onClick={() => removeModel(model.id)}>
+          <Close fontSize="small" />
+        </IconButton>
+      </Controls>
+    </ListItem>
+  );
+};
 
 export const ModelList: FC = () => {
-  const { models, activeTool } = useMap3DStore();
+  const { loadedModels, removeModel } = useCatalog();
 
-  const { setModelVisibility, removeModel } = useModels();
+  // Clean up models on component unmount
+  useEffect(() => {
+    return () => {
+      loadedModels.forEach(model => removeModel(model.id));
+    };
+  }, [loadedModels, removeModel]);
 
-  // Não mostra a lista se não houver modelos ou se estiver no catálogo
-  if (models.length === 0 || activeTool === 'catalog') return null;
+  if (loadedModels.length === 0) {
+    return null;
+  }
 
   return (
     <ListContainer>
-      <List disablePadding>
-        {models.map(model => (
-          <ListItem key={model.id}>
-            <Avatar
-              src={getModelThumbnailUrl(model)}
-              variant="rounded"
-              sx={{ width: 32, height: 32, mr: 1 }}
-            />
-
-            <Tooltip title={model.nome}>
-              <ListItemText
-                primary={model.nome}
-                primaryTypographyProps={{
-                  noWrap: true,
-                  fontSize: '0.875rem',
-                  fontWeight: 'medium',
-                }}
-                secondary={model.tipo}
-                secondaryTypographyProps={{
-                  noWrap: true,
-                  fontSize: '0.75rem',
-                }}
-              />
-            </Tooltip>
-
-            <Controls>
-              <IconButton
-                size="small"
-                onClick={() => setModelVisibility(model.id, !model.visivel)}
-                title={model.visivel ? 'Ocultar modelo' : 'Mostrar modelo'}
-              >
-                {model.visivel ? (
-                  <Visibility fontSize="small" />
-                ) : (
-                  <VisibilityOff fontSize="small" />
-                )}
-              </IconButton>
-
-              <IconButton
-                size="small"
-                onClick={() => {
-                  // TODO: Implementar zoom para o modelo
-                  console.log('Zoom para', model.nome);
-                }}
-                title="Zoom para o modelo"
-              >
-                <ZoomIn fontSize="small" />
-              </IconButton>
-
-              <IconButton
-                size="small"
-                onClick={() => removeModel(model.id)}
-                title="Remover modelo"
-              >
-                <Close fontSize="small" />
-              </IconButton>
-            </Controls>
-          </ListItem>
+      <Box sx={{ p: 1, borderBottom: '1px solid rgba(0, 0, 0, 0.12)' }}>
+        <Typography variant="subtitle2">
+          Modelos Carregados ({loadedModels.length})
+        </Typography>
+      </Box>
+      <List
+        disablePadding
+        sx={{ maxHeight: 'calc(100vh - 180px)', overflow: 'auto' }}
+      >
+        {loadedModels.map(model => (
+          <ModelItem key={model.id} model={model} />
         ))}
       </List>
     </ListContainer>
   );
 };
+
+export default ModelList;

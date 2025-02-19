@@ -1,54 +1,33 @@
 // Path: map3d\features\viewshed\ViewshedControl\index.tsx
-import { type FC, useCallback, useEffect } from 'react';
+import { FC, useEffect } from 'react';
 
-import { Tool } from '@/map3d/components/Tool';
-import { useMap3DStore } from '@/map3d/store';
-
+import { Tool } from '../../../components/Tool';
+import { useMap3DToolState } from '../../../store';
 import { useViewshedStore } from '../store';
-import { useViewshedDraw } from '../useViewshedDraw';
+import { ViewshedToolState } from '../types';
+import { useViewshed } from '../useViewshed';
 
-interface ViewshedControlProps {
-  disabled?: boolean;
-  active?: boolean;
-}
+export const ViewshedControl: FC = () => {
+  const { isActive, isEnabled } = useMap3DToolState('viewshed');
+  const { addViewshed, cancelViewshedAnalysis } = useViewshed();
+  const toolState = useViewshedStore(state => state.toolState);
 
-export const ViewshedControl: FC<ViewshedControlProps> = ({
-  disabled,
-  active = true,
-}) => {
-  const { activeTool, setActiveTool, clearActiveTool } = useMap3DStore();
-  const { startNewViewshed, reset } = useViewshedStore();
-
-  // Initialize viewshed drawing functionality
-  const { viewshedRefs } = useViewshedDraw();
-
-  const handleClick = useCallback(() => {
-    const isActive = activeTool === 'viewshed';
-
-    if (isActive) {
-      clearActiveTool();
-      reset();
-    } else {
-      setActiveTool('viewshed');
-      startNewViewshed();
-    }
-  }, [activeTool, setActiveTool, clearActiveTool, startNewViewshed, reset]);
-
-  // Save viewshed refs to map store when active
+  // Sincroniza o estado da ferramenta com o estado do mapa
   useEffect(() => {
-    if (activeTool === 'viewshed') {
-      // The useViewshedDraw hook is now active and handling interactions
+    if (isActive && toolState === ViewshedToolState.INACTIVE) {
+      addViewshed();
+    } else if (!isActive && toolState === ViewshedToolState.ACTIVE) {
+      cancelViewshedAnalysis();
     }
-  }, [activeTool, viewshedRefs]);
+  }, [isActive, toolState, addViewshed, cancelViewshedAnalysis]);
 
   return (
     <Tool
+      id="viewshed"
       image="/images/icon-viewshed.svg"
-      active={active}
-      inUse={activeTool === 'viewshed'}
-      disabled={disabled}
-      tooltip="Analisar visibilidade"
-      onClick={handleClick}
+      tooltip="Análise de visibilidade"
+      active={isActive}
+      disabled={!isEnabled}
     />
   );
 };

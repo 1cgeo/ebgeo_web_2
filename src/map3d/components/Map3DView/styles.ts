@@ -5,17 +5,19 @@ export const MapContainer = styled('div')({
   position: 'relative',
   overflow: 'hidden',
   width: '100%',
+  top: 0,
+  left: 0,
   height: '100vh',
   cursor: 'default',
 
-  // Estilos para controles do Cesium
+  // Estilos específicos do Cesium
   '& .cesium-viewer-toolbar': {
-    top: 80,
-    right: 10,
+    top: '80px',
+    position: 'fixed',
   },
 
-  '& .cesium-viewer-cesiumInspectorContainer': {
-    top: 80,
-    right: 10,
+  '& .cesium-viewer-toolbar > span > div': {
+    position: 'absolute',
+    right: '60px',
   },
 });

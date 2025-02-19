@@ -1,71 +1,74 @@
 // Path: map3d\features\identify\IdentifyPanel\index.tsx
-import { CircularProgress, Typography } from '@mui/material';
-
 import { type FC } from 'react';
 
 import { useIdentifyStore } from '../store';
-import { useIdentify } from '../useIdentify';
-import { CloseButton, InfoGroup, PanelContainer } from './styles';
+import { CloseButton, FeatureInfoContainer } from './styles';
 
-export const IdentifyPanel: FC = () => {
-  const { isPanelOpen, featureInfo, error, closePanel } = useIdentifyStore();
+export const FeatureInfoPanel: FC = () => {
+  const { featureInfo, error, style, clearInfo } = useIdentifyStore();
 
-  const { isLoading } = useIdentify();
+  if (!featureInfo && !error) return null;
 
-  if (!isPanelOpen) return null;
+  let content;
+  if (error) {
+    content = (
+      <p>
+        <strong>Erro:</strong> {error}
+      </p>
+    );
+  } else if (featureInfo?.message) {
+    content = (
+      <p>
+        <strong>Aviso:</strong> {featureInfo.message}
+      </p>
+    );
+  } else {
+    content = (
+      <>
+        <h3>Informações da Feature</h3>
+        {featureInfo?.nome && (
+          <p>
+            <strong>Nome:</strong> {featureInfo.nome}
+          </p>
+        )}
+        {featureInfo?.municipio && (
+          <p>
+            <strong>Município:</strong> {featureInfo.municipio}
+          </p>
+        )}
+        {featureInfo?.estado && (
+          <p>
+            <strong>Estado:</strong> {featureInfo.estado}
+          </p>
+        )}
+        {featureInfo?.tipo && (
+          <p>
+            <strong>Tipo:</strong> {featureInfo.tipo}
+          </p>
+        )}
+        {featureInfo?.altitude_base !== undefined && (
+          <p>
+            <strong>Altitude Base:</strong> {featureInfo.altitude_base} m
+          </p>
+        )}
+        {featureInfo?.altitude_topo !== undefined && (
+          <p>
+            <strong>Altitude Topo:</strong> {featureInfo.altitude_topo} m
+          </p>
+        )}
+      </>
+    );
+  }
 
   return (
-    <PanelContainer>
-      <CloseButton onClick={closePanel} />
-
-      {isLoading ? (
-        <CircularProgress size={24} />
-      ) : error ? (
-        <Typography color="error">{error}</Typography>
-      ) : featureInfo?.message ? (
-        <Typography>
-          <strong>Aviso:</strong> {featureInfo.message}
-        </Typography>
-      ) : featureInfo ? (
-        <>
-          <Typography variant="h6" gutterBottom>
-            Informações da Feição
-          </Typography>
-
-          <InfoGroup>
-            {featureInfo.nome && (
-              <Typography>
-                <strong>Nome:</strong> {featureInfo.nome}
-              </Typography>
-            )}
-            {featureInfo.municipio && (
-              <Typography>
-                <strong>Município:</strong> {featureInfo.municipio}
-              </Typography>
-            )}
-            {featureInfo.estado && (
-              <Typography>
-                <strong>Estado:</strong> {featureInfo.estado}
-              </Typography>
-            )}
-            {featureInfo.tipo && (
-              <Typography>
-                <strong>Tipo:</strong> {featureInfo.tipo}
-              </Typography>
-            )}
-            {featureInfo.altitude_base !== undefined && (
-              <Typography>
-                <strong>Altitude Base:</strong> {featureInfo.altitude_base} m
-              </Typography>
-            )}
-            {featureInfo.altitude_topo !== undefined && (
-              <Typography>
-                <strong>Altitude Topo:</strong> {featureInfo.altitude_topo} m
-              </Typography>
-            )}
-          </InfoGroup>
-        </>
-      ) : null}
-    </PanelContainer>
+    <FeatureInfoContainer
+      $backgroundColor={style.panelBackgroundColor}
+      $textColor={style.panelTextColor}
+      $borderColor={style.panelBorderColor}
+      $width={style.panelWidth}
+    >
+      <CloseButton onClick={clearInfo}>✕</CloseButton>
+      {content}
+    </FeatureInfoContainer>
   );
 };

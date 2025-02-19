@@ -1,176 +1,263 @@
 // Path: map3d\features\catalog\Catalog\index.tsx
-import CloseIcon from '@mui/icons-material/Close';
 import SearchIcon from '@mui/icons-material/Search';
 import {
+  Box,
   CircularProgress,
-  Grid,
-  IconButton,
+  Fade,
   InputAdornment,
   Modal,
-  Tab,
-  Tabs,
   TextField,
   Typography,
+  useMediaQuery,
+  useTheme,
 } from '@mui/material';
+import Grid from '@mui/material/Grid2';
 
-import { type FC, Suspense, useState } from 'react';
-
-import { useMap3DStore } from '@/map3d/store';
-
-import { ModelCard } from '../ModelCard';
-import { useCatalogStore } from '../store';
-// Import from useQueries instead of queries
-import { usePaginatedCatalog } from '../useQueries';
 import {
-  HeaderContainer,
-  LoadMoreButton,
-  LoadingWrapper,
-  NoResultsMessage,
-  PanelContainer,
-  ResultsContainer,
-  SearchBox,
-} from './styles';
+  type FC,
+  Suspense,
+  lazy,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
+import InfiniteScroll from 'react-infinite-scroll-component';
 
-export const CatalogPanel: FC = () => {
+import { CatalogToolState } from '../types';
+import { useCatalog } from '../useCatalog';
+
+const ModelCard = lazy(() =>
+  import('../ModelCard').then(module => ({ default: module.ModelCard })),
+);
+
+interface Model3DCatalogProps {
+  open: boolean;
+  onClose: () => void;
+}
+
+export const Model3DCatalog: FC<Model3DCatalogProps> = ({ open, onClose }) => {
   const {
-    isPanelOpen,
-    closePanel,
-    searchParams,
-    setSearchTerm,
-    addModelToScene,
-  } = useCatalogStore();
-
-  const { models } = useMap3DStore();
-
-  // Use the paginated catalog hook from useQueries.ts
-  const {
-    data,
+    models,
+    searchTerm,
+    totalItems,
+    hasMore,
     isLoading,
-    error,
-    hasNextPage,
-    hasPreviousPage,
-    page,
-    totalPages,
-    setPage,
-  } = usePaginatedCatalog();
 
-  const isModelLoaded = (modelId: string) => {
-    return models.some(m => m.id === modelId);
-  };
+    handleSearchChange,
+    handleResetSearch,
+    loadNextPage,
+    handleAddModelAndClose,
+    isModelLoaded,
+  } = useCatalog();
 
-  if (!isPanelOpen) return null;
+  const [resizeLoading, setResizeLoading] = useState(false);
+  const [noResults, setNoResults] = useState(false);
+  const searchTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const theme = useTheme();
+  const prevColumnsCountRef = useRef<number>();
+
+  // Determine number of columns based on breakpoint
+  const isXs = useMediaQuery(theme.breakpoints.down('sm'));
+  const isSm = useMediaQuery(theme.breakpoints.between('sm', 'md'));
+  const isMd = useMediaQuery(theme.breakpoints.between('md', 'lg'));
+
+  const columnsCount = useMemo(() => {
+    if (isXs) return 1;
+    if (isSm) return 2;
+    if (isMd) return 3;
+    return 4;
+  }, [isXs, isSm, isMd]);
+
+  // Update noResults based on data
+  useEffect(() => {
+    setNoResults(models.length === 0 && !isLoading);
+  }, [models, isLoading]);
+
+  // Effect to detect changes in column count and reload
+  useEffect(() => {
+    if (
+      prevColumnsCountRef.current !== undefined &&
+      prevColumnsCountRef.current !== columnsCount &&
+      open
+    ) {
+      setResizeLoading(true);
+      handleResetSearch();
+      setTimeout(() => setResizeLoading(false), 500);
+    }
+    prevColumnsCountRef.current = columnsCount;
+  }, [columnsCount, open, handleResetSearch]);
+
+  // Handle search input with debounce
+  const handleSearchInputChange = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      const value = event.target.value;
+
+      if (searchTimeout.current) {
+        clearTimeout(searchTimeout.current);
+        searchTimeout.current = null;
+      }
+
+      const cleanupFn = handleSearchChange(value);
+      if (cleanupFn) {
+        searchTimeout.current = setTimeout(() => {
+          searchTimeout.current = null;
+        }, 300);
+      }
+    },
+    [handleSearchChange],
+  );
+
+  // Clean up timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (searchTimeout.current) {
+        clearTimeout(searchTimeout.current);
+      }
+    };
+  }, []);
 
   return (
-    <Modal
-      open={isPanelOpen}
-      onClose={closePanel}
-      aria-labelledby="catalog-title"
-    >
-      <PanelContainer>
-        <HeaderContainer>
-          <Typography
-            id="catalog-title"
-            variant="h5"
-            component="h2"
-            color="primary"
-          >
-            Catálogo de modelos 3D
-          </Typography>
-          <IconButton
-            onClick={closePanel}
-            size="small"
-            aria-label="fechar catálogo"
-          >
-            <CloseIcon />
-          </IconButton>
-        </HeaderContainer>
-
-        <SearchBox>
+    <Modal open={open} onClose={onClose}>
+      <Box
+        id="catalogContainer"
+        sx={{
+          position: 'absolute',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          width: '90%',
+          maxWidth: 1200,
+          maxHeight: '90vh',
+          bgcolor: 'rgba(255, 255, 255, 0.98)',
+          boxShadow: 24,
+          p: 4,
+          borderRadius: 2,
+          display: 'flex',
+          flexDirection: 'column',
+          overflowY: 'auto',
+        }}
+      >
+        <Typography
+          variant="h4"
+          component="h2"
+          gutterBottom
+          sx={{ mb: 3, color: '#315730' }}
+        >
+          Catálogo de modelos 3D
+        </Typography>
+        <Box sx={{ mb: 3 }}>
           <TextField
             fullWidth
             variant="outlined"
             placeholder="Buscar modelos..."
-            value={searchParams.query || ''}
-            onChange={e => setSearchTerm(e.target.value)}
+            value={searchTerm}
+            onChange={handleSearchInputChange}
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
-                  <SearchIcon color="action" />
+                  <SearchIcon sx={{ color: 'text.secondary' }} />
                 </InputAdornment>
               ),
             }}
+            sx={{
+              '& .MuiOutlinedInput-root': {
+                borderRadius: '50px',
+                '& fieldset': {
+                  borderColor: 'rgba(0, 0, 0, 0.23)',
+                },
+                '&:hover fieldset': {
+                  borderColor: 'rgba(0, 0, 0, 0.23)',
+                },
+                '&.Mui-focused fieldset': {
+                  borderColor: '#315730',
+                },
+              },
+            }}
           />
-        </SearchBox>
+        </Box>
 
-        {data && (
+        {!noResults && models.length > 0 && (
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            Mostrando{' '}
-            {data.data.length > 0
-              ? (page - 1) * searchParams.por_pagina + 1
-              : 0}
-            –{Math.min(page * searchParams.por_pagina, data.total)} de{' '}
-            {data.total} resultados
+            Mostrando {models.length} de {totalItems} resultados
           </Typography>
         )}
 
-        <ResultsContainer>
-          {error ? (
-            <NoResultsMessage>
-              <Typography variant="h6" color="error">
-                Erro ao carregar os modelos. Tente novamente.
-              </Typography>
-            </NoResultsMessage>
-          ) : isLoading ? (
-            <LoadingWrapper>
+        <Box
+          id="scrollableDiv"
+          sx={{
+            overflow: 'auto',
+            flex: 1,
+            maxHeight: 'calc(90vh - 200px)',
+          }}
+        >
+          <Fade in={resizeLoading}>
+            <Box
+              sx={{
+                position: 'absolute',
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -50%)',
+                zIndex: 1000,
+                backgroundColor: 'rgba(255, 255, 255, 0.8)',
+                padding: 2,
+                borderRadius: 2,
+              }}
+            >
               <CircularProgress />
-            </LoadingWrapper>
-          ) : data?.data.length === 0 ? (
-            <NoResultsMessage>
+            </Box>
+          </Fade>
+
+          {noResults ? (
+            <Box sx={{ textAlign: 'center', py: 4 }}>
               <Typography variant="h6" color="text.secondary">
-                Nenhum resultado encontrado
+                Nenhum resultado encontrado para sua busca.
               </Typography>
-              <Typography variant="body1" color="text.secondary">
-                Tente ajustar seus termos de busca
+              <Typography variant="body1" color="text.secondary" mt={2}>
+                Tente ajustar seus termos de busca ou explorar outros modelos.
               </Typography>
-            </NoResultsMessage>
+            </Box>
           ) : (
-            <Grid container spacing={2}>
-              <Suspense fallback={<CircularProgress />}>
-                {data?.data.map(model => (
-                  <Grid item xs={12} sm={6} md={4} lg={3} key={model.id}>
-                    <ModelCard
-                      model={model}
-                      onAddModel={addModelToScene}
-                      isLoaded={isModelLoaded(model.id)}
-                    />
-                  </Grid>
-                ))}
-              </Suspense>
-            </Grid>
-          )}
-
-          {hasNextPage && (
-            <LoadMoreButton
-              variant="contained"
-              onClick={() => setPage(page + 1)}
-              disabled={isLoading}
+            <InfiniteScroll
+              dataLength={models.length}
+              next={loadNextPage}
+              hasMore={hasMore}
+              loader={
+                <Box sx={{ textAlign: 'center', py: 2 }}>
+                  <CircularProgress />
+                </Box>
+              }
+              endMessage={
+                models.length > 0 && (
+                  <Box sx={{ textAlign: 'center', py: 2 }}>
+                    <Typography variant="body2" color="text.secondary">
+                      Você já viu todos os modelos disponíveis!
+                    </Typography>
+                  </Box>
+                )
+              }
+              scrollableTarget="scrollableDiv"
             >
-              {isLoading ? 'Carregando...' : 'Carregar mais'}
-            </LoadMoreButton>
+              <Grid container spacing={2}>
+                <Suspense fallback={<CircularProgress />}>
+                  {models.map(model => (
+                    <Grid xs={12} sm={6} md={4} lg={3} key={model.id}>
+                      <ModelCard
+                        model={model}
+                        onAddModel={handleAddModelAndClose}
+                        isLoaded={isModelLoaded(model.id)}
+                      />
+                    </Grid>
+                  ))}
+                </Suspense>
+              </Grid>
+            </InfiniteScroll>
           )}
-
-          {hasPreviousPage && (
-            <LoadMoreButton
-              variant="outlined"
-              onClick={() => setPage(page - 1)}
-              disabled={isLoading}
-              sx={{ mt: 1 }}
-            >
-              Página anterior
-            </LoadMoreButton>
-          )}
-        </ResultsContainer>
-      </PanelContainer>
+        </Box>
+      </Box>
     </Modal>
   );
 };
+
+export default Model3DCatalog;

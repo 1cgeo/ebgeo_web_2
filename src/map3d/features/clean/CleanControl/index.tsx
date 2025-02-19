@@ -1,31 +1,21 @@
 // Path: map3d\features\clean\CleanControl\index.tsx
-import { type FC, useCallback } from 'react';
+import { FC } from 'react';
 
-import { Tool } from '@/map3d/components/Tool';
+import { Tool } from '../../../components/Tool';
+import { useMap3DToolState } from '../../../store';
+import { useClean } from '../useClean';
 
-import { useCleanStore } from '../store';
-
-interface CleanControlProps {
-  disabled?: boolean;
-}
-
-export const CleanControl: FC<CleanControlProps> = ({ disabled }) => {
-  const { clearAll, config, isEnabled } = useCleanStore();
-
-  const handleClick = useCallback(() => {
-    clearAll();
-  }, [clearAll]);
-
-  // Se o componente estiver desabilitado externamente ou o store indicar que não está habilitado
-  const isDisabled = disabled || !isEnabled;
+export const CleanControl: FC = () => {
+  const { isEnabled } = useMap3DToolState('clean');
+  const { cleanAll } = useClean();
 
   return (
     <Tool
-      image={config.icon}
-      active={true}
-      disabled={isDisabled}
-      tooltip={config.tooltip}
-      onClick={handleClick}
+      id="clean"
+      image="/images/icon-clear.svg"
+      tooltip="Limpar medições e análises"
+      onClick={cleanAll}
+      disabled={!isEnabled}
     />
   );
 };

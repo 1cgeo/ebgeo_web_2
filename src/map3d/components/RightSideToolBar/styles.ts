@@ -15,4 +15,27 @@ export const ToolbarContainer = styled(Box)(({ theme }) => ({
   boxShadow: theme.shadows[2],
   zIndex: 1000,
   opacity: 0.9,
+  transition: theme.transitions.create(['opacity']),
+
+  '&:hover': {
+    opacity: 1,
+  },
+
+  // Estilos para o container das ferramentas
+  '& > div': {
+    position: 'relative',
+
+    // Animação no hover
+    '&:hover': {
+      '& > .MuiTooltip-tooltip': {
+        opacity: 1,
+        visibility: 'visible',
+      },
+    },
+  },
+
+  // Responsividade
+  [theme.breakpoints.down('sm')]: {
+    display: 'none',
+  },
 }));

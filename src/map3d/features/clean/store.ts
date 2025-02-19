@@ -1,43 +1,44 @@
 // Path: map3d\features\clean\store.ts
 import { create } from 'zustand';
 
-import { useMap3DStore } from '@/map3d/store';
-
-import { useAreaStore } from '../area/store';
-import { useDistanceStore } from '../distance/store';
-import { useLabelStore } from '../label/store';
-import { useViewshedStore } from '../viewshed/store';
-import { type CleanConfig, defaultCleanConfig } from './types';
+import { type CleanConfig } from './types';
 
 interface CleanState {
+  // Estado
   config: CleanConfig;
-  isEnabled: boolean;
+  isConfirmationOpen: boolean;
 
-  // Actions
-  clearAll: () => void;
-  setEnabled: (enabled: boolean) => void;
+  // Ações
   updateConfig: (config: Partial<CleanConfig>) => void;
+  openConfirmation: () => void;
+  closeConfirmation: () => void;
+  resetConfig: () => void;
 }
 
+const defaultConfig: CleanConfig = {
+  clearMeasurements: true,
+  clearLabels: true,
+  clearViewshed: true,
+  showConfirmation: false,
+};
+
 export const useCleanStore = create<CleanState>(set => ({
-  config: defaultCleanConfig,
-  isEnabled: true,
+  // Estado inicial
+  config: defaultConfig,
+  isConfirmationOpen: false,
 
-  clearAll: () => {
-    // Limpa todas as features
-    useAreaStore.getState().reset();
-    useDistanceStore.getState().reset();
-    useViewshedStore.getState().reset();
-    useLabelStore.getState().reset();
-
-    // Limpa a ferramenta ativa
-    useMap3DStore.getState().clearActiveTool();
-  },
-
-  setEnabled: enabled => set({ isEnabled: enabled }),
-
-  updateConfig: newConfig =>
+  // Ações
+  updateConfig: config =>
     set(state => ({
-      config: { ...state.config, ...newConfig },
+      config: {
+        ...state.config,
+        ...config,
+      },
     })),
+
+  openConfirmation: () => set({ isConfirmationOpen: true }),
+
+  closeConfirmation: () => set({ isConfirmationOpen: false }),
+
+  resetConfig: () => set({ config: defaultConfig }),
 }));

@@ -3,42 +3,67 @@ import { Tooltip } from '@mui/material';
 
 import React, { type FC } from 'react';
 
+import type { FeatureId } from '../../features/registry';
+import { useMap3DStore } from '../../store';
 import { StyledIconButton } from './styles';
 
 interface ToolProps {
+  // Identificação e conteúdo
+  id: string;
   image?: string;
   icon?: React.ReactNode;
-  active: boolean;
-  inUse?: boolean;
-  disabled?: boolean;
-  onClick: () => void;
   tooltip: string;
+  active?: boolean;
+
+  // Estado
+  disabled?: boolean;
   drawerMode?: boolean;
+
+  // Handlers
+  onClick?: () => void;
 }
 
 export const Tool: FC<ToolProps> = ({
+  id,
   image,
   icon,
-  active,
-  inUse,
-  disabled,
-  onClick,
   tooltip,
+  active: forcedActive,
+  disabled: forcedDisabled,
   drawerMode = false,
+  onClick,
 }) => {
+  const { activeTool, setActiveTool, areToolsEnabled } = useMap3DStore();
+
+  const handleClick = () => {
+    if (onClick) {
+      onClick();
+    }
+    setActiveTool((activeTool === id ? null : id) as FeatureId | null);
+  };
+
+  const isActive =
+    forcedActive !== undefined ? forcedActive : activeTool === id;
+  const isDisabled =
+    forcedDisabled !== undefined
+      ? forcedDisabled
+      : !areToolsEnabled && id !== 'catalog' && id !== 'clean';
+
   const content = (
     <StyledIconButton
-      onClick={onClick}
-      disabled={disabled || !active}
-      $active={inUse}
-      $disabled={disabled}
+      onClick={handleClick}
+      disabled={isDisabled}
+      $active={isActive}
+      $disabled={isDisabled}
       $drawerMode={drawerMode}
+      aria-label={tooltip}
     >
       {image ? (
         <img
           src={image}
-          alt="tool icon"
-          style={{ width: '100%', height: '100%' }}
+          alt={tooltip}
+          width={drawerMode ? 24 : 32}
+          height={drawerMode ? 24 : 32}
         />
       ) : (
         icon
@@ -46,13 +71,9 @@ export const Tool: FC<ToolProps> = ({
     </StyledIconButton>
   );
 
-  if (disabled || drawerMode) {
-    return content;
-  }
-
   return (
-    <Tooltip title={tooltip} placement="left">
-      {content}
+    <Tooltip title={tooltip} placement="left" arrow>
+      <span>{content}</span>
     </Tooltip>
   );
 };

@@ -1,21 +1,57 @@
 // Path: map3d\features\label\LabelPanel\index.tsx
-import { MenuItem, Select, Slider, TextField, Typography } from '@mui/material';
-
-import { type FC } from 'react';
-
-import { useLabelStore } from '../store';
 import {
-  ActionButtons,
-  ColorInput,
-  PanelContainer,
-  StyledButton,
-} from './styles';
+  Box,
+  Button,
+  MenuItem,
+  Select,
+  Slider,
+  TextField,
+  Typography,
+} from '@mui/material';
 
-export const LabelPanel: FC = () => {
-  const { selectedLabel, updateLabel, removeLabel, closePanel } =
-    useLabelStore();
+import { FC, useEffect, useState } from 'react';
 
-  if (!selectedLabel) return null;
+import { type LabelProperties } from '../types';
+import { PanelContainer } from './styles';
+
+interface TextAttributesPanelProps {
+  properties: LabelProperties;
+  onUpdate: (properties: LabelProperties) => void;
+  onDelete: (labelId: string) => void;
+  onClose: () => void;
+}
+
+export const TextAttributesPanel: FC<TextAttributesPanelProps> = ({
+  properties,
+  onUpdate,
+  onDelete,
+  onClose,
+}) => {
+  const [localProperties, setLocalProperties] =
+    useState<LabelProperties>(properties);
+
+  // Atualiza as propriedades locais quando as propriedades mudam
+  useEffect(() => {
+    setLocalProperties(properties);
+  }, [properties]);
+
+  const handleChange = <K extends keyof LabelProperties>(
+    property: K,
+    value: LabelProperties[K],
+  ) => {
+    setLocalProperties(prev => ({
+      ...prev,
+      [property]: value,
+    }));
+  };
+
+  const handleApply = () => {
+    onUpdate(localProperties);
+  };
+
+  const handleDelete = () => {
+    onDelete(properties.id);
+  };
 
   return (
     <PanelContainer>
@@ -28,56 +64,49 @@ export const LabelPanel: FC = () => {
         multiline
         rows={3}
         label="Texto"
-        value={selectedLabel.properties.text}
-        onChange={e => updateLabel(selectedLabel.id, { text: e.target.value })}
+        value={localProperties.text}
+        onChange={e => handleChange('text', e.target.value)}
         margin="normal"
       />
 
       <Typography gutterBottom>Tamanho</Typography>
       <Slider
-        value={selectedLabel.properties.size}
-        onChange={(_, value) =>
-          updateLabel(selectedLabel.id, { size: value as number })
-        }
-        min={8}
-        max={72}
+        value={localProperties.size}
+        onChange={(_, value) => handleChange('size', value as number)}
+        min={1}
+        max={100}
         step={1}
         marks={[
-          { value: 8, label: '8' },
-          { value: 38, label: '38' },
-          { value: 72, label: '72' },
+          { value: 1, label: '1' },
+          { value: 50, label: '50' },
+          { value: 100, label: '100' },
         ]}
       />
 
-      <ColorInput
+      <TextField
         fullWidth
+        type="color"
         label="Cor do texto"
-        type="color"
-        value={selectedLabel.properties.fillColor}
-        onChange={e =>
-          updateLabel(selectedLabel.id, { fillColor: e.target.value })
-        }
+        value={localProperties.fillColor}
+        onChange={e => handleChange('fillColor', e.target.value)}
         margin="normal"
       />
 
-      <ColorInput
+      <TextField
         fullWidth
-        label="Cor de fundo"
         type="color"
-        value={selectedLabel.properties.backgroundColor}
-        onChange={e =>
-          updateLabel(selectedLabel.id, { backgroundColor: e.target.value })
-        }
+        label="Cor de fundo"
+        value={localProperties.backgroundColor}
+        onChange={e => handleChange('backgroundColor', e.target.value)}
         margin="normal"
       />
 
+      <Typography gutterBottom>Alinhamento</Typography>
       <Select
         fullWidth
-        value={selectedLabel.properties.align}
+        value={localProperties.align}
         onChange={e =>
-          updateLabel(selectedLabel.id, {
-            align: e.target.value as 'left' | 'center' | 'right',
-          })
+          handleChange('align', e.target.value as 'left' | 'center' | 'right')
         }
         margin="dense"
       >
@@ -86,20 +115,19 @@ export const LabelPanel: FC = () => {
         <MenuItem value="right">Direita</MenuItem>
       </Select>
 
-      <ActionButtons>
-        <StyledButton variant="contained" color="primary" onClick={closePanel}>
-          Concluir
-        </StyledButton>
-        <StyledButton
-          variant="outlined"
-          color="error"
-          onClick={() => {
-            removeLabel(selectedLabel.id);
-          }}
-        >
+      <Box sx={{ mt: 3, display: 'flex', justifyContent: 'space-between' }}>
+        <Button variant="contained" color="primary" onClick={handleApply}>
+          Aplicar
+        </Button>
+
+        <Button variant="outlined" color="error" onClick={handleDelete}>
           Excluir
-        </StyledButton>
-      </ActionButtons>
+        </Button>
+
+        <Button variant="outlined" onClick={onClose}>
+          Fechar
+        </Button>
+      </Box>
     </PanelContainer>
   );
 };

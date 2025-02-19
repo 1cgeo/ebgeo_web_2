@@ -3,18 +3,18 @@ import { Box } from '@mui/material';
 
 import { type FC } from 'react';
 
-import { type Map3DFeature } from '../../features/registry';
+import { useMapsStore } from '@/shared/store/mapsStore';
+
+import { useMap3DFeatures } from '../../features/registry';
 import { ToolbarContainer } from './styles';
 
-interface RightSideToolBarProps {
-  features: Map3DFeature[];
-  enabled: boolean;
-}
+export const RightSideToolBar: FC = () => {
+  const features = useMap3DFeatures({ showInToolbar: true });
+  const cesiumMap = useMapsStore(state => state.cesiumMap);
 
-export const RightSideToolBar: FC<RightSideToolBarProps> = ({
-  features,
-  enabled,
-}) => {
+  // Se não houver mapa, não renderizamos a toolbar
+  if (!cesiumMap) return null;
+
   return (
     <ToolbarContainer
       sx={{
@@ -26,11 +26,14 @@ export const RightSideToolBar: FC<RightSideToolBarProps> = ({
     >
       {features.map(feature => {
         const FeatureComponent = feature.component;
-        const isDisabled = feature.requiresModel && !enabled;
 
         return (
-          <Box key={feature.id}>
-            <FeatureComponent disabled={isDisabled} />
+          <Box
+            key={feature.id}
+            title={feature.description}
+            sx={{ position: 'relative' }}
+          >
+            <FeatureComponent />
           </Box>
         );
       })}

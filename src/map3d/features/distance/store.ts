@@ -2,106 +2,158 @@
 import { nanoid } from 'nanoid';
 import { create } from 'zustand';
 
-import { useMap3DStore } from '@/map3d/store';
-
+import { getCesium } from '../../store';
 import {
-  type Cartesian,
-  type DistanceLine,
+  type DistanceMeasurement,
+  type DistancePoint,
   type DistanceStyle,
-  cartesianSchema,
-  defaultDistanceStyle,
-  distanceLineSchema,
+  DistanceToolState,
 } from './types';
 
 interface DistanceState {
-  currentLine: DistanceLine | null;
-  lines: DistanceLine[];
+  // Estado
+  toolState: DistanceToolState;
+  currentPoints: DistancePoint[];
+  measurements: DistanceMeasurement[];
   style: DistanceStyle;
 
-  // Actions
-  startNewLine: () => void;
-  addPoint: (point: Cartesian) => void;
-  completeLine: (finalDistance: number) => void;
-  removeLine: (id: string) => void;
-  clearLines: () => void;
+  // Ações
+  startMeasuring: () => void;
+  cancelMeasuring: () => void;
+  addPoint: (
+    point: Omit<DistancePoint, 'distance'>,
+    calculateDistance: boolean,
+  ) => void;
+  completeMeasurement: () => void;
+  removeMeasurement: (id: string) => void;
+  clearAllMeasurements: () => void;
   updateStyle: (style: Partial<DistanceStyle>) => void;
-  reset: () => void;
 }
 
+const defaultStyle: DistanceStyle = {
+  lineColor: 'rgba(0, 70, 255, 0.8)',
+  lineWidth: 3,
+  pointSize: 10,
+  pointColor: 'rgba(0, 70, 255, 1.0)',
+  labelBackgroundColor: 'rgba(255, 255, 255, 0.8)',
+  labelTextColor: '#000000',
+  labelFont: '14px monospace',
+};
+
 export const useDistanceStore = create<DistanceState>((set, get) => ({
-  currentLine: null,
-  lines: [],
-  style: defaultDistanceStyle,
+  // Estado inicial
+  toolState: DistanceToolState.INACTIVE,
+  currentPoints: [],
+  measurements: [],
+  style: defaultStyle,
 
-  startNewLine: () => {
-    const newLine = distanceLineSchema.parse({
-      id: nanoid(),
-      points: [],
-      isComplete: false,
+  // Ações
+  startMeasuring: () => {
+    // Se já estiver medindo, não faz nada
+    if (get().toolState === DistanceToolState.MEASURING) {
+      return;
+    }
+
+    // Inicia uma nova medição
+    set({
+      toolState: DistanceToolState.MEASURING,
+      currentPoints: [],
     });
-
-    set({ currentLine: newLine });
   },
 
-  addPoint: point => {
-    // Valida o ponto antes de adicionar
-    const validatedPoint = cartesianSchema.parse(point);
+  cancelMeasuring: () => {
+    set({
+      toolState: DistanceToolState.INACTIVE,
+      currentPoints: [],
+    });
+  },
 
-    set(state => {
-      if (!state.currentLine) return state;
+  addPoint: (point, calculateDistance) => {
+    const currentPoints = get().currentPoints;
+    let distance = 0;
 
-      const updatedLine = distanceLineSchema.parse({
-        ...state.currentLine,
-        points: [...state.currentLine.points, validatedPoint],
+    // Calcula a distância acumulada
+    if (currentPoints.length > 0 && calculateDistance) {
+      const lastPoint = currentPoints[currentPoints.length - 1];
+      const dx = point.x - lastPoint.x;
+      const dy = point.y - lastPoint.y;
+      const dz = point.z - lastPoint.z;
+      const segmentDistance = Math.sqrt(dx * dx + dy * dy + dz * dz);
+      distance = lastPoint.distance + segmentDistance;
+    }
+
+    const newPoint: DistancePoint = {
+      ...point,
+      distance,
+    };
+
+    set(state => ({
+      currentPoints: [...state.currentPoints, newPoint],
+    }));
+  },
+
+  completeMeasurement: () => {
+    const { currentPoints } = get();
+
+    // Se não houver pontos suficientes, não completa
+    if (currentPoints.length < 2) {
+      set({
+        toolState: DistanceToolState.INACTIVE,
+        currentPoints: [],
       });
+      return;
+    }
 
-      return { currentLine: updatedLine };
-    });
-  },
+    const totalDistance = currentPoints[currentPoints.length - 1].distance;
 
-  completeLine: finalDistance => {
-    const state = get();
-    if (!state.currentLine) return;
+    const newMeasurement: DistanceMeasurement = {
+      id: nanoid(),
+      points: currentPoints,
+      totalDistance,
+      timestamp: Date.now(),
+    };
 
-    const completedLine = distanceLineSchema.parse({
-      ...state.currentLine,
-      distance: finalDistance,
-      isComplete: true,
-    });
-
-    set({
-      lines: [...state.lines, completedLine],
-      currentLine: null,
-    });
-
-    // Limpa a ferramenta ativa após completar
-    useMap3DStore.getState().clearActiveTool();
-  },
-
-  removeLine: id =>
     set(state => ({
-      lines: state.lines.filter(line => line.id !== id),
-    })),
-
-  clearLines: () => {
-    set({
-      lines: [],
-      currentLine: null,
-    });
-    useMap3DStore.getState().clearActiveTool();
+      toolState: DistanceToolState.COMPLETED,
+      currentPoints: [],
+      measurements: [...state.measurements, newMeasurement],
+    }));
   },
 
-  updateStyle: newStyle =>
+  removeMeasurement: id => {
     set(state => ({
-      style: { ...state.style, ...newStyle },
-    })),
+      measurements: state.measurements.filter(m => m.id !== id),
+    }));
+  },
 
-  reset: () => {
+  clearAllMeasurements: () => {
     set({
-      currentLine: null,
-      lines: [],
-      style: defaultDistanceStyle,
+      toolState: DistanceToolState.INACTIVE,
+      currentPoints: [],
+      measurements: [],
     });
-    useMap3DStore.getState().clearActiveTool();
+  },
+
+  updateStyle: style => {
+    set(state => ({
+      style: {
+        ...state.style,
+        ...style,
+      },
+    }));
   },
 }));
+
+// Helper para limpar medições ao desmontar
+export function cleanDistanceMeasurements() {
+  const cesium = getCesium();
+  if (!cesium) return;
+
+  const { viewer } = cesium;
+  const drawLayer = viewer.dataSources.getByName('measureDistanceLayer')[0];
+  if (drawLayer) {
+    viewer.dataSources.remove(drawLayer);
+  }
+
+  useDistanceStore.getState().clearAllMeasurements();
+}
