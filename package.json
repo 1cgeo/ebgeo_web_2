@@ -25,9 +25,12 @@
     "@tanstack/react-query-devtools": "^5.28.10",
     "@turf/turf": "^6.5.0",
     "dexie": "^4.0.4",
+    "file-saver": "^2.0.5",
     "ignore": "^7.0.5",
+    "jszip": "^3.10.1",
     "maplibre-gl": "^4.1.1",
     "milsymbol": "^2.1.0",
+    "papaparse": "^5.5.3",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-map-gl": "^7.1.7",
@@ -35,6 +38,9 @@
     "zustand": "^4.5.2"
   },
   "devDependencies": {
+    "@types/file-saver": "^2.0.7",
+    "@types/jszip": "^3.4.1",
+    "@types/papaparse": "^5.3.16",
     "@types/react": "^18.2.66",
     "@types/react-dom": "^18.2.22",
     "@typescript-eslint/eslint-plugin": "^7.2.0",

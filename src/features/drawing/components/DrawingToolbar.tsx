@@ -1,4 +1,4 @@
-// Path: features\drawing\components\DrawingToolbar.tsx
+// Path: features/drawing/components/DrawingToolbar.tsx
 
 import React, { useState } from 'react';
 import {
@@ -32,6 +32,7 @@ import {
 
 import { useDrawingStore, useDrawingActions } from '../store/drawing.store';
 import { useFeatureSelection } from '../../selection/hooks/useFeatureSelection';
+import { useUndoRedo } from '../../transaction-history/hooks/useUndoRedo';
 import { DrawingTool } from '../../../types/feature.types';
 
 interface DrawingToolbarProps {
@@ -75,6 +76,17 @@ export const DrawingToolbar: React.FC<DrawingToolbarProps> = ({
     isDuplicating,
   } = useFeatureSelection();
 
+  // Undo/Redo
+  const {
+    canUndo,
+    canRedo,
+    undo,
+    redo,
+    isProcessing: isUndoRedoProcessing,
+    nextUndoDescription,
+    nextRedoDescription,
+  } = useUndoRedo();
+
   // Definir ferramentas disponíveis
   const tools: Array<{
     id: DrawingTool;
@@ -103,6 +115,27 @@ export const DrawingToolbar: React.FC<DrawingToolbarProps> = ({
       label: 'Linha',
       description: 'Desenhar linhas e polilinhas',
       shortcut: 'L',
+    },
+    {
+      id: 'polygon',
+      icon: <PolygonIcon />,
+      label: 'Polígono',
+      description: 'Desenhar polígonos e áreas',
+      shortcut: 'O',
+    },
+    {
+      id: 'text',
+      icon: <TextIcon />,
+      label: 'Texto',
+      description: 'Adicionar texto e anotações',
+      shortcut: 'T',
+    },
+    {
+      id: 'military-symbol',
+      icon: <MilitaryIcon />,
+      label: 'Símbolo Militar',
+      description: 'Inserir simbologia militar SIDC',
+      shortcut: 'M',
     },
   ];
 
@@ -147,6 +180,15 @@ export const DrawingToolbar: React.FC<DrawingToolbarProps> = ({
   // Handler para limpar seleção
   const handleClearSelection = () => {
     clearSelection();
+  };
+
+  // Handlers para undo/redo
+  const handleUndo = async () => {
+    await undo();
+  };
+
+  const handleRedo = async () => {
+    await redo();
   };
 
   return (
@@ -228,6 +270,35 @@ export const DrawingToolbar: React.FC<DrawingToolbarProps> = ({
           </ToggleButton>
         ))}
       </ToggleButtonGroup>
+
+      <Divider />
+
+      {/* Ações de Undo/Redo */}
+      <Box sx={{ display: 'flex', gap: 0.5, justifyContent: 'center' }}>
+        <Tooltip title={nextUndoDescription ? `Desfazer: ${nextUndoDescription}` : 'Desfazer (Ctrl+Z)'}>
+          <span>
+            <IconButton
+              size="small"
+              onClick={handleUndo}
+              disabled={!canUndo || isUndoRedoProcessing}
+            >
+              <UndoIcon fontSize="small" />
+            </IconButton>
+          </span>
+        </Tooltip>
+
+        <Tooltip title={nextRedoDescription ? `Refazer: ${nextRedoDescription}` : 'Refazer (Ctrl+Y)'}>
+          <span>
+            <IconButton
+              size="small"
+              onClick={handleRedo}
+              disabled={!canRedo || isUndoRedoProcessing}
+            >
+              <RedoIcon fontSize="small" />
+            </IconButton>
+          </span>
+        </Tooltip>
+      </Box>
 
       <Divider />
 
@@ -382,6 +453,22 @@ export const DrawingToolbar: React.FC<DrawingToolbarProps> = ({
             borderRadius: '50%',
             backgroundColor: 'success.main',
             animation: 'pulse 1.5s ease-in-out infinite',
+          }}
+        />
+      )}
+
+      {/* Indicador de processamento undo/redo */}
+      {isUndoRedoProcessing && (
+        <Box
+          sx={{
+            position: 'absolute',
+            top: -8,
+            left: -8,
+            width: 16,
+            height: 16,
+            borderRadius: '50%',
+            backgroundColor: 'warning.main',
+            animation: 'pulse 1s ease-in-out infinite',
           }}
         />
       )}

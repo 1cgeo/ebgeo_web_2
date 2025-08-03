@@ -415,3 +415,115 @@ export const formatGeometry = {
     return `SW: ${formatGeometry.position(sw, format)}, NE: ${formatGeometry.position(ne, format)}`;
   },
 };
+
+/**
+ * Formatação de áreas
+ */
+export const formatArea = {
+  /**
+   * Formatar área automaticamente (metros quadrados ou quilômetros quadrados)
+   */
+  auto: (sqMeters: number): string => {
+    if (sqMeters < 1000) {
+      return `${Math.round(sqMeters)} m²`;
+    } else if (sqMeters < 10000) {
+      return `${(sqMeters / 1000).toFixed(1)} km²`;
+    } else if (sqMeters < 1000000) {
+      return `${(sqMeters / 10000).toFixed(1)} ha`;
+    } else {
+      return `${(sqMeters / 1000000).toFixed(2)} km²`;
+    }
+  },
+
+  /**
+   * Formatar em unidade específica
+   */
+  inUnit: (sqMeters: number, unit: AreaUnit): string => {
+    const conversions = {
+      sqmeters: { factor: 1, symbol: 'm²' },
+      sqkilometers: { factor: 1000000, symbol: 'km²' },
+      hectares: { factor: 10000, symbol: 'ha' },
+      sqfeet: { factor: 0.092903, symbol: 'ft²' },
+      sqmiles: { factor: 2589988.110336, symbol: 'mi²' },
+      acres: { factor: 4046.8564224, symbol: 'ac' },
+    };
+
+    const conversion = conversions[unit];
+    const value = sqMeters / conversion.factor;
+    
+    if (value < 10) {
+      return `${value.toFixed(2)} ${conversion.symbol}`;
+    } else if (value < 100) {
+      return `${value.toFixed(1)} ${conversion.symbol}`;
+    } else {
+      return `${Math.round(value).toLocaleString()} ${conversion.symbol}`;
+    }
+  },
+};
+
+/**
+ * Validador de email melhorado
+ */
+export const validation = {
+  /**
+   * Validar email com regex mais robusta
+   */
+  email: (email: string): boolean => {
+    const regex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
+    return regex.test(email);
+  },
+
+  /**
+   * Validar URL
+   */
+  url: (url: string): boolean => {
+    try {
+      new URL(url);
+      return true;
+    } catch {
+      return false;
+    }
+  },
+
+  /**
+   * Validar coordenadas
+   */
+  coordinates: (lng: number, lat: number): boolean => {
+    return lng >= -180 && lng <= 180 && lat >= -90 && lat <= 90;
+  },
+};
+
+/**
+ * Utilitários de formatação para dados tabulares
+ */
+export const formatTable = {
+  /**
+   * Formatar valor para exibição em tabela
+   */
+  cellValue: (value: any, type: 'text' | 'number' | 'date' | 'coordinates' = 'text'): string => {
+    if (value == null) return '';
+    
+    switch (type) {
+      case 'date':
+        return new Date(value).toLocaleString();
+      case 'number':
+        return typeof value === 'number' ? value.toLocaleString() : value.toString();
+      case 'coordinates':
+        if (Array.isArray(value) && value.length >= 2) {
+          const [lng, lat] = value;
+          return formatCoordinates.decimal(lng, lat, 4);
+        }
+        return value.toString();
+      default:
+        return value.toString();
+    }
+  },
+
+  /**
+   * Truncar texto para exibição em tabela
+   */
+  truncate: (text: string, maxLength: number = 50): string => {
+    if (text.length <= maxLength) return text;
+    return text.substring(0, maxLength - 3) + '...';
+  },
+};

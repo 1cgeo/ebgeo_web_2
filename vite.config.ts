@@ -131,28 +131,4 @@ export default defineConfig({
       localsConvention: 'camelCase',
     },
   },
-
-  // Configurações para PWA (caso queira implementar no futuro)
-  // Comentado por enquanto, mas pode ser útil para uso offline
-  /*
-  pwa: {
-    registerType: 'autoUpdate',
-    workbox: {
-      globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
-      runtimeCaching: [
-        {
-          urlPattern: /^https:\/\/.*\.tile\.openstreetmap\.org\/.*/i,
-          handler: 'CacheFirst',
-          options: {
-            cacheName: 'osm-tiles',
-            expiration: {
-              maxEntries: 500,
-              maxAgeSeconds: 60 * 60 * 24 * 30, // 30 dias
-            },
-          },
-        },
-      ],
-    },
-  },
-  */
 });

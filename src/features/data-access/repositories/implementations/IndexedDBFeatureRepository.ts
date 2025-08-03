@@ -1,4 +1,4 @@
-// Path: features\data-access\repositories\implementations\IndexedDBFeatureRepository.ts
+// Path: features/data-access/repositories/implementations/IndexedDBFeatureRepository.ts
 
 import { db } from '../../db';
 import { ExtendedFeature, validateFeature } from '../../schemas/feature.schema';
@@ -129,26 +129,6 @@ export class IndexedDBFeatureRepository implements IFeatureRepository {
     }
   }
 
-  async findBy(criteria: Partial<ExtendedFeature>): Promise<ExtendedFeature[]> {
-    try {
-      return await db.features
-        .filter(feature => {
-          return Object.entries(criteria).every(([key, value]) => {
-            if (key === 'properties' && typeof value === 'object') {
-              return Object.entries(value).every(([propKey, propValue]) => 
-                feature.properties[propKey] === propValue
-              );
-            }
-            return (feature as any)[key] === value;
-          });
-        })
-        .toArray();
-    } catch (error) {
-      console.error('Erro ao buscar features por critério:', error);
-      throw new Error(`Falha na busca: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
-    }
-  }
-
   async getByLayerId(layerId: string): Promise<ExtendedFeature[]> {
     try {
       return await db.features
@@ -157,7 +137,7 @@ export class IndexedDBFeatureRepository implements IFeatureRepository {
         .toArray();
     } catch (error) {
       console.error('Erro ao buscar features por camada:', error);
-      throw new Error(`Falha ao buscar features da camada: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+      throw new Error(`Falha ao buscar por camada: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
     }
   }
 
@@ -169,7 +149,7 @@ export class IndexedDBFeatureRepository implements IFeatureRepository {
         .toArray();
     } catch (error) {
       console.error('Erro ao buscar features por múltiplas camadas:', error);
-      throw new Error(`Falha ao buscar features: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+      throw new Error(`Falha ao buscar por camadas: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
     }
   }
 
@@ -181,21 +161,20 @@ export class IndexedDBFeatureRepository implements IFeatureRepository {
   ): Promise<ExtendedFeature[]> {
     try {
       const allFeatures = await this.getAll();
-      const bbox = turf.bbox(turf.bboxPolygon([minLng, minLat, maxLng, maxLat]));
+      
+      // Filtrar usando Turf.js para busca espacial
+      const bbox = turf.bboxPolygon([minLng, minLat, maxLng, maxLat]);
       
       return allFeatures.filter(feature => {
         try {
-          const featureBbox = turf.bbox(feature as any);
-          return turf.booleanOverlap(
-            turf.bboxPolygon(bbox),
-            turf.bboxPolygon(featureBbox)
-          );
+          return turf.booleanIntersects(feature as any, bbox);
         } catch {
-          return false;
+          // Em caso de erro na geometria, incluir na busca por segurança
+          return true;
         }
       });
     } catch (error) {
-      console.error('Erro na busca por bounding box:', error);
+      console.error('Erro ao buscar features por bounding box:', error);
       throw new Error(`Falha na busca espacial: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
     }
   }
@@ -211,14 +190,15 @@ export class IndexedDBFeatureRepository implements IFeatureRepository {
       
       return allFeatures.filter(feature => {
         try {
-          const distance = turf.distance(center, feature as any, { units: 'meters' });
+          const distance = turf.distance(center, turf.center(feature as any), { units: 'meters' });
           return distance <= radiusMeters;
         } catch {
+          // Em caso de erro na geometria, excluir da busca
           return false;
         }
       });
     } catch (error) {
-      console.error('Erro na busca por raio:', error);
+      console.error('Erro ao buscar features por raio:', error);
       throw new Error(`Falha na busca por proximidade: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
     }
   }
@@ -229,44 +209,59 @@ export class IndexedDBFeatureRepository implements IFeatureRepository {
         .filter(feature => feature.geometry.type === geometryType)
         .toArray();
     } catch (error) {
-      console.error('Erro ao buscar por tipo de geometria:', error);
-      throw new Error(`Falha na busca: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+      console.error('Erro ao buscar features por tipo de geometria:', error);
+      throw new Error(`Falha ao buscar por geometria: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
     }
   }
 
   async moveToLayer(featureIds: string[], targetLayerId: string): Promise<ExtendedFeature[]> {
     try {
-      const features = await db.features.where('id').anyOf(featureIds).toArray();
-      const updatedFeatures = features.map(feature => ({
-        ...feature,
-        properties: {
-          ...feature.properties,
-          layerId: targetLayerId,
-          updatedAt: new Date().toISOString(),
-        },
-      }));
-
-      await db.features.bulkPut(updatedFeatures);
+      const updatedFeatures: ExtendedFeature[] = [];
+      
+      for (const featureId of featureIds) {
+        const updatedFeature = await this.update(featureId, {
+          properties: {
+            layerId: targetLayerId,
+            updatedAt: new Date().toISOString(),
+          },
+        } as Partial<ExtendedFeature>);
+        
+        updatedFeatures.push(updatedFeature);
+      }
+      
       return updatedFeatures;
     } catch (error) {
-      console.error('Erro ao mover features:', error);
-      throw new Error(`Falha ao mover features: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+      console.error('Erro ao mover features para camada:', error);
+      throw new Error(`Falha ao mover para camada: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
     }
   }
 
   async duplicate(featureIds: string[], targetLayerId?: string): Promise<ExtendedFeature[]> {
     try {
-      const features = await db.features.where('id').anyOf(featureIds).toArray();
-      const duplicatedFeatures = features.map(feature => {
-        const now = new Date().toISOString();
+      const originalFeatures = await Promise.all(
+        featureIds.map(id => this.getById(id))
+      );
+      
+      const validFeatures = originalFeatures.filter(Boolean) as ExtendedFeature[];
+      
+      if (validFeatures.length === 0) {
+        throw new Error('Nenhuma feature válida encontrada para duplicar');
+      }
+      
+      const now = new Date().toISOString();
+      
+      const duplicatedFeatures: ExtendedFeature[] = validFeatures.map(feature => {
+        const duplicatedId = `${feature.id}_copy_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        
         return {
           ...feature,
-          id: crypto.randomUUID(),
+          id: duplicatedId,
           properties: {
             ...feature.properties,
-            id: crypto.randomUUID(),
+            id: duplicatedId,
             layerId: targetLayerId || feature.properties.layerId,
-            name: feature.properties.name ? `${feature.properties.name} (Cópia)` : undefined,
+            name: feature.properties.name ? 
+              `${feature.properties.name} (Cópia)` : undefined,
             createdAt: now,
             updatedAt: now,
           },
@@ -342,16 +337,25 @@ export class IndexedDBFeatureRepository implements IFeatureRepository {
     };
   }
 
-  async cleanOrphanedFeatures(): Promise<string[]> {
+  // NOVO: Método para obter features órfãs
+  async getOrphanedFeatures(): Promise<ExtendedFeature[]> {
     try {
       const features = await this.getAll();
       const layers = await db.layers.toArray();
       const validLayerIds = new Set(layers.map(layer => layer.id));
       
-      const orphanedFeatures = features.filter(
+      return features.filter(
         feature => !validLayerIds.has(feature.properties.layerId)
       );
-      
+    } catch (error) {
+      console.error('Erro ao buscar features órfãs:', error);
+      throw new Error(`Falha ao buscar órfãs: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+    }
+  }
+
+  async cleanOrphanedFeatures(): Promise<string[]> {
+    try {
+      const orphanedFeatures = await this.getOrphanedFeatures();
       const orphanedIds = orphanedFeatures.map(feature => feature.id);
       
       if (orphanedIds.length > 0) {

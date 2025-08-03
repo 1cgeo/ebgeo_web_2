@@ -1,0 +1,167 @@
+/
+|-- .vscode/
+|   |-- extensions.json
+|   |-- settings.json
+|
+|-- public/
+|   |-- # Assets estáticos servidos diretamente (ex: ícones do mapa)
+|
+|-- src/
+|   |
+|   |-- assets/               # Assets da UI (logos, imagens de fundo, etc.)
+|   |
+|   |-- components/
+|   |   |-- layout/             # Componentes de estrutura da página (ex: MainLayout, Header, Sidebar)
+|   |   |-- ui/                 # Componentes de UI genéricos e reutilizáveis (Button, Input, Modal, Table, etc.)
+|   |
+|   |-- config/
+|   |   |-- app.config.ts       # Configurações gerais da aplicação
+|   |   |-- toolRegistry.ts     # Registro central para novas ferramentas de desenho (Extensibilidade)
+|   |   |-- keyboardShortcuts.ts # Mapeamento de atalhos de teclado
+|   |
+|   |-- constants/              # Constantes globais, enums
+|   |   |-- app.constants.ts
+|   |   |-- map.constants.ts
+|   |
+|   |-- utils/                  # Utilitários globais
+|   |   |-- format.utils.ts
+|   |   |-- validation.utils.ts
+|   |   |-- turf.utils.ts       # Funções utilitárias que encapsulam operações do Turf.js
+|   |
+|   |-- schemas/                # Schemas Zod compartilhados
+|   |   |-- shared.schemas.ts
+|   |
+|   |-- services/               # Services globais
+|   |   |-- error.service.ts    # Tratamento global de erros
+|   |   |-- performance.service.ts
+|   |
+|   |-- features/
+|   |   |
+|   |   |-- shared/             # Código comum entre features
+|   |   |   |-- components/       # Componentes compartilhados específicos do domínio
+|   |   |   |-- hooks/            # Hooks compartilhados entre features
+|   |   |   |-- utils/            # Utils específicos do domínio compartilhados
+|   |   |   |-- types/            # Tipos compartilhados entre features
+|   |   |
+|   |   |-- core-map/             # Lógica central do mapa e sua inicialização
+|   |   |   |-- components/
+|   |   |   |   |-- MapView.tsx       # Componente principal que renderiza o mapa e as fontes de dados
+|   |   |   |-- hooks/
+|   |   |   |   |-- useMapInstance.ts # Hook para acessar a instância do mapa MapLibre
+|   |   |   |-- context/
+|   |   |   |   |-- MapProvider.tsx   # Provider para a instância do mapa
+|   |   |
+|   |   |-- data-access/          # Abstração da persistência (IndexedDB) - A "Cold Source"
+|   |   |   |-- hooks/              # Hooks React Query que usam o repository
+|   |   |   |   |-- useFeatures.ts    # Hook para ler feições (getAll, getById)
+|   |   |   |   |-- useMutateFeature.ts # Hook para criar, atualizar e deletar feições
+|   |   |   |   |-- useLayers.ts      # Hooks para CRUD de camadas
+|   |   |   |   |-- useMaps.ts        # Hooks para CRUD de mapas
+|   |   |   |
+|   |   |   |-- repositories/       # Repository Pattern - Abstração da camada de dados
+|   |   |   |   |-- interfaces/
+|   |   |   |   |   |-- IRepository.ts     # Interface base do repository
+|   |   |   |   |   |-- IFeatureRepository.ts
+|   |   |   |   |   |-- ILayerRepository.ts
+|   |   |   |   |   |-- IMapRepository.ts
+|   |   |   |   |
+|   |   |   |   |-- implementations/
+|   |   |   |   |   |-- IndexedDBFeatureRepository.ts
+|   |   |   |   |   |-- IndexedDBLayerRepository.ts
+|   |   |   |   |   |-- IndexedDBMapRepository.ts
+|   |   |   |   |
+|   |   |   |   |-- repository.factory.ts # Factory para criar instâncias dos repositories
+|   |   |   |
+|   |   |   |-- schemas/            # Schemas Zod para validação de dados
+|   |   |   |   |-- feature.schema.ts
+|   |   |   |   |-- layer.schema.ts
+|   |   |   |   |-- map.schema.ts
+|   |   |   |   |-- audit.schema.ts   # Schema para campos de auditoria (createdAt, updatedAt, ownerId)
+|   |   |   |
+|   |   |   |-- db.ts               # Configuração e inicialização do IndexedDB (ex: com Dexie.js)
+|   |   |   |-- types.ts            # Tipos de dados da persistência
+|   |   |
+|   |   |-- drawing/              # Funcionalidade de desenho e edição de feições
+|   |   |   |-- components/
+|   |   |   |   |-- DrawingToolbar.tsx  # Barra de ferramentas com os botões de desenho
+|   |   |   |   |-- PropertiesPanel.tsx # Painel para editar propriedades da feição selecionada
+|   |   |   |
+|   |   |   |-- lib/
+|   |   |   |   |-- DrawingManager.ts   # Orquestrador que gerencia as ferramentas e o estado de edição
+|   |   |   |   |-- HotSource.ts      # Gerenciador da fonte de dados "Hot" do MapLibre para edição
+|   |   |   |
+|   |   |   |-- store/
+|   |   |   |   |-- drawing.store.ts  # Store (Zustand) para o estado da UI (ferramenta ativa, etc.)
+|   |   |   |
+|   |   |   |-- tools/              # Implementação das ferramentas de desenho
+|   |   |   |   |-- AbstractTool.ts     # Classe base abstrata para todas as ferramentas
+|   |   |   |   |-- PointTool.ts
+|   |   |   |   |-- LineTool.ts
+|   |   |   |   |-- PolygonTool.ts
+|   |   |   |   |-- TextTool.ts
+|   |   |   |   |-- MilitarySymbolTool.ts # Ferramenta para simbologia SIDC
+|   |   |
+|   |   |-- layers/               # Funcionalidade de gerenciamento de camadas e tabela de atributos
+|   |   |   |-- components/
+|   |   |   |   |-- LayerManager.tsx    # UI para criar, renomear e apagar camadas
+|   |   |   |   |-- AttributeTable.tsx  # Tabela de atributos da camada selecionada
+|   |   |   |
+|   |   |   |-- store/
+|   |   |   |   |-- layers.store.ts   # Store (Zustand) para estado da UI (camada ativa, visibilidade)
+|   |   |
+|   |   |-- maps-contexts/        # Funcionalidade de salvar/carregar "Mapas" (conjuntos de camadas)
+|   |   |   |-- components/
+|   |   |   |   |-- MapContextSwitcher.tsx # UI para gerenciar e alternar entre mapas
+|   |   |
+|   |   |-- selection/            # Lógica e estado da seleção de múltiplas feições
+|   |   |   |-- hooks/
+|   |   |   |   |-- useFeatureSelection.ts # Hook com a lógica para gerenciar seleção e edições em massa
+|   |   |   |
+|   |   |   |-- store/
+|   |   |   |   |-- selection.store.ts   # Store (Zustand) para gerenciar IDs das feições selecionadas
+|   |   |
+|   |   |-- symbology/            # Lógica específica para simbologia militar
+|   |   |   |-- utils/
+|   |   |   |   |-- milsymbol.utils.ts # Wrapper para a biblioteca milsymbol (gerar SVG a partir de SIDC)
+|   |   |
+|   |   |-- transaction-history/  # Sistema de Desfazer/Refazer (Undo/Redo)
+|   |   |   |-- hooks/
+|   |   |   |   |-- useUndoRedo.ts      # Hook para interagir com a pilha (undo, redo, add)
+|   |   |   |-- store/
+|   |   |   |   |-- history.store.ts  # Store (Zustand) com a pilha de transações
+|   |   |
+|   |   |-- io/                   # Funcionalidades de Importação e Exportação (.ebgeo)
+|   |       |-- components/
+|   |       |   |-- ImportExportControls.tsx
+|   |       |-- services/
+|   |           |-- import.service.ts   # Lógica para ler, descompactar e processar o arquivo .ebgeo
+|   |           |-- export.service.ts   # Lógica para coletar dados, criar o manifest e compactar o .ebgeo
+|   |
+|   |-- hooks/                    # Hooks globais e reutilizáveis (não associados a uma feature)
+|   |   |-- useTheme.ts
+|   |
+|   |-- pages/                    # Componentes de página (se a aplicação tiver múltiplas rotas)
+|   |   |-- Main.page.tsx         # A view principal da aplicação que compõe todas as features
+|   |
+|   |-- store/                    # Configuração e combinação dos stores globais (Zustand)
+|   |   |-- store.config.ts
+|   |
+|   |-- theme/                    # Definição de temas (cores, fontes, espaçamento)
+|   |   |-- ThemeProvider.tsx     # Provedor de contexto do tema
+|   |   |-- themes.ts             # Objetos de tema (ex: lightTheme, darkTheme)
+|   |   |-- global.css
+|   |
+|   |-- types/                    # Definições de tipos globais para a aplicação
+|   |   |-- feature.types.ts      # Extensão dos tipos GeoJSON para incluir `layerId`, `style`, etc.
+|   |   |-- index.d.ts
+|   |
+|   |-- App.tsx                   # Componente raiz (configura providers, rotas, layout global)
+|   |-- main.tsx                  # Ponto de entrada da aplicação
+|
+|-- .eslintrc.cjs               # Configuração do ESLint (ex: com eslint-config-airbnb-typescript)
+|-- .gitignore
+|-- .prettierrc.json            # Configuração do Prettier
+|-- index.html
+|-- package.json
+|-- tsconfig.json
+|-- vite.config.ts

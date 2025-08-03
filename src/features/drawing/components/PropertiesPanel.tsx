@@ -1,4 +1,4 @@
-// Path: features\drawing\components\PropertiesPanel.tsx
+// Path: features/drawing/components/PropertiesPanel.tsx
 
 import React, { useState, useEffect } from 'react';
 import {
@@ -34,17 +34,20 @@ import {
 import { useFeatureSelection } from '../../selection/hooks/useFeatureSelection';
 import { useUpdateFeature } from '../../data-access/hooks/useMutateFeature';
 import { ExtendedFeature, FeatureStyle } from '../../data-access/schemas/feature.schema';
+import { CoordinatesTable } from '../../shared/components/CoordinatesTable';
 
 interface PropertiesPanelProps {
   open: boolean;
   onClose: () => void;
   className?: string;
+  onVertexSelect?: (featureId: string, vertexIndex: number, coordinate: [number, number]) => void;
 }
 
 export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
   open,
   onClose,
   className,
+  onVertexSelect,
 }) => {
   const { selectedFeatures, selectionStats, hasSelection, hasSingleSelection } = useFeatureSelection();
   const updateFeature = useUpdateFeature();
@@ -52,7 +55,8 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
   // Estado local para edição
   const [editedFeature, setEditedFeature] = useState<ExtendedFeature | null>(null);
   const [isDirty, setIsDirty] = useState(false);
-  const [expandedAccordions, setExpandedAccordions] = useState<string[]>(['basic', 'style']);
+  const [expandedAccordions, setExpandedAccordions] = useState<string[]>(['basic', 'style', 'coordinates']);
+  const [selectedVertexIndex, setSelectedVertexIndex] = useState<number | undefined>();
 
   // Feature ativa (primeira selecionada)
   const activeFeature = selectedFeatures[0] || null;
@@ -62,9 +66,11 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
     if (hasSingleSelection && activeFeature) {
       setEditedFeature({ ...activeFeature });
       setIsDirty(false);
+      setSelectedVertexIndex(undefined);
     } else {
       setEditedFeature(null);
       setIsDirty(false);
+      setSelectedVertexIndex(undefined);
     }
   }, [activeFeature, hasSingleSelection]);
 
@@ -124,14 +130,19 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
     setIsDirty(true);
   };
 
-  // Salvar mudanças
+  // Handler para salvar mudanças
   const handleSave = async () => {
     if (!editedFeature || !isDirty) return;
 
     try {
       await updateFeature.mutateAsync({
         id: editedFeature.id,
-        updates: editedFeature,
+        updates: {
+          properties: {
+            ...editedFeature.properties,
+            updatedAt: new Date().toISOString(),
+          },
+        },
       });
       setIsDirty(false);
     } catch (error) {
@@ -139,7 +150,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
     }
   };
 
-  // Resetar mudanças
+  // Handler para reset
   const handleReset = () => {
     if (activeFeature) {
       setEditedFeature({ ...activeFeature });
@@ -147,13 +158,26 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
     }
   };
 
-  // Renderizar conteúdo baseado na seleção
+  // Handler para seleção de vértice
+  const handleVertexSelect = (vertexIndex: number, coordinate: [number, number]) => {
+    setSelectedVertexIndex(vertexIndex);
+    if (editedFeature && onVertexSelect) {
+      onVertexSelect(editedFeature.id, vertexIndex, coordinate);
+    }
+  };
+
+  // Handler para hover de vértice
+  const handleVertexHover = (vertexIndex: number | null) => {
+    // Implementar highlight do vértice no mapa se necessário
+  };
+
+  // Render content baseado no estado
   const renderContent = () => {
     if (!hasSelection) {
       return (
         <Box sx={{ p: 3, textAlign: 'center' }}>
-          <Typography variant="body2" color="text.secondary">
-            Selecione uma feature para editar suas propriedades
+          <Typography variant="body2" color="textSecondary">
+            Selecione uma feição no mapa para ver suas propriedades
           </Typography>
         </Box>
       );
@@ -162,40 +186,30 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
     if (!hasSingleSelection) {
       return (
         <Box sx={{ p: 2 }}>
-          <Typography variant="h6" gutterBottom>
-            Seleção Múltipla
+          <Alert severity="info" sx={{ mb: 2 }}>
+            {selectionStats.count} feições selecionadas
+          </Alert>
+          
+          <Typography variant="body2" color="textSecondary" gutterBottom>
+            Para editar propriedades, selecione apenas uma feição.
           </Typography>
           
-          <Alert severity="info" sx={{ mb: 2 }}>
-            {selectionStats.count} features selecionadas
-          </Alert>
-
-          <Box sx={{ mb: 2 }}>
+          <Box sx={{ mt: 2 }}>
             <Typography variant="subtitle2" gutterBottom>
-              Tipos de Geometria:
+              Resumo da Seleção:
             </Typography>
-            {Object.entries(selectionStats.geometryTypes).map(([type, count]) => (
-              <Chip
-                key={type}
-                label={`${type}: ${count}`}
-                size="small"
-                sx={{ mr: 1, mb: 1 }}
-              />
-            ))}
-          </Box>
-
-          <Box sx={{ mb: 2 }}>
-            <Typography variant="subtitle2" gutterBottom>
-              Camadas:
+            <Typography variant="body2">
+              • {selectionStats.count} feições
             </Typography>
-            <Typography variant="body2" color="text.secondary">
-              {selectionStats.layerCount} camada(s) diferentes
+            <Typography variant="body2">
+              • {selectionStats.layerCount} camada(s)
+            </Typography>
+            <Typography variant="body2">
+              • Tipos: {Object.entries(selectionStats.geometryTypes)
+                .map(([type, count]) => `${type} (${count})`)
+                .join(', ')}
             </Typography>
           </Box>
-
-          <Typography variant="body2" color="text.secondary">
-            Selecione apenas uma feature para editar propriedades individuais
-          </Typography>
         </Box>
       );
     }
@@ -203,48 +217,38 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
     if (!editedFeature) return null;
 
     return (
-      <Box sx={{ p: 2 }}>
-        {/* Cabeçalho */}
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
-          <Typography variant="h6">
-            Propriedades
-          </Typography>
-          <Box>
-            {isDirty && (
-              <Tooltip title="Resetar mudanças">
-                <IconButton size="small" onClick={handleReset}>
-                  <RefreshIcon />
-                </IconButton>
-              </Tooltip>
-            )}
-            <Tooltip title="Salvar mudanças">
-              <span>
-                <IconButton
-                  size="small"
-                  onClick={handleSave}
-                  disabled={!isDirty || updateFeature.isPending}
-                  color="primary"
-                >
-                  <SaveIcon />
-                </IconButton>
-              </span>
-            </Tooltip>
-          </Box>
-        </Box>
-
+      <Box>
         {isDirty && (
-          <Alert severity="warning" sx={{ mb: 2 }}>
-            Há mudanças não salvas
+          <Alert 
+            severity="warning" 
+            sx={{ m: 2, mb: 1 }}
+            action={
+              <Box sx={{ display: 'flex', gap: 1 }}>
+                <Button size="small" onClick={handleReset}>
+                  Desfazer
+                </Button>
+                <Button 
+                  size="small" 
+                  variant="contained" 
+                  onClick={handleSave}
+                  disabled={updateFeature.isPending}
+                >
+                  Salvar
+                </Button>
+              </Box>
+            }
+          >
+            Modificações não salvas
           </Alert>
         )}
 
-        {/* Informações básicas */}
+        {/* Propriedades Básicas */}
         <Accordion
           expanded={expandedAccordions.includes('basic')}
           onChange={handleAccordionChange('basic')}
         >
           <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-            <Typography variant="subtitle1">Informações Básicas</Typography>
+            <Typography variant="subtitle1">Propriedades Básicas</Typography>
           </AccordionSummary>
           <AccordionDetails>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -260,33 +264,21 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
                 label="Descrição"
                 value={editedFeature.properties.description || ''}
                 onChange={(e) => handleDescriptionChange(e.target.value)}
-                multiline
-                rows={3}
                 size="small"
                 fullWidth
+                multiline
+                rows={3}
               />
 
-              <Box>
-                <Typography variant="caption" color="text.secondary">
+              <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'wrap' }}>
+                <Chip 
+                  icon={<EditIcon fontSize="small" />}
+                  label={editedFeature.geometry.type}
+                  size="small"
+                  variant="outlined"
+                />
+                <Typography variant="caption" color="textSecondary">
                   ID: {editedFeature.id}
-                </Typography>
-              </Box>
-
-              <Box>
-                <Typography variant="caption" color="text.secondary">
-                  Tipo: {editedFeature.geometry.type}
-                </Typography>
-              </Box>
-
-              <Box>
-                <Typography variant="caption" color="text.secondary">
-                  Criado: {new Date(editedFeature.properties.createdAt).toLocaleString()}
-                </Typography>
-              </Box>
-
-              <Box>
-                <Typography variant="caption" color="text.secondary">
-                  Modificado: {new Date(editedFeature.properties.updatedAt).toLocaleString()}
                 </Typography>
               </Box>
             </Box>
@@ -303,10 +295,10 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
           </AccordionSummary>
           <AccordionDetails>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-              {/* Cor do traço */}
+              {/* Cor da linha/borda */}
               <Box>
                 <Typography variant="body2" gutterBottom>
-                  Cor do Traço
+                  Cor da Linha
                 </Typography>
                 <input
                   type="color"
@@ -322,25 +314,26 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
                 />
               </Box>
 
-              {/* Largura do traço */}
+              {/* Largura da linha */}
               <Box>
                 <Typography variant="body2" gutterBottom>
-                  Largura do Traço: {editedFeature.properties.style?.strokeWidth || 3}px
+                  Largura da Linha: {editedFeature.properties.style?.strokeWidth || 2}px
                 </Typography>
                 <Slider
-                  value={editedFeature.properties.style?.strokeWidth || 3}
+                  value={editedFeature.properties.style?.strokeWidth || 2}
                   onChange={(_, value) => handleStyleChange({ strokeWidth: value as number })}
                   min={1}
-                  max={20}
+                  max={10}
                   step={1}
                   size="small"
+                  marks
                 />
               </Box>
 
-              {/* Opacidade do traço */}
+              {/* Opacidade da linha */}
               <Box>
                 <Typography variant="body2" gutterBottom>
-                  Opacidade do Traço: {Math.round((editedFeature.properties.style?.strokeOpacity || 1) * 100)}%
+                  Opacidade da Linha: {Math.round((editedFeature.properties.style?.strokeOpacity || 1) * 100)}%
                 </Typography>
                 <Slider
                   value={editedFeature.properties.style?.strokeOpacity || 1}
@@ -351,43 +344,6 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
                   size="small"
                 />
               </Box>
-
-              {/* Para pontos */}
-              {editedFeature.geometry.type === 'Point' && (
-                <>
-                  <Box>
-                    <Typography variant="body2" gutterBottom>
-                      Cor do Marcador
-                    </Typography>
-                    <input
-                      type="color"
-                      value={editedFeature.properties.style?.markerColor || '#1976d2'}
-                      onChange={(e) => handleStyleChange({ markerColor: e.target.value })}
-                      style={{
-                        width: '100%',
-                        height: 40,
-                        border: '1px solid #ccc',
-                        borderRadius: 4,
-                        cursor: 'pointer',
-                      }}
-                    />
-                  </Box>
-
-                  <Box>
-                    <Typography variant="body2" gutterBottom>
-                      Tamanho do Marcador: {editedFeature.properties.style?.markerSize || 8}px
-                    </Typography>
-                    <Slider
-                      value={editedFeature.properties.style?.markerSize || 8}
-                      onChange={(_, value) => handleStyleChange({ markerSize: value as number })}
-                      min={4}
-                      max={30}
-                      step={2}
-                      size="small"
-                    />
-                  </Box>
-                </>
-              )}
 
               {/* Para polígonos */}
               {editedFeature.geometry.type === 'Polygon' && (
@@ -429,7 +385,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
           </AccordionDetails>
         </Accordion>
 
-        {/* Coordenadas (somente leitura) */}
+        {/* Coordenadas - Nova implementação com CoordinatesTable */}
         <Accordion
           expanded={expandedAccordions.includes('coordinates')}
           onChange={handleAccordionChange('coordinates')}
@@ -437,26 +393,43 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
           <AccordionSummary expandIcon={<ExpandMoreIcon />}>
             <Typography variant="subtitle1">Coordenadas</Typography>
           </AccordionSummary>
+          <AccordionDetails sx={{ p: 0 }}>
+            <CoordinatesTable
+              feature={editedFeature}
+              selectedVertexIndex={selectedVertexIndex}
+              onVertexSelect={handleVertexSelect}
+              onVertexHover={handleVertexHover}
+              maxHeight={300}
+              showActions={true}
+              showDistances={editedFeature.geometry.type !== 'Point'}
+              compactMode={false}
+            />
+          </AccordionDetails>
+        </Accordion>
+
+        {/* Metadados */}
+        <Accordion
+          expanded={expandedAccordions.includes('metadata')}
+          onChange={handleAccordionChange('metadata')}
+        >
+          <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+            <Typography variant="subtitle1">Metadados</Typography>
+          </AccordionSummary>
           <AccordionDetails>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-              {editedFeature.geometry.type === 'Point' && (
-                <Typography variant="body2" component="pre" sx={{ fontSize: '0.8rem' }}>
-                  Longitude: {(editedFeature.geometry.coordinates as [number, number])[0].toFixed(6)}{'\n'}
-                  Latitude: {(editedFeature.geometry.coordinates as [number, number])[1].toFixed(6)}
+              <Typography variant="body2" color="textSecondary">
+                <strong>Criado em:</strong> {new Date(editedFeature.properties.createdAt).toLocaleString()}
+              </Typography>
+              <Typography variant="body2" color="textSecondary">
+                <strong>Atualizado em:</strong> {new Date(editedFeature.properties.updatedAt).toLocaleString()}
+              </Typography>
+              <Typography variant="body2" color="textSecondary">
+                <strong>Camada:</strong> {editedFeature.properties.layerId}
+              </Typography>
+              {editedFeature.properties.ownerId && (
+                <Typography variant="body2" color="textSecondary">
+                  <strong>Proprietário:</strong> {editedFeature.properties.ownerId}
                 </Typography>
-              )}
-              
-              {editedFeature.geometry.type === 'LineString' && (
-                <Box>
-                  <Typography variant="body2" gutterBottom>
-                    {(editedFeature.geometry.coordinates as [number, number][]).length} pontos
-                  </Typography>
-                  <Typography variant="body2" component="pre" sx={{ fontSize: '0.7rem', maxHeight: 200, overflow: 'auto' }}>
-                    {(editedFeature.geometry.coordinates as [number, number][])
-                      .map((coord, i) => `${i + 1}: ${coord[1].toFixed(6)}, ${coord[0].toFixed(6)}`)
-                      .join('\n')}
-                  </Typography>
-                </Box>
               )}
             </Box>
           </AccordionDetails>
@@ -475,7 +448,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
         position: 'absolute',
         top: 16,
         right: 16,
-        width: 350,
+        width: 400,
         maxHeight: 'calc(100vh - 32px)',
         zIndex: 1000,
         display: 'flex',

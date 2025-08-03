@@ -1,0 +1,86 @@
+**1. Overview**
+
+Interactive vector drawing web application based on React and MapLibre GL JS. The application will allow military users to create, edit, and organize geospatial information (features) intuitively and persistently in the browser. The system must be extensible, performant on low-speed networks, and robust, using IndexedDB as the primary data source.
+
+**2. Fundamental Concepts Glossary**
+
+* **Feature:** The basic unit of information (point, line, etc.), represented as a GeoJSON object.
+* **Attribute:** A key/value pair in the `properties` property of a *Feature*.
+* **Style:** Visual properties stored in `feature.properties.style`.
+* **Layer:** A collection of *Features* (identified by `feature.properties.layerId`).
+* **Map:** A set of *Layers* that defines an operational context.
+
+**3. Functional Requirements**
+
+**3.1. Feature Management (CRUD)**
+* **Create:** Add features to the map, including:
+    * Simple Geometries: Point, Line, Polygon.
+    * Visual Elements: Text, Image.
+    * **Military Symbology:** Implemented using the **`milsymbol`** library. The feature will store the SIDC code (ex: `properties.sidc`) and the library will be used to generate the corresponding SVG for rendering.
+* **Read/Display:** Rendering of all features on the map.
+* **Update (Edit):**
+    * Geometry Editing: Move feature, add/move/delete vertices.
+    * Tool-Specific Editing: Radius editing for circles, base/tip/curvature manipulation for arrows, etc.
+* **Delete:** Remove features.
+
+**3.2. Data Organization**
+* **Layers:**
+    * Users can create, rename, and delete layers.
+    * Features are associated with layers via a `layerId` property in their `properties`.
+    * The interface must allow moving features between layers (updating their `layerId`).
+    * **Attribute Table:** For each layer, a table must be displayed with the following functionalities:
+        * **Visualization:** List the layer's features in rows, with columns for their main attributes.
+        * **Sorting:** Allow ascending/descending sorting when clicking on column headers.
+        * **Individual Editing:** Clicking on a row (or edit button) should open the editing panel/modal for that specific feature.
+* **Maps:**
+    * Allow saving and loading sets of layers as a "Map", switching the user's work context.
+
+**3.3. User Interaction (UX)**
+* **Undo/Redo:**
+    * The action stack should operate on complete transactions.
+    * A new action is added to the stack only when an edit is completed (transition from "Hot Source" to "Cold Source"). Intermediate actions (like dragging a vertex) are not added individually.
+* **Keyboard Shortcuts:** Implement shortcuts to streamline operations.
+
+**4. Technical and Architecture Requirements**
+
+**4.1. Core Technology Stack**
+* **Framework:** React
+* **Language:** TypeScript
+* **Schema Validation:** Zod (to ensure integrity of data saved in IndexedDB and in transit).
+* **Global State Management:** Zustand (for UI states, such as active tool, selected layer, etc.).
+* **Server State/Cache Management:** React Query (to manage any asynchronous calls, even if they are to the IndexedDB "API", ensuring consistency).
+* **Map Rendering:** MapLibre GL JS.
+* **React-Map Integration:** `react-map-gl`.
+* **Geospatial Operations:** Turf.js.
+
+**4.2. Data Persistence (Source of Truth)**
+* **Storage:** IndexedDB is the single source of truth (*Single Source of Truth*).
+* **Data Schema:**
+    * **Features:** Stored as GeoJSON objects.
+        * The feature's style will be an object stored in `feature.properties.style`.
+        * Layer affiliation will be defined by `feature.properties.layerId`.
+    * **Assets:** Binary data (images, SVGs) will be stored in a separate *Object Store*.
+* **Precision:** Coordinates stored as integers (tenths of a meter).
+
+**4.3. Drawing Architecture**
+* **DrawingManager + Tools:** Maintain the architecture of a central state manager with extensible tool classes.
+* **"Hot" vs. "Cold" Data Sources:**
+    * **Cold Source:** Wrapper around IndexedDB, possibly managed with `react-query` to provide hooks (`useFeatures`, `updateFeature`) to the rest of the application.
+    * **Hot Source:** A MapLibre `GeoJSONSource`, managed by React local state or Zustand, containing only the geometry being edited.
+    * **Save Flow:** Editing occurs in the *Hot Source*. Upon completion (ex: deselecting the feature), the final state is validated with Zod and saved to the *Cold Source* (IndexedDB). This transaction is a single event for the Undo/Redo stack.
+
+**4.4. Import and Export**
+* **Format:** `.ebgeo` file (a renamed `.zip`).
+* **File Structure:** The file must contain everything necessary to reconstruct the IndexedDB state in a new browser.
+    * `manifest.json`: Describes the metadata structure. Contains an array of `layer` and `map` objects to reconstruct the organization.
+    * `features.json`: A single GeoJSON `FeatureCollection` file containing all features from all layers. Each feature must include its complete `properties` (`layerId`, `style`, attributes, etc.).
+    * `assets/`: A folder with all binary files. Features must reference these assets by a relative path (ex: `properties.image = "assets/base_image.png"`). The import process will read the file, transform it into a Blob, and save it to the IndexedDB assets *Object Store*.
+
+**4.5. Non-Functional Requirements and Deployment Context**
+* **Data Scale:** The application must be optimized for hundreds of features, with a practical expected limit of ~1000 features. Rendering strategies can be based on client-side GeoJSON sources without the need for server-generated *vector tiles*.
+* **Environment:** Brazilian Army intranet.
+* **Network Constraints:** The application will be hosted in a single location (probably in RS), but accessed by users throughout Brazil (ex: Acre). The network may have **high latency and low bandwidth**.
+* **Network Implications:**
+    * **Offline-First:** The architecture should prioritize functioning with local data in IndexedDB. The user interface should not freeze while waiting for network resources.
+    * **Optimized Initial Load:** The application *bundle* (JavaScript, CSS) should be as small as possible to ensure fast initial loading times on slow networks.
+    * **Asynchronous Communication:** Any communication with a server (if any, in the future) must be asynchronous, resilient to failures, and provide clear feedback to the user about synchronization status, using `react-query` to manage `loading`, `error`, and `retry`.

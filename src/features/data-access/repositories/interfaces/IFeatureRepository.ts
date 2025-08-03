@@ -1,4 +1,4 @@
-// Path: features\data-access\repositories\interfaces\IFeatureRepository.ts
+// Path: features/data-access/repositories/interfaces/IFeatureRepository.ts
 
 import { ExtendedFeature } from '../../schemas/feature.schema';
 import { IRepository, ISearchableRepository } from './IRepository';
@@ -48,6 +48,9 @@ export interface IFeatureRepository extends ISearchableRepository<ExtendedFeatur
     valid: boolean;
     errors: string[];
   }>;
+  
+  // Obter features órfãs (sem camada válida)
+  getOrphanedFeatures(): Promise<ExtendedFeature[]>;
   
   // Limpeza de features órfãs (sem camada)
   cleanOrphanedFeatures(): Promise<string[]>;
