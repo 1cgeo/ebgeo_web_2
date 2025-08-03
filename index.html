@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    
+    <!-- SEO and App Info -->
+    <title>EBGeo - Sistema de Desenho Vetorial</title>
+    <meta name="description" content="Sistema interativo de desenho vetorial para operações geoespaciais militares" />
+    <meta name="author" content="EBGeo Team" />
+    <meta name="keywords" content="gis, mapeamento, militar, geoespacial, vetorial" />
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="EBGeo - Sistema de Desenho Vetorial" />
+    <meta property="og:description" content="Sistema interativo de desenho vetorial para operações geoespaciais militares" />
+    
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image" />
+    <meta property="twitter:title" content="EBGeo - Sistema de Desenho Vetorial" />
+    <meta property="twitter:description" content="Sistema interativo de desenho vetorial para operações geoespaciais militares" />
+    
+    <!-- Security -->
+    <meta http-equiv="X-Content-Type-Options" content="nosniff" />
+    <meta http-equiv="X-Frame-Options" content="DENY" />
+    <meta http-equiv="X-XSS-Protection" content="1; mode=block" />
+    
+    <!-- PWA Meta Tags (para futuras implementações) -->
+    <meta name="theme-color" content="#1976d2" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="EBGeo" />
+    
+    <!-- Preconnect para otimização de performance -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    
+    <!-- Fontes do Google (Roboto para Material-UI) -->
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;600;700&display=swap"
+    />
+    
+    <!-- Material Icons -->
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/icon?family=Material+Icons"
+    />
+    
+    <!-- MapLibre GL CSS -->
+    <link
+      href="https://unpkg.com/maplibre-gl@4.1.1/dist/maplibre-gl.css"
+      rel="stylesheet"
+    />
+    
+    <!-- Estilos inline críticos para evitar FOUC -->
+    <style>
+      /* Estilos críticos para loading inicial */
+      #root {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
+      
+      /* Loading spinner inicial */
+      .initial-loading {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: #fafafa;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        z-index: 9999;
+      }
+      
+      .initial-loading .spinner {
+        width: 48px;
+        height: 48px;
+        border: 4px solid #e3f2fd;
+        border-top: 4px solid #1976d2;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+      }
+      
+      .initial-loading .text {
+        margin-top: 16px;
+        font-family: 'Roboto', sans-serif;
+        font-size: 14px;
+        color: #757575;
+      }
+      
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+      
+      /* Reset básico */
+      * {
+        box-sizing: border-box;
+      }
+      
+      html, body {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        font-family: 'Roboto', 'Helvetica', 'Arial', sans-serif;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        background-color: #fafafa;
+      }
+      
+      /* Garantir que links de skip sejam acessíveis */
+      .skip-link {
+        position: absolute;
+        top: -40px;
+        left: 6px;
+        background: #1976d2;
+        color: white;
+        padding: 8px;
+        text-decoration: none;
+        border-radius: 4px;
+        z-index: 10000;
+      }
+      
+      .skip-link:focus {
+        top: 6px;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Skip link para acessibilidade -->
+    <a href="#main-content" class="skip-link">Pular para o conteúdo principal</a>
+    
+    <!-- Loading inicial -->
+    <div class="initial-loading" id="initial-loading">
+      <div class="spinner"></div>
+      <div class="text">Carregando EBGeo...</div>
+    </div>
+    
+    <!-- Root da aplicação React -->
+    <div id="root" role="main" aria-label="Aplicação EBGeo">
+      <!-- A aplicação React será renderizada aqui -->
+    </div>
+    
+    <!-- Script para remover loading inicial quando React carregar -->
+    <script>
+      // Remover loading inicial após um tempo máximo (fallback)
+      setTimeout(() => {
+        const loading = document.getElementById('initial-loading');
+        if (loading) {
+          loading.style.opacity = '0';
+          setTimeout(() => loading.remove(), 300);
+        }
+      }, 5000);
+      
+      // Detectar erros de carregamento
+      window.addEventListener('error', (e) => {
+        console.error('Erro de carregamento detectado:', e);
+        const loading = document.getElementById('initial-loading');
+        if (loading) {
+          loading.innerHTML = `
+            <div style="text-align: center; color: #d32f2f;">
+              <h3>Erro de Carregamento</h3>
+              <p>Falha ao carregar a aplicação. Tente recarregar a página.</p>
+              <button onclick="window.location.reload()" style="padding: 8px 16px; margin-top: 16px; background: #1976d2; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                Recarregar
+              </button>
+            </div>
+          `;
+        }
+      });
+      
+      // Melhorias de performance
+      if ('serviceWorker' in navigator && import.meta.env.PROD) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js').catch((error) => {
+            console.log('SW registration failed: ', error);
+          });
+        });
+      }
+    </script>
+    
+    <!-- Script principal da aplicação -->
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

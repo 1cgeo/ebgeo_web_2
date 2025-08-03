@@ -1,0 +1,269 @@
+# .prettierignore
+
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Production builds
+/build
+/dist
+/.next/
+/out/
+
+# Generated files
+.docusaurus
+.cache
+.parcel-cache
+.size-limit.json
+
+# Coverage directory used by tools like istanbul
+coverage/
+*.lcov
+.nyc_output
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+.pnpm-debug.log*
+
+# Diagnostic reports (https://nodejs.org/api/report.html)
+report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
+
+# Compiled binary addons (https://nodejs.org/api/addons.html)
+build/Release
+
+# Dependency directories
+jspm_packages/
+
+# TypeScript cache
+*.tsbuildinfo
+
+# Optional npm cache directory
+.npm
+
+# Optional eslint cache
+.eslintcache
+
+# Optional stylelint cache
+.stylelintcache
+
+# Microbundle cache
+.rpt2_cache/
+.rts2_cache_cjs/
+.rts2_cache_es/
+.rts2_cache_umd/
+
+# Optional REPL history
+.node_repl_history
+
+# Output of 'npm pack'
+*.tgz
+
+# Yarn Integrity file
+.yarn-integrity
+
+# dotenv environment variables file
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# parcel-bundler cache (https://parceljs.org/)
+.cache
+.parcel-cache
+
+# Storybook build outputs
+.out
+.storybook-out
+storybook-static
+
+# Temporary folders
+tmp/
+temp/
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Package manager lockfiles (version-dependent formatting)
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Generated documentation
+docs/build/
+docs/.docusaurus/
+
+# Test results
+test-results/
+playwright-report/
+
+# Auto-generated files
+src/types/generated/
+src/api/generated/
+public/icons/generated/
+
+# Map files
+*.map
+
+# Certificate files
+*.pem
+
+# Local development
+.vercel
+.netlify
+
+# Deployment files
+.deployment
+deploy.sh
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Backup files
+*.backup
+*.bak
+*.tmp
+
+# Archive files
+*.zip
+*.tar.gz
+*.rar
+
+# Large media files (should be in .gitignore anyway)
+*.mov
+*.mp4
+*.mp3
+*.wav
+
+# Minified files
+*.min.js
+*.min.css
+
+# Vendor libraries (third-party code that shouldn't be formatted)
+vendor/
+lib/third-party/
+src/vendor/
+
+# Auto-generated CSS
+src/styles/generated/
+public/css/generated/
+
+# Translation files
+src/locales/generated/
+
+# API documentation
+docs/api/
+
+# Code coverage reports
+coverage.xml
+.coverage
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints
+
+# VS Code workspace files
+*.code-workspace
+
+# JetBrains IDE
+.idea/
+
+# Vim
+*.swp
+*.swo
+
+# Emacs
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+auto-save-list
+tramp
+.\#*
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+*.lnk
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
+
+# Linux
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+.nfs*
+
+# Security related
+.env.secret
+.secrets
+secrets.json
+config/secrets/
+
+# Performance monitoring
+.size-limit.json
+bundle-analyzer/
+
+# Changelogs (often auto-generated)
+CHANGELOG.md
+HISTORY.md
+
+# License files (formatting might be important for legal reasons)
+LICENSE
+LICENSE.md
+LICENSE.txt
+COPYING
+COPYING.md
