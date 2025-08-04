@@ -104,10 +104,14 @@ export const useInvalidateMaps = () => {
   return {
     invalidateAll: () => queryClient.invalidateQueries({ queryKey: MAP_QUERY_KEYS.all }),
     invalidateList: () => queryClient.invalidateQueries({ queryKey: MAP_QUERY_KEYS.lists() }),
-    invalidateDetail: (id: string) => queryClient.invalidateQueries({ queryKey: MAP_QUERY_KEYS.detail(id) }),
-    invalidateWithLayers: (id: string) => queryClient.invalidateQueries({ queryKey: MAP_QUERY_KEYS.withLayers(id) }),
-    invalidateStats: (id: string) => queryClient.invalidateQueries({ queryKey: MAP_QUERY_KEYS.stats(id) }),
-    invalidateValidation: (id: string) => queryClient.invalidateQueries({ queryKey: MAP_QUERY_KEYS.validation(id) }),
+    invalidateDetail: (id: string) =>
+      queryClient.invalidateQueries({ queryKey: MAP_QUERY_KEYS.detail(id) }),
+    invalidateWithLayers: (id: string) =>
+      queryClient.invalidateQueries({ queryKey: MAP_QUERY_KEYS.withLayers(id) }),
+    invalidateStats: (id: string) =>
+      queryClient.invalidateQueries({ queryKey: MAP_QUERY_KEYS.stats(id) }),
+    invalidateValidation: (id: string) =>
+      queryClient.invalidateQueries({ queryKey: MAP_QUERY_KEYS.validation(id) }),
   };
 };
 
@@ -116,16 +120,18 @@ export const usePrefetchMaps = () => {
   const queryClient = useQueryClient();
 
   return {
-    prefetchAll: () => queryClient.prefetchQuery({
-      queryKey: MAP_QUERY_KEYS.lists(),
-      queryFn: () => mapRepository.getAll(),
-      staleTime: 30000,
-    }),
-    prefetchWithLayers: (id: string) => queryClient.prefetchQuery({
-      queryKey: MAP_QUERY_KEYS.withLayers(id),
-      queryFn: () => mapRepository.getWithLayers(id),
-      staleTime: 30000,
-    }),
+    prefetchAll: () =>
+      queryClient.prefetchQuery({
+        queryKey: MAP_QUERY_KEYS.lists(),
+        queryFn: () => mapRepository.getAll(),
+        staleTime: 30000,
+      }),
+    prefetchWithLayers: (id: string) =>
+      queryClient.prefetchQuery({
+        queryKey: MAP_QUERY_KEYS.withLayers(id),
+        queryFn: () => mapRepository.getWithLayers(id),
+        staleTime: 30000,
+      }),
   };
 };
 
@@ -136,17 +142,14 @@ export const useCreateMap = () => {
 
   return useMutation({
     mutationFn: (map: MapConfig) => mapRepository.create(map),
-    onSuccess: (newMap) => {
+    onSuccess: newMap => {
       // Atualizar cache otimisticamente
-      queryClient.setQueryData(
-        MAP_QUERY_KEYS.detail(newMap.id),
-        newMap
-      );
+      queryClient.setQueryData(MAP_QUERY_KEYS.detail(newMap.id), newMap);
 
       // Invalidar queries relacionadas
       invalidateAll();
     },
-    onError: (error) => {
+    onError: error => {
       console.error('Erro ao criar mapa:', error);
     },
   });
@@ -155,17 +158,15 @@ export const useCreateMap = () => {
 // Hook para atualizar mapa
 export const useUpdateMap = () => {
   const queryClient = useQueryClient();
-  const { invalidateDetail, invalidateList, invalidateWithLayers, invalidateStats } = useInvalidateMaps();
+  const { invalidateDetail, invalidateList, invalidateWithLayers, invalidateStats } =
+    useInvalidateMaps();
 
   return useMutation({
     mutationFn: ({ id, updates }: { id: string; updates: Partial<MapConfig> }) =>
       mapRepository.update(id, updates),
     onSuccess: (updatedMap, { id }) => {
       // Atualizar cache
-      queryClient.setQueryData(
-        MAP_QUERY_KEYS.detail(id),
-        updatedMap
-      );
+      queryClient.setQueryData(MAP_QUERY_KEYS.detail(id), updatedMap);
 
       // Invalidar queries relacionadas
       invalidateDetail(id);
@@ -173,7 +174,7 @@ export const useUpdateMap = () => {
       invalidateWithLayers(id);
       invalidateStats(id);
     },
-    onError: (error) => {
+    onError: error => {
       console.error('Erro ao atualizar mapa:', error);
     },
   });
@@ -186,14 +187,12 @@ export const useDeleteMap = () => {
 
   return useMutation({
     mutationFn: (id: string) => mapRepository.delete(id),
-    onMutate: async (id) => {
+    onMutate: async id => {
       // Cancelar queries em andamento
       await queryClient.cancelQueries({ queryKey: MAP_QUERY_KEYS.detail(id) });
 
       // Snapshot do estado anterior
-      const previousMap = queryClient.getQueryData<MapConfig>(
-        MAP_QUERY_KEYS.detail(id)
-      );
+      const previousMap = queryClient.getQueryData<MapConfig>(MAP_QUERY_KEYS.detail(id));
 
       // Atualizar cache otimisticamente
       queryClient.removeQueries({ queryKey: MAP_QUERY_KEYS.detail(id) });
@@ -203,10 +202,7 @@ export const useDeleteMap = () => {
     onError: (error, id, context) => {
       // Reverter em caso de erro
       if (context?.previousMap) {
-        queryClient.setQueryData(
-          MAP_QUERY_KEYS.detail(id),
-          context.previousMap
-        );
+        queryClient.setQueryData(MAP_QUERY_KEYS.detail(id), context.previousMap);
       }
       console.error('Erro ao deletar mapa:', error);
     },
@@ -222,10 +218,14 @@ export const useDuplicateMap = () => {
   const { invalidateAll } = useInvalidateMaps();
 
   return useMutation({
-    mutationFn: ({ id, newName, includeFeatures = false }: { 
-      id: string; 
-      newName: string; 
-      includeFeatures?: boolean; 
+    mutationFn: ({
+      id,
+      newName,
+      includeFeatures = false,
+    }: {
+      id: string;
+      newName: string;
+      includeFeatures?: boolean;
     }) => mapRepository.duplicate(id, newName, includeFeatures),
     onSuccess: () => {
       // Invalidar todas as queries
@@ -234,7 +234,7 @@ export const useDuplicateMap = () => {
       queryClient.invalidateQueries({ queryKey: ['layers'] });
       queryClient.invalidateQueries({ queryKey: ['features'] });
     },
-    onError: (error) => {
+    onError: error => {
       console.error('Erro ao duplicar mapa:', error);
     },
   });
@@ -248,19 +248,16 @@ export const useAddLayerToMap = () => {
   return useMutation({
     mutationFn: ({ mapId, layerId }: { mapId: string; layerId: string }) =>
       mapRepository.addLayer(mapId, layerId),
-    onSuccess: (updatedMap) => {
+    onSuccess: updatedMap => {
       // Atualizar cache
-      queryClient.setQueryData(
-        MAP_QUERY_KEYS.detail(updatedMap.id),
-        updatedMap
-      );
+      queryClient.setQueryData(MAP_QUERY_KEYS.detail(updatedMap.id), updatedMap);
 
       // Invalidar queries relacionadas
       invalidateDetail(updatedMap.id);
       invalidateWithLayers(updatedMap.id);
       invalidateStats(updatedMap.id);
     },
-    onError: (error) => {
+    onError: error => {
       console.error('Erro ao adicionar camada ao mapa:', error);
     },
   });
@@ -274,19 +271,16 @@ export const useRemoveLayerFromMap = () => {
   return useMutation({
     mutationFn: ({ mapId, layerId }: { mapId: string; layerId: string }) =>
       mapRepository.removeLayer(mapId, layerId),
-    onSuccess: (updatedMap) => {
+    onSuccess: updatedMap => {
       // Atualizar cache
-      queryClient.setQueryData(
-        MAP_QUERY_KEYS.detail(updatedMap.id),
-        updatedMap
-      );
+      queryClient.setQueryData(MAP_QUERY_KEYS.detail(updatedMap.id), updatedMap);
 
       // Invalidar queries relacionadas
       invalidateDetail(updatedMap.id);
       invalidateWithLayers(updatedMap.id);
       invalidateStats(updatedMap.id);
     },
-    onError: (error) => {
+    onError: error => {
       console.error('Erro ao remover camada do mapa:', error);
     },
   });
@@ -300,18 +294,15 @@ export const useReorderMapLayers = () => {
   return useMutation({
     mutationFn: ({ mapId, layerIds }: { mapId: string; layerIds: string[] }) =>
       mapRepository.reorderLayers(mapId, layerIds),
-    onSuccess: (updatedMap) => {
+    onSuccess: updatedMap => {
       // Atualizar cache
-      queryClient.setQueryData(
-        MAP_QUERY_KEYS.detail(updatedMap.id),
-        updatedMap
-      );
+      queryClient.setQueryData(MAP_QUERY_KEYS.detail(updatedMap.id), updatedMap);
 
       // Invalidar queries relacionadas
       invalidateDetail(updatedMap.id);
       invalidateWithLayers(updatedMap.id);
     },
-    onError: (error) => {
+    onError: error => {
       console.error('Erro ao reordenar camadas:', error);
     },
   });
@@ -323,22 +314,16 @@ export const useUpdateMapViewport = () => {
   const { invalidateDetail } = useInvalidateMaps();
 
   return useMutation({
-    mutationFn: ({ id, center, zoom }: { 
-      id: string; 
-      center: [number, number]; 
-      zoom: number; 
-    }) => mapRepository.updateViewport(id, center, zoom),
-    onSuccess: (updatedMap) => {
+    mutationFn: ({ id, center, zoom }: { id: string; center: [number, number]; zoom: number }) =>
+      mapRepository.updateViewport(id, center, zoom),
+    onSuccess: updatedMap => {
       // Atualizar cache
-      queryClient.setQueryData(
-        MAP_QUERY_KEYS.detail(updatedMap.id),
-        updatedMap
-      );
+      queryClient.setQueryData(MAP_QUERY_KEYS.detail(updatedMap.id), updatedMap);
 
       // Invalidar query específica
       invalidateDetail(updatedMap.id);
     },
-    onError: (error) => {
+    onError: error => {
       console.error('Erro ao atualizar viewport:', error);
     },
   });
@@ -354,7 +339,7 @@ export const useCleanupLayerReferences = () => {
       // Invalidar todas as queries de mapas
       invalidateAll();
     },
-    onError: (error) => {
+    onError: error => {
       console.error('Erro ao limpar referências de camadas:', error);
     },
   });
@@ -364,7 +349,7 @@ export const useCleanupLayerReferences = () => {
 export const useExportMapData = () => {
   return useMutation({
     mutationFn: (id: string) => mapRepository.exportMapData(id),
-    onError: (error) => {
+    onError: error => {
       console.error('Erro ao exportar dados do mapa:', error);
     },
   });

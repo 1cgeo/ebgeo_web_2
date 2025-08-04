@@ -17,10 +17,10 @@ export const MapView: React.FC<MapViewProps> = ({ className, style }) => {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const { setMapContainer, isMapLoaded } = useMapContext();
   const { updateColdFeatures, updateSelectedFeatures } = useMapInstance();
-  
+
   // Dados das features
   const { data: features = [], isLoading: featuresLoading, error: featuresError } = useFeatures();
-  
+
   // Estados globais
   const selectedFeatureIds = useSelectionStore(state => state.selectedFeatureIds);
   const activeTool = useDrawingStore(state => state.activeTool);
@@ -46,9 +46,7 @@ export const MapView: React.FC<MapViewProps> = ({ className, style }) => {
   // Atualizar features selecionadas no mapa
   useEffect(() => {
     if (isMapLoaded) {
-      const selectedFeatures = features.filter(feature => 
-        selectedFeatureIds.includes(feature.id)
-      );
+      const selectedFeatures = features.filter(feature => selectedFeatureIds.includes(feature.id));
       updateSelectedFeatures(selectedFeatures);
     }
   }, [isMapLoaded, features, selectedFeatureIds, updateSelectedFeatures]);

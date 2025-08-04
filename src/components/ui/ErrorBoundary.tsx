@@ -34,7 +34,7 @@ interface State {
 export class ErrorBoundary extends Component<Props, State> {
   constructor(props: Props) {
     super(props);
-    
+
     this.state = {
       hasError: false,
       error: null,
@@ -55,7 +55,7 @@ export class ErrorBoundary extends Component<Props, State> {
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     // Registrar o erro
     console.error('ErrorBoundary capturou um erro:', error, errorInfo);
-    
+
     this.setState({
       error,
       errorInfo,
@@ -149,21 +149,21 @@ export class ErrorBoundary extends Component<Props, State> {
             }}
           >
             <Box sx={{ textAlign: 'center', mb: 3 }}>
-              <BugIcon 
-                sx={{ 
-                  fontSize: 64, 
+              <BugIcon
+                sx={{
+                  fontSize: 64,
                   color: 'error.main',
                   mb: 2,
-                }} 
+                }}
               />
-              
+
               <Typography variant="h4" component="h1" gutterBottom color="error">
                 Ops! Algo deu errado
               </Typography>
-              
+
               <Typography variant="body1" color="text.secondary" paragraph>
-                A aplicação encontrou um erro inesperado. Você pode tentar recarregar a página 
-                ou reportar este problema.
+                A aplicação encontrou um erro inesperado. Você pode tentar recarregar a página ou
+                reportar este problema.
               </Typography>
             </Box>
 
@@ -189,11 +189,8 @@ export class ErrorBoundary extends Component<Props, State> {
               >
                 Recarregar Página
               </Button>
-              
-              <Button
-                variant="outlined"
-                onClick={this.handleReset}
-              >
+
+              <Button variant="outlined" onClick={this.handleReset}>
                 Tentar Novamente
               </Button>
             </Box>
@@ -202,12 +199,10 @@ export class ErrorBoundary extends Component<Props, State> {
             {process.env.NODE_ENV === 'development' && this.state.error && (
               <>
                 <Divider sx={{ my: 3 }} />
-                
+
                 <Accordion>
                   <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                    <Typography variant="subtitle1">
-                      Detalhes Técnicos (Desenvolvimento)
-                    </Typography>
+                    <Typography variant="subtitle1">Detalhes Técnicos (Desenvolvimento)</Typography>
                   </AccordionSummary>
                   <AccordionDetails>
                     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -219,7 +214,7 @@ export class ErrorBoundary extends Component<Props, State> {
                       >
                         Copiar Detalhes
                       </Button>
-                      
+
                       <Box>
                         <Typography variant="subtitle2" gutterBottom>
                           Mensagem de Erro:
@@ -296,7 +291,12 @@ export class ErrorBoundary extends Component<Props, State> {
               <Typography variant="body2" color="info.contrastText">
                 <strong>O que você pode fazer:</strong>
               </Typography>
-              <Typography variant="body2" color="info.contrastText" component="ul" sx={{ mt: 1, mb: 0 }}>
+              <Typography
+                variant="body2"
+                color="info.contrastText"
+                component="ul"
+                sx={{ mt: 1, mb: 0 }}
+              >
                 <li>Recarregue a página para começar novamente</li>
                 <li>Verifique sua conexão com a internet</li>
                 <li>Tente limpar o cache do navegador</li>
@@ -341,15 +341,15 @@ export const ErrorFallback: React.FC<ErrorFallbackProps> = ({ error, resetError 
       }}
     >
       <BugIcon sx={{ fontSize: 48, color: 'error.main', mb: 2 }} />
-      
+
       <Typography variant="h6" color="error" gutterBottom>
         Algo deu errado
       </Typography>
-      
+
       <Typography variant="body2" color="text.secondary" paragraph>
         {error.message}
       </Typography>
-      
+
       <Button variant="outlined" onClick={resetError} startIcon={<RefreshIcon />}>
         Tentar Novamente
       </Button>

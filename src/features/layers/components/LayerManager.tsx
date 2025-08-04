@@ -1,4 +1,4 @@
-// Path: features/layers/components/LayerManager.tsx
+// Path: features\layers\components\LayerManager.tsx
 
 import React, { useState, useEffect } from 'react';
 import {
@@ -32,13 +32,18 @@ import {
   Layers as LayersIcon,
 } from '@mui/icons-material';
 
-import { useLayersStore, useLayersActions, useLayersSelectors, useLayerVisibility } from '../store/layers.store';
+import {
+  useLayersStore,
+  useLayersActions,
+  useLayersSelectors,
+  useLayerVisibility,
+} from '../store/layers.store';
 import { useMapsStore, useMapsSelectors } from '../../maps-contexts/store/maps.store';
-import { 
-  useLayers, 
-  useCreateLayer, 
-  useUpdateLayer, 
-  useDeleteLayer, 
+import {
+  useLayers,
+  useCreateLayer,
+  useUpdateLayer,
+  useDeleteLayer,
   useDuplicateLayer,
 } from '../../data-access/hooks/useLayers';
 import { useFeatures } from '../../data-access/hooks/useFeatures';
@@ -54,11 +59,7 @@ interface LayerManagerProps {
   className?: string;
 }
 
-export const LayerManager: React.FC<LayerManagerProps> = ({
-  open,
-  onClose,
-  className,
-}) => {
+export const LayerManager: React.FC<LayerManagerProps> = ({ open, onClose, className }) => {
   // Estados locais
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
@@ -91,10 +92,8 @@ export const LayerManager: React.FC<LayerManagerProps> = ({
 
   // Layers do mapa ativo
   const activeMapId = useMapsStore(state => state.activeMapId);
-  const activeMapLayers = useMapsStore(state => 
-    activeMapId ? 
-      state.mapLayers.get(activeMapId) || [] :
-      []
+  const activeMapLayers = useMapsStore(state =>
+    activeMapId ? state.mapLayers.get(activeMapId) || [] : []
   ).sort((a, b) => b.zIndex - a.zIndex); // Ordenar por zIndex (maior no topo)
 
   // Calcular estatísticas das camadas
@@ -104,10 +103,13 @@ export const LayerManager: React.FC<LayerManagerProps> = ({
       return {
         layerId: layer.id,
         featureCount: features.length,
-        geometryTypes: features.reduce((acc, f) => {
-          acc[f.geometry.type] = (acc[f.geometry.type] || 0) + 1;
-          return acc;
-        }, {} as Record<string, number>)
+        geometryTypes: features.reduce(
+          (acc, f) => {
+            acc[f.geometry.type] = (acc[f.geometry.type] || 0) + 1;
+            return acc;
+          },
+          {} as Record<string, number>
+        ),
       };
     });
   }, [activeMapLayers, allFeatures]);
@@ -146,10 +148,10 @@ export const LayerManager: React.FC<LayerManagerProps> = ({
     try {
       const newLayer = createDefaultLayer(newLayerName.trim());
       await createLayer.mutateAsync(newLayer);
-      
+
       // Adicionar ao mapa ativo
       // TODO: Implementar addLayerToMap
-      
+
       setCreateDialogOpen(false);
       setNewLayerName('');
     } catch (error) {
@@ -164,9 +166,9 @@ export const LayerManager: React.FC<LayerManagerProps> = ({
     try {
       await updateLayer.mutateAsync({
         id: selectedLayer.id,
-        updates: { name: editLayerName.trim() }
+        updates: { name: editLayerName.trim() },
       });
-      
+
       setEditDialogOpen(false);
       setSelectedLayer(null);
       setEditLayerName('');
@@ -195,9 +197,9 @@ export const LayerManager: React.FC<LayerManagerProps> = ({
     try {
       await duplicateLayer.mutateAsync({
         id: selectedLayer.id,
-        newName: duplicateName.trim()
+        newName: duplicateName.trim(),
       });
-      
+
       setDuplicateDialogOpen(false);
       setSelectedLayer(null);
       setDuplicateName('');
@@ -210,21 +212,23 @@ export const LayerManager: React.FC<LayerManagerProps> = ({
   const handleTransferLayerFeatures = (layerId: string) => {
     const layerFeatures = allFeatures.filter(f => f.properties.layerId === layerId);
     const featureIds = layerFeatures.map(f => f.id);
-    
+
     if (featureIds.length > 0) {
       featureTransfer.openTransferDialog(featureIds);
     }
-    
+
     handleMenuClose();
   };
 
   // Obter estatísticas de uma camada
   const getLayerStats = (layerId: string) => {
-    return layerStats.find(s => s.layerId === layerId) || { 
-      layerId, 
-      featureCount: 0, 
-      geometryTypes: {} 
-    };
+    return (
+      layerStats.find(s => s.layerId === layerId) || {
+        layerId,
+        featureCount: 0,
+        geometryTypes: {},
+      }
+    );
   };
 
   if (!open) return null;
@@ -258,9 +262,7 @@ export const LayerManager: React.FC<LayerManagerProps> = ({
           }}
         >
           <Box>
-            <Typography variant="h6">
-              Gerenciar Camadas
-            </Typography>
+            <Typography variant="h6">Gerenciar Camadas</Typography>
             {mapsSelectors.activeMapName && (
               <Typography variant="caption" color="text.secondary">
                 Mapa: {mapsSelectors.activeMapName}
@@ -269,8 +271,8 @@ export const LayerManager: React.FC<LayerManagerProps> = ({
           </Box>
           <Box display="flex" gap={1}>
             <Tooltip title="Transferir Features">
-              <IconButton 
-                size="small" 
+              <IconButton
+                size="small"
                 onClick={() => featureTransfer.openTransferDialog()}
                 disabled={allFeatures.length === 0}
               >
@@ -324,7 +326,7 @@ export const LayerManager: React.FC<LayerManagerProps> = ({
               layerStats={layerStats}
               onLayerMenuOpen={handleMenuOpen}
               onTransferLayerFeatures={handleTransferLayerFeatures}
-              onOpenAttributeTable={(layerId) => {
+              onOpenAttributeTable={layerId => {
                 const layer = activeMapLayers.find(l => l.id === layerId);
                 if (layer) {
                   setSelectedLayer(layer);
@@ -337,11 +339,7 @@ export const LayerManager: React.FC<LayerManagerProps> = ({
       </Paper>
 
       {/* Menu de contexto */}
-      <Menu
-        anchorEl={menuAnchor}
-        open={Boolean(menuAnchor)}
-        onClose={handleMenuClose}
-      >
+      <Menu anchorEl={menuAnchor} open={Boolean(menuAnchor)} onClose={handleMenuClose}>
         <MenuItem
           onClick={() => {
             const layer = activeMapLayers.find(l => l.id === menuLayerId);
@@ -398,8 +396,8 @@ export const LayerManager: React.FC<LayerManagerProps> = ({
             fullWidth
             variant="outlined"
             value={newLayerName}
-            onChange={(e) => setNewLayerName(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleCreateLayer()}
+            onChange={e => setNewLayerName(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && handleCreateLayer()}
           />
         </DialogContent>
         <DialogActions>
@@ -425,8 +423,8 @@ export const LayerManager: React.FC<LayerManagerProps> = ({
             fullWidth
             variant="outlined"
             value={editLayerName}
-            onChange={(e) => setEditLayerName(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleEditLayer()}
+            onChange={e => setEditLayerName(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && handleEditLayer()}
           />
         </DialogContent>
         <DialogActions>
@@ -445,12 +443,11 @@ export const LayerManager: React.FC<LayerManagerProps> = ({
       <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)}>
         <DialogTitle>Deletar Camada</DialogTitle>
         <DialogContent>
-          <Typography>
-            Tem certeza que deseja deletar a camada "{selectedLayer?.name}"?
-          </Typography>
+          <Typography>Tem certeza que deseja deletar a camada "{selectedLayer?.name}"?</Typography>
           {selectedLayer && getLayerStats(selectedLayer.id).featureCount > 0 && (
             <Alert severity="warning" sx={{ mt: 2 }}>
-              Esta camada contém {getLayerStats(selectedLayer.id).featureCount} feature(s) que também serão deletadas.
+              Esta camada contém {getLayerStats(selectedLayer.id).featureCount} feature(s) que
+              também serão deletadas.
             </Alert>
           )}
         </DialogContent>
@@ -478,8 +475,8 @@ export const LayerManager: React.FC<LayerManagerProps> = ({
             fullWidth
             variant="outlined"
             value={duplicateName}
-            onChange={(e) => setDuplicateName(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleDuplicateLayer()}
+            onChange={e => setDuplicateName(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && handleDuplicateLayer()}
           />
         </DialogContent>
         <DialogActions>

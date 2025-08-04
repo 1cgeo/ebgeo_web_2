@@ -1,4 +1,4 @@
-// Path: features/shared/components/CoordinatesTable.tsx
+// Path: features\shared\components\CoordinatesTable.tsx
 
 import React, { useState, useMemo } from 'react';
 import {
@@ -30,7 +30,12 @@ import {
 } from '@mui/icons-material';
 
 import { ExtendedFeature } from '../../data-access/schemas/feature.schema';
-import { formatCoordinates, formatDistance, formatArea, CoordinateFormat } from '../../../utils/format.utils';
+import {
+  formatCoordinates,
+  formatDistance,
+  formatArea,
+  CoordinateFormat,
+} from '../../../utils/format.utils';
 import { geoUtils } from '../../../utils/turf.utils';
 import { Position } from 'geojson';
 
@@ -121,7 +126,7 @@ export const CoordinatesTable: React.FC<CoordinatesTableProps> = ({
   const geometryStats = useMemo(() => {
     const totalVertices = vertexData.length;
     const totalDistance = vertexData[vertexData.length - 1]?.cumulativeDistance || 0;
-    
+
     let area = 0;
     if (feature.geometry.type === 'Polygon') {
       try {
@@ -142,7 +147,7 @@ export const CoordinatesTable: React.FC<CoordinatesTableProps> = ({
   // Formatação de coordenadas
   const formatCoordinate = (coordinate: Position) => {
     const [lng, lat] = coordinate;
-    
+
     switch (coordinateFormat) {
       case 'dms':
         return formatCoordinates.dms(lng, lat);
@@ -153,7 +158,10 @@ export const CoordinatesTable: React.FC<CoordinatesTableProps> = ({
   };
 
   // Copiar coordenada para clipboard
-  const copyCoordinate = async (coordinate: Position, format: 'decimal' | 'dms' | 'array' = coordinateFormat) => {
+  const copyCoordinate = async (
+    coordinate: Position,
+    format: 'decimal' | 'dms' | 'array' = coordinateFormat
+  ) => {
     try {
       let textToCopy: string;
       const [lng, lat] = coordinate;
@@ -183,7 +191,7 @@ export const CoordinatesTable: React.FC<CoordinatesTableProps> = ({
       const coordsText = vertexData
         .map(vertex => `${vertex.index + 1}: ${formatCoordinate(vertex.coordinate)}`)
         .join('\n');
-      
+
       await navigator.clipboard.writeText(coordsText);
     } catch (error) {
       console.error('Erro ao copiar coordenadas:', error);
@@ -239,10 +247,10 @@ export const CoordinatesTable: React.FC<CoordinatesTableProps> = ({
       {/* Cabeçalho com estatísticas */}
       <Box sx={{ p: compactMode ? 1 : 2, pb: 1 }}>
         <Box display="flex" alignItems="center" justifyContent="space-between" mb={1}>
-          <Typography variant={compactMode ? "body2" : "subtitle1"} fontWeight="medium">
+          <Typography variant={compactMode ? 'body2' : 'subtitle1'} fontWeight="medium">
             Vértices da Geometria
           </Typography>
-          <Chip 
+          <Chip
             icon={<LocationIcon fontSize="small" />}
             label={geometryStats.geometryType}
             size="small"
@@ -251,18 +259,24 @@ export const CoordinatesTable: React.FC<CoordinatesTableProps> = ({
         </Box>
 
         {/* Estatísticas */}
-        <Box display="flex" flexDirection={compactMode ? "column" : "row"} gap={compactMode ? 0.5 : 2} mb={2}>
+        <Box
+          display="flex"
+          flexDirection={compactMode ? 'column' : 'row'}
+          gap={compactMode ? 0.5 : 2}
+          mb={2}
+        >
           <Typography variant="caption" color="textSecondary">
-            <strong>{geometryStats.totalVertices}</strong> vértice{geometryStats.totalVertices !== 1 ? 's' : ''}
+            <strong>{geometryStats.totalVertices}</strong> vértice
+            {geometryStats.totalVertices !== 1 ? 's' : ''}
           </Typography>
-          
+
           {showDistances && geometryStats.totalDistance > 0 && (
             <Typography variant="caption" color="textSecondary">
               <RulerIcon fontSize="inherit" sx={{ mr: 0.5, verticalAlign: 'middle' }} />
               <strong>{formatDistance.auto(geometryStats.totalDistance)}</strong>
             </Typography>
           )}
-          
+
           {geometryStats.area > 0 && (
             <Typography variant="caption" color="textSecondary">
               <strong>{formatArea.auto(geometryStats.area)}</strong>
@@ -271,14 +285,20 @@ export const CoordinatesTable: React.FC<CoordinatesTableProps> = ({
         </Box>
 
         {/* Controles */}
-        <Box display="flex" alignItems="center" justifyContent="space-between" flexWrap="wrap" gap={1}>
+        <Box
+          display="flex"
+          alignItems="center"
+          justifyContent="space-between"
+          flexWrap="wrap"
+          gap={1}
+        >
           <Box display="flex" alignItems="center" gap={1}>
             <FormControlLabel
               control={
                 <Switch
                   size="small"
                   checked={coordinateFormat === 'dms'}
-                  onChange={(e) => setCoordinateFormat(e.target.checked ? 'dms' : 'decimal')}
+                  onChange={e => setCoordinateFormat(e.target.checked ? 'dms' : 'decimal')}
                 />
               }
               label={
@@ -310,34 +330,44 @@ export const CoordinatesTable: React.FC<CoordinatesTableProps> = ({
 
       {/* Tabela de coordenadas */}
       <TableContainer sx={{ maxHeight }}>
-        <Table size={compactMode ? "small" : "medium"} stickyHeader>
+        <Table size={compactMode ? 'small' : 'medium'} stickyHeader>
           <TableHead>
             <TableRow>
               <TableCell width="60px" align="center">
-                <Typography variant="caption" fontWeight="medium">#</Typography>
+                <Typography variant="caption" fontWeight="medium">
+                  #
+                </Typography>
               </TableCell>
               <TableCell>
-                <Typography variant="caption" fontWeight="medium">Coordenadas</Typography>
+                <Typography variant="caption" fontWeight="medium">
+                  Coordenadas
+                </Typography>
               </TableCell>
               {showDistances && (
                 <>
                   <TableCell width="100px" align="right">
-                    <Typography variant="caption" fontWeight="medium">Distância</Typography>
+                    <Typography variant="caption" fontWeight="medium">
+                      Distância
+                    </Typography>
                   </TableCell>
                   <TableCell width="100px" align="right">
-                    <Typography variant="caption" fontWeight="medium">Acumulada</Typography>
+                    <Typography variant="caption" fontWeight="medium">
+                      Acumulada
+                    </Typography>
                   </TableCell>
                 </>
               )}
               {showActions && (
                 <TableCell width="60px" align="center">
-                  <Typography variant="caption" fontWeight="medium">Ações</Typography>
+                  <Typography variant="caption" fontWeight="medium">
+                    Ações
+                  </Typography>
                 </TableCell>
               )}
             </TableRow>
           </TableHead>
           <TableBody>
-            {vertexData.map((vertex) => (
+            {vertexData.map(vertex => (
               <TableRow
                 key={vertex.index}
                 hover
@@ -353,14 +383,14 @@ export const CoordinatesTable: React.FC<CoordinatesTableProps> = ({
                 }}
               >
                 <TableCell align="center">
-                  <Typography variant={compactMode ? "caption" : "body2"} fontWeight="medium">
+                  <Typography variant={compactMode ? 'caption' : 'body2'} fontWeight="medium">
                     {vertex.index + 1}
                   </Typography>
                 </TableCell>
-                
+
                 <TableCell>
-                  <Typography 
-                    variant={compactMode ? "caption" : "body2"} 
+                  <Typography
+                    variant={compactMode ? 'caption' : 'body2'}
                     fontFamily="monospace"
                     sx={{ wordBreak: 'break-all' }}
                   >
@@ -381,7 +411,7 @@ export const CoordinatesTable: React.FC<CoordinatesTableProps> = ({
                         </Typography>
                       )}
                     </TableCell>
-                    
+
                     <TableCell align="right">
                       {vertex.cumulativeDistance ? (
                         <Typography variant="caption" color="textSecondary">
@@ -399,9 +429,9 @@ export const CoordinatesTable: React.FC<CoordinatesTableProps> = ({
                 {showActions && (
                   <TableCell align="center">
                     <Tooltip title="Copiar coordenada">
-                      <IconButton 
-                        size="small" 
-                        onClick={(e) => {
+                      <IconButton
+                        size="small"
+                        onClick={e => {
                           e.stopPropagation();
                           copyCoordinate(vertex.coordinate);
                         }}

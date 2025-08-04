@@ -19,21 +19,23 @@ export const FeatureStyleSchema = z.object({
 });
 
 // Schema para propriedades da feature
-export const ExtendedFeaturePropertiesSchema = z.object({
-  id: z.string().uuid(),
-  layerId: z.string().uuid(),
-  name: z.string().optional(),
-  description: z.string().optional(),
-  style: FeatureStyleSchema.optional(),
-  createdAt: z.string().datetime(),
-  updatedAt: z.string().datetime(),
-  ownerId: z.string().optional(),
-}).catchall(z.any()); // Permite propriedades customizadas
+export const ExtendedFeaturePropertiesSchema = z
+  .object({
+    id: z.string().uuid(),
+    layerId: z.string().uuid(),
+    name: z.string().optional(),
+    description: z.string().optional(),
+    style: FeatureStyleSchema.optional(),
+    createdAt: z.string().datetime(),
+    updatedAt: z.string().datetime(),
+    ownerId: z.string().optional(),
+  })
+  .catchall(z.any()); // Permite propriedades customizadas
 
 // Schema para coordenadas (posição)
-export const PositionSchema = z.tuple([z.number(), z.number()]).or(
-  z.tuple([z.number(), z.number(), z.number()])
-);
+export const PositionSchema = z
+  .tuple([z.number(), z.number()])
+  .or(z.tuple([z.number(), z.number(), z.number()]));
 
 // Schema para geometrias
 export const PointGeometrySchema = z.object({

@@ -52,17 +52,13 @@ export abstract class AbstractTool {
   protected isActive: boolean = false;
   protected currentFeature: ExtendedFeature | null = null;
   protected tempFeatures: ExtendedFeature[] = [];
-  
+
   // Estado interno da ferramenta
   protected isDrawing: boolean = false;
   protected coordinates: Position[] = [];
   protected lastMousePosition: maplibregl.LngLat | null = null;
-  
-  constructor(
-    map: maplibregl.Map,
-    config: ToolConfig,
-    callbacks: ToolCallbacks
-  ) {
+
+  constructor(map: maplibregl.Map, config: ToolConfig, callbacks: ToolCallbacks) {
     this.map = map;
     this.config = config;
     this.callbacks = callbacks;
@@ -73,11 +69,11 @@ export abstract class AbstractTool {
   abstract getName(): string;
   abstract getDescription(): string;
   abstract getCursor(): string;
-  
+
   // Métodos de ciclo de vida da ferramenta
   activate(): void {
     if (this.isActive) return;
-    
+
     this.isActive = true;
     this.addEventListeners();
     this.updateCursor();
@@ -86,7 +82,7 @@ export abstract class AbstractTool {
 
   deactivate(): void {
     if (!this.isActive) return;
-    
+
     this.isActive = false;
     this.removeEventListeners();
     this.reset();
@@ -121,7 +117,7 @@ export abstract class AbstractTool {
 
   protected onKeyDown(e: MapKeyboardEvent): void {
     const key = e.originalEvent.key;
-    
+
     switch (key) {
       case 'Escape':
         this.cancel();
@@ -147,7 +143,7 @@ export abstract class AbstractTool {
     this.map.on('mousemove', this.handleMouseMove);
     this.map.on('click', this.handleClick);
     this.map.on('dblclick', this.handleDoubleClick);
-    
+
     // Eventos de teclado no canvas do mapa
     this.map.getCanvas().addEventListener('keydown', this.handleKeyDown);
     this.map.getCanvas().tabIndex = 0; // Permitir foco para eventos de teclado
@@ -159,7 +155,7 @@ export abstract class AbstractTool {
     this.map.off('mousemove', this.handleMouseMove);
     this.map.off('click', this.handleClick);
     this.map.off('dblclick', this.handleDoubleClick);
-    
+
     this.map.getCanvas().removeEventListener('keydown', this.handleKeyDown);
   }
 
@@ -222,7 +218,7 @@ export abstract class AbstractTool {
 
   protected createTempFeature(coordinates: Position[], geometryType: string): ExtendedFeature {
     const now = new Date().toISOString();
-    
+
     let geometry: any;
     switch (geometryType) {
       case 'Point':
@@ -234,13 +230,28 @@ export abstract class AbstractTool {
       case 'LineString':
         geometry = {
           type: 'LineString',
-          coordinates: coordinates.length >= 2 ? coordinates : [[0, 0], [0, 0]],
+          coordinates:
+            coordinates.length >= 2
+              ? coordinates
+              : [
+                  [0, 0],
+                  [0, 0],
+                ],
         };
         break;
       case 'Polygon':
         geometry = {
           type: 'Polygon',
-          coordinates: [coordinates.length >= 3 ? [...coordinates, coordinates[0]] : [[0, 0], [0, 0], [0, 0], [0, 0]]],
+          coordinates: [
+            coordinates.length >= 3
+              ? [...coordinates, coordinates[0]]
+              : [
+                  [0, 0],
+                  [0, 0],
+                  [0, 0],
+                  [0, 0],
+                ],
+          ],
         };
         break;
       default:
@@ -285,7 +296,9 @@ export abstract class AbstractTool {
         this.callbacks.onStatusChange(`${this.getName()} criado com sucesso`);
       }
     } catch (error) {
-      this.callbacks.onError(`Erro ao criar ${this.getName()}: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+      this.callbacks.onError(
+        `Erro ao criar ${this.getName()}: ${error instanceof Error ? error.message : 'Erro desconhecido'}`
+      );
     }
 
     this.reset();

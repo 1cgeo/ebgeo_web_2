@@ -31,5 +31,5 @@ ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
         {import.meta.env.DEV && <ReactQueryDevtools initialIsOpen={false} />}
       </ThemeProvider>
     </QueryClientProvider>
-  </React.StrictMode>,
+  </React.StrictMode>
 );

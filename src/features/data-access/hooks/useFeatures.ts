@@ -95,9 +95,12 @@ export const useInvalidateFeatures = () => {
   return {
     invalidateAll: () => queryClient.invalidateQueries({ queryKey: FEATURE_QUERY_KEYS.all }),
     invalidateList: () => queryClient.invalidateQueries({ queryKey: FEATURE_QUERY_KEYS.lists() }),
-    invalidateDetail: (id: string) => queryClient.invalidateQueries({ queryKey: FEATURE_QUERY_KEYS.detail(id) }),
-    invalidateByLayer: (layerId: string) => queryClient.invalidateQueries({ queryKey: FEATURE_QUERY_KEYS.byLayer(layerId) }),
-    invalidateStats: (layerId: string) => queryClient.invalidateQueries({ queryKey: FEATURE_QUERY_KEYS.stats(layerId) }),
+    invalidateDetail: (id: string) =>
+      queryClient.invalidateQueries({ queryKey: FEATURE_QUERY_KEYS.detail(id) }),
+    invalidateByLayer: (layerId: string) =>
+      queryClient.invalidateQueries({ queryKey: FEATURE_QUERY_KEYS.byLayer(layerId) }),
+    invalidateStats: (layerId: string) =>
+      queryClient.invalidateQueries({ queryKey: FEATURE_QUERY_KEYS.stats(layerId) }),
   };
 };
 
@@ -106,15 +109,17 @@ export const usePrefetchFeatures = () => {
   const queryClient = useQueryClient();
 
   return {
-    prefetchAll: () => queryClient.prefetchQuery({
-      queryKey: FEATURE_QUERY_KEYS.lists(),
-      queryFn: () => featureRepository.getAll(),
-      staleTime: 30000,
-    }),
-    prefetchByLayer: (layerId: string) => queryClient.prefetchQuery({
-      queryKey: FEATURE_QUERY_KEYS.byLayer(layerId),
-      queryFn: () => featureRepository.getByLayerId(layerId),
-      staleTime: 30000,
-    }),
+    prefetchAll: () =>
+      queryClient.prefetchQuery({
+        queryKey: FEATURE_QUERY_KEYS.lists(),
+        queryFn: () => featureRepository.getAll(),
+        staleTime: 30000,
+      }),
+    prefetchByLayer: (layerId: string) =>
+      queryClient.prefetchQuery({
+        queryKey: FEATURE_QUERY_KEYS.byLayer(layerId),
+        queryFn: () => featureRepository.getByLayerId(layerId),
+        staleTime: 30000,
+      }),
   };
 };

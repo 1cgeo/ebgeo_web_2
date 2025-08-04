@@ -2,10 +2,13 @@
 
 import { db } from '../../db';
 import { LayerConfig, validateLayerConfig } from '../../schemas/layer.schema';
-import { ILayerRepository, CreateLayerOptions, ReorderResult } from '../interfaces/ILayerRepository';
+import {
+  ILayerRepository,
+  CreateLayerOptions,
+  ReorderResult,
+} from '../interfaces/ILayerRepository';
 
 export class IndexedDBLayerRepository implements ILayerRepository {
-  
   async create(layer: LayerConfig): Promise<LayerConfig> {
     try {
       const validatedLayer = validateLayerConfig(layer);
@@ -13,7 +16,9 @@ export class IndexedDBLayerRepository implements ILayerRepository {
       return validatedLayer;
     } catch (error) {
       console.error('Erro ao criar camada:', error);
-      throw new Error(`Falha ao criar camada: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+      throw new Error(
+        `Falha ao criar camada: ${error instanceof Error ? error.message : 'Erro desconhecido'}`
+      );
     }
   }
 
@@ -23,7 +28,9 @@ export class IndexedDBLayerRepository implements ILayerRepository {
       return layer || null;
     } catch (error) {
       console.error('Erro ao buscar camada por ID:', error);
-      throw new Error(`Falha ao buscar camada: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+      throw new Error(
+        `Falha ao buscar camada: ${error instanceof Error ? error.message : 'Erro desconhecido'}`
+      );
     }
   }
 
@@ -32,7 +39,9 @@ export class IndexedDBLayerRepository implements ILayerRepository {
       return await db.layers.orderBy('zIndex').toArray();
     } catch (error) {
       console.error('Erro ao buscar todas as camadas:', error);
-      throw new Error(`Falha ao buscar camadas: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+      throw new Error(
+        `Falha ao buscar camadas: ${error instanceof Error ? error.message : 'Erro desconhecido'}`
+      );
     }
   }
 
@@ -54,7 +63,9 @@ export class IndexedDBLayerRepository implements ILayerRepository {
       return validatedLayer;
     } catch (error) {
       console.error('Erro ao atualizar camada:', error);
-      throw new Error(`Falha ao atualizar camada: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+      throw new Error(
+        `Falha ao atualizar camada: ${error instanceof Error ? error.message : 'Erro desconhecido'}`
+      );
     }
   }
 
@@ -66,7 +77,9 @@ export class IndexedDBLayerRepository implements ILayerRepository {
       }
     } catch (error) {
       console.error('Erro ao deletar camada:', error);
-      throw new Error(`Falha ao deletar camada: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+      throw new Error(
+        `Falha ao deletar camada: ${error instanceof Error ? error.message : 'Erro desconhecido'}`
+      );
     }
   }
 
@@ -77,7 +90,9 @@ export class IndexedDBLayerRepository implements ILayerRepository {
       return validatedLayers;
     } catch (error) {
       console.error('Erro ao criar múltiplas camadas:', error);
-      throw new Error(`Falha ao criar camadas: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+      throw new Error(
+        `Falha ao criar camadas: ${error instanceof Error ? error.message : 'Erro desconhecido'}`
+      );
     }
   }
 
@@ -86,7 +101,9 @@ export class IndexedDBLayerRepository implements ILayerRepository {
       await db.layers.bulkDelete(ids);
     } catch (error) {
       console.error('Erro ao deletar múltiplas camadas:', error);
-      throw new Error(`Falha ao deletar camadas: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+      throw new Error(
+        `Falha ao deletar camadas: ${error instanceof Error ? error.message : 'Erro desconhecido'}`
+      );
     }
   }
 
@@ -95,7 +112,9 @@ export class IndexedDBLayerRepository implements ILayerRepository {
       return await db.layers.count();
     } catch (error) {
       console.error('Erro ao contar camadas:', error);
-      throw new Error(`Falha ao contar camadas: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+      throw new Error(
+        `Falha ao contar camadas: ${error instanceof Error ? error.message : 'Erro desconhecido'}`
+      );
     }
   }
 
@@ -115,7 +134,9 @@ export class IndexedDBLayerRepository implements ILayerRepository {
       return layer || null;
     } catch (error) {
       console.error('Erro ao buscar camada por nome:', error);
-      throw new Error(`Falha ao buscar camada: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+      throw new Error(
+        `Falha ao buscar camada: ${error instanceof Error ? error.message : 'Erro desconhecido'}`
+      );
     }
   }
 
@@ -132,7 +153,7 @@ export class IndexedDBLayerRepository implements ILayerRepository {
   async reorder(layerIds: string[]): Promise<LayerConfig[]> {
     try {
       const layers = await db.layers.where('id').anyOf(layerIds).toArray();
-      
+
       if (layers.length !== layerIds.length) {
         throw new Error('Algumas camadas não foram encontradas');
       }
@@ -150,7 +171,9 @@ export class IndexedDBLayerRepository implements ILayerRepository {
       return updatedLayers;
     } catch (error) {
       console.error('Erro ao reordenar camadas:', error);
-      throw new Error(`Falha ao reordenar camadas: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+      throw new Error(
+        `Falha ao reordenar camadas: ${error instanceof Error ? error.message : 'Erro desconhecido'}`
+      );
     }
   }
 
@@ -164,7 +187,9 @@ export class IndexedDBLayerRepository implements ILayerRepository {
       return await this.update(id, { visible: !layer.visible });
     } catch (error) {
       console.error('Erro ao alternar visibilidade:', error);
-      throw new Error(`Falha ao alternar visibilidade: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+      throw new Error(
+        `Falha ao alternar visibilidade: ${error instanceof Error ? error.message : 'Erro desconhecido'}`
+      );
     }
   }
 
@@ -177,19 +202,20 @@ export class IndexedDBLayerRepository implements ILayerRepository {
       return await this.update(id, { opacity });
     } catch (error) {
       console.error('Erro ao atualizar opacidade:', error);
-      throw new Error(`Falha ao atualizar opacidade: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+      throw new Error(
+        `Falha ao atualizar opacidade: ${error instanceof Error ? error.message : 'Erro desconhecido'}`
+      );
     }
   }
 
   async getVisibleLayers(): Promise<LayerConfig[]> {
     try {
-      return await db.layers
-        .where('visible')
-        .equals(true)
-        .sortBy('zIndex');
+      return await db.layers.where('visible').equals(true).sortBy('zIndex');
     } catch (error) {
       console.error('Erro ao buscar camadas visíveis:', error);
-      throw new Error(`Falha ao buscar camadas visíveis: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+      throw new Error(
+        `Falha ao buscar camadas visíveis: ${error instanceof Error ? error.message : 'Erro desconhecido'}`
+      );
     }
   }
 
@@ -227,7 +253,9 @@ export class IndexedDBLayerRepository implements ILayerRepository {
       return await this.create(newLayer);
     } catch (error) {
       console.error('Erro ao duplicar camada:', error);
-      throw new Error(`Falha ao duplicar camada: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+      throw new Error(
+        `Falha ao duplicar camada: ${error instanceof Error ? error.message : 'Erro desconhecido'}`
+      );
     }
   }
 
@@ -239,7 +267,7 @@ export class IndexedDBLayerRepository implements ILayerRepository {
     try {
       const features = await db.features.where('properties.layerId').equals(id).toArray();
       const featureCount = features.length;
-      
+
       const geometryTypes: Record<string, number> = {};
       features.forEach(feature => {
         const type = feature.geometry.type;
@@ -249,8 +277,9 @@ export class IndexedDBLayerRepository implements ILayerRepository {
       // Encontrar a data da última modificação
       let lastModified = '';
       if (features.length > 0) {
-        const sortedFeatures = features.sort((a, b) => 
-          new Date(b.properties.updatedAt).getTime() - new Date(a.properties.updatedAt).getTime()
+        const sortedFeatures = features.sort(
+          (a, b) =>
+            new Date(b.properties.updatedAt).getTime() - new Date(a.properties.updatedAt).getTime()
         );
         lastModified = sortedFeatures[0].properties.updatedAt;
       }
@@ -258,7 +287,9 @@ export class IndexedDBLayerRepository implements ILayerRepository {
       return { featureCount, lastModified, geometryTypes };
     } catch (error) {
       console.error('Erro ao obter estatísticas da camada:', error);
-      throw new Error(`Falha ao obter estatísticas: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+      throw new Error(
+        `Falha ao obter estatísticas: ${error instanceof Error ? error.message : 'Erro desconhecido'}`
+      );
     }
   }
 
@@ -269,7 +300,7 @@ export class IndexedDBLayerRepository implements ILayerRepository {
   }> {
     try {
       const featureCount = await db.features.where('properties.layerId').equals(id).count();
-      
+
       if (featureCount > 0) {
         return {
           canDelete: false,
@@ -297,13 +328,15 @@ export class IndexedDBLayerRepository implements ILayerRepository {
       await db.transaction('rw', [db.layers, db.features], async () => {
         // Deletar todas as features da camada
         await db.features.where('properties.layerId').equals(id).delete();
-        
+
         // Deletar a camada
         await db.layers.delete(id);
       });
     } catch (error) {
       console.error('Erro ao deletar camada com features:', error);
-      throw new Error(`Falha ao deletar camada: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+      throw new Error(
+        `Falha ao deletar camada: ${error instanceof Error ? error.message : 'Erro desconhecido'}`
+      );
     }
   }
 }

@@ -24,7 +24,7 @@ export class EBGeoDatabase extends Dexie {
 
   constructor() {
     super('EBGeoDatabase');
-    
+
     this.version(1).stores({
       features: 'id, properties.layerId, properties.createdAt, properties.updatedAt',
       layers: 'id, name, createdAt, updatedAt',
@@ -60,13 +60,13 @@ export const initializeDatabase = async (): Promise<void> => {
   try {
     await db.open();
     console.log('Banco de dados inicializado com sucesso');
-    
+
     // Verificar se existem mapas
     const mapCount = await db.maps.count();
     const layerCount = await db.layers.count();
-    
+
     let defaultLayerId: string;
-    
+
     // Criar camada padrão se não existir
     if (layerCount === 0) {
       const defaultLayer: LayerConfig = {
@@ -78,7 +78,7 @@ export const initializeDatabase = async (): Promise<void> => {
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
-      
+
       await db.layers.add(defaultLayer);
       defaultLayerId = defaultLayer.id;
       console.log('Camada padrão criada:', defaultLayer.id);
@@ -87,7 +87,7 @@ export const initializeDatabase = async (): Promise<void> => {
       const firstLayer = await db.layers.orderBy('createdAt').first();
       defaultLayerId = firstLayer!.id;
     }
-    
+
     // Criar mapa padrão se não existir
     if (mapCount === 0) {
       const defaultMap: MapConfig = {
@@ -100,7 +100,7 @@ export const initializeDatabase = async (): Promise<void> => {
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
-      
+
       await db.maps.add(defaultMap);
       console.log('Mapa padrão criado:', defaultMap.id);
     } else {
@@ -117,7 +117,6 @@ export const initializeDatabase = async (): Promise<void> => {
         }
       }
     }
-    
   } catch (error) {
     console.error('Erro ao inicializar banco de dados:', error);
     throw error;
@@ -210,7 +209,7 @@ export const restoreDatabase = async (backup: {
       await db.maps.bulkAdd(backup.maps);
       await db.assets.bulkAdd(backup.assets);
     });
-    
+
     console.log('Backup restaurado com sucesso');
   } catch (error) {
     console.error('Erro ao restaurar backup:', error);
@@ -242,9 +241,9 @@ export const checkDatabaseIntegrity = async (): Promise<{
     const features = await db.features.toArray();
     const layers = await db.layers.toArray();
     const maps = await db.maps.toArray();
-    
+
     const layerIds = new Set(layers.map(l => l.id));
-    
+
     // Features órfãs (sem camada)
     const orphanedFeatures = features.filter(f => !layerIds.has(f.properties.layerId));
     if (orphanedFeatures.length > 0) {
@@ -255,7 +254,9 @@ export const checkDatabaseIntegrity = async (): Promise<{
     for (const map of maps) {
       const invalidLayerIds = map.layerIds.filter(id => !layerIds.has(id));
       if (invalidLayerIds.length > 0) {
-        issues.push(`Mapa "${map.name}" referencia ${invalidLayerIds.length} camada(s) inexistente(s)`);
+        issues.push(
+          `Mapa "${map.name}" referencia ${invalidLayerIds.length} camada(s) inexistente(s)`
+        );
       }
     }
 
@@ -273,7 +274,9 @@ export const checkDatabaseIntegrity = async (): Promise<{
     console.error('Erro ao verificar integridade:', error);
     return {
       valid: false,
-      issues: [`Erro na verificação: ${error instanceof Error ? error.message : 'Erro desconhecido'}`],
+      issues: [
+        `Erro na verificação: ${error instanceof Error ? error.message : 'Erro desconhecido'}`,
+      ],
     };
   }
 };
@@ -286,7 +289,7 @@ export const repairDatabaseIntegrity = async (): Promise<{
   try {
     const actions: string[] = [];
     const integrity = await checkDatabaseIntegrity();
-    
+
     if (integrity.valid) {
       return { repaired: false, actions: ['Banco já está íntegro'] };
     }
@@ -295,7 +298,7 @@ export const repairDatabaseIntegrity = async (): Promise<{
       // Garantir que há pelo menos uma camada
       const layerCount = await db.layers.count();
       let defaultLayerId: string;
-      
+
       if (layerCount === 0) {
         const defaultLayer: LayerConfig = {
           id: crypto.randomUUID(),
@@ -306,7 +309,7 @@ export const repairDatabaseIntegrity = async (): Promise<{
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
         };
-        
+
         await db.layers.add(defaultLayer);
         defaultLayerId = defaultLayer.id;
         actions.push('Camada padrão criada');
@@ -328,7 +331,7 @@ export const repairDatabaseIntegrity = async (): Promise<{
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
         };
-        
+
         await db.maps.add(defaultMap);
         actions.push('Mapa padrão criado');
       }
@@ -337,11 +340,11 @@ export const repairDatabaseIntegrity = async (): Promise<{
       const features = await db.features.toArray();
       const layers = await db.layers.toArray();
       const layerIds = new Set(layers.map(l => l.id));
-      
+
       const orphanedFeatureIds = features
         .filter(f => !layerIds.has(f.properties.layerId))
         .map(f => f.id);
-      
+
       if (orphanedFeatureIds.length > 0) {
         await db.features.bulkDelete(orphanedFeatureIds);
         actions.push(`${orphanedFeatureIds.length} feature(s) órfã(s) removida(s)`);
@@ -351,18 +354,18 @@ export const repairDatabaseIntegrity = async (): Promise<{
       const maps = await db.maps.toArray();
       for (const map of maps) {
         const validLayerIds = map.layerIds.filter(id => layerIds.has(id));
-        
+
         if (validLayerIds.length !== map.layerIds.length) {
           // Se ficou sem camadas válidas, adicionar a padrão
           if (validLayerIds.length === 0) {
             validLayerIds.push(defaultLayerId);
           }
-          
+
           await db.maps.update(map.id, {
             layerIds: validLayerIds,
             updatedAt: new Date().toISOString(),
           });
-          
+
           actions.push(`Referências do mapa "${map.name}" corrigidas`);
         }
       }

@@ -1,4 +1,4 @@
-// Path: features/layers/components/DraggableLayerList.tsx
+// Path: features\layers\components\raggableLayerList.tsx
 
 import React, { useState, useRef, useCallback } from 'react';
 import {
@@ -34,7 +34,11 @@ import {
 } from '@mui/icons-material';
 
 import { LayerConfig } from '../../data-access/schemas/layer.schema';
-import { useReorderLayers, useToggleLayerVisibility, useUpdateLayerOpacity } from '../../data-access/hooks/useLayers';
+import {
+  useReorderLayers,
+  useToggleLayerVisibility,
+  useUpdateLayerOpacity,
+} from '../../data-access/hooks/useLayers';
 
 interface DragState {
   isDragging: boolean;
@@ -84,21 +88,30 @@ export const DraggableLayerList: React.FC<DraggableLayerListProps> = ({
   const listRef = useRef<HTMLUListElement | null>(null);
 
   // Obter estatísticas de uma camada
-  const getLayerStats = useCallback((layerId: string): LayerStats => {
-    return layerStats.find(s => s.layerId === layerId) || { 
-      layerId, 
-      featureCount: 0, 
-      geometryTypes: {} 
-    };
-  }, [layerStats]);
+  const getLayerStats = useCallback(
+    (layerId: string): LayerStats => {
+      return (
+        layerStats.find(s => s.layerId === layerId) || {
+          layerId,
+          featureCount: 0,
+          geometryTypes: {},
+        }
+      );
+    },
+    [layerStats]
+  );
 
   // Ícones por tipo de geometria
   const getGeometryIcon = useCallback((type: string) => {
     switch (type) {
-      case 'Point': return <PointIcon fontSize="small" />;
-      case 'LineString': return <LineIcon fontSize="small" />;
-      case 'Polygon': return <PolygonIcon fontSize="small" />;
-      default: return <TextIcon fontSize="small" />;
+      case 'Point':
+        return <PointIcon fontSize="small" />;
+      case 'LineString':
+        return <LineIcon fontSize="small" />;
+      case 'Polygon':
+        return <PolygonIcon fontSize="small" />;
+      default:
+        return <TextIcon fontSize="small" />;
     }
   }, []);
 
@@ -106,16 +119,16 @@ export const DraggableLayerList: React.FC<DraggableLayerListProps> = ({
   const handleDragStart = useCallback((e: React.DragEvent<HTMLLIElement>, layerId: string) => {
     e.dataTransfer.effectAllowed = 'move';
     e.dataTransfer.setData('text/plain', layerId);
-    
+
     // Criar imagem de drag customizada
     const dragImage = e.currentTarget.cloneNode(true) as HTMLElement;
     dragImage.style.opacity = '0.8';
     dragImage.style.transform = 'rotate(2deg)';
     dragImage.style.boxShadow = '0 8px 32px rgba(0,0,0,0.3)';
-    
+
     document.body.appendChild(dragImage);
     e.dataTransfer.setDragImage(dragImage, 20, 20);
-    
+
     setTimeout(() => document.body.removeChild(dragImage), 0);
 
     setDragState({
@@ -135,30 +148,33 @@ export const DraggableLayerList: React.FC<DraggableLayerListProps> = ({
     });
   }, []);
 
-  const handleDragOver = useCallback((e: React.DragEvent<HTMLLIElement>, layerId: string) => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
+  const handleDragOver = useCallback(
+    (e: React.DragEvent<HTMLLIElement>, layerId: string) => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
 
-    if (dragState.draggedItemId === layerId) return;
+      if (dragState.draggedItemId === layerId) return;
 
-    const rect = e.currentTarget.getBoundingClientRect();
-    const y = e.clientY - rect.top;
-    const height = rect.height;
-    const dropPosition = y < height / 2 ? 'before' : 'after';
+      const rect = e.currentTarget.getBoundingClientRect();
+      const y = e.clientY - rect.top;
+      const height = rect.height;
+      const dropPosition = y < height / 2 ? 'before' : 'after';
 
-    setDragState(prev => ({
-      ...prev,
-      dragOverItemId: layerId,
-      dropPosition,
-    }));
-  }, [dragState.draggedItemId]);
+      setDragState(prev => ({
+        ...prev,
+        dragOverItemId: layerId,
+        dropPosition,
+      }));
+    },
+    [dragState.draggedItemId]
+  );
 
   const handleDragLeave = useCallback((e: React.DragEvent<HTMLLIElement>) => {
     // Verificar se realmente saiu do elemento
     const rect = e.currentTarget.getBoundingClientRect();
     const x = e.clientX;
     const y = e.clientY;
-    
+
     if (x < rect.left || x > rect.right || y < rect.top || y > rect.bottom) {
       setDragState(prev => ({
         ...prev,
@@ -168,77 +184,85 @@ export const DraggableLayerList: React.FC<DraggableLayerListProps> = ({
     }
   }, []);
 
-  const handleDrop = useCallback(async (e: React.DragEvent<HTMLLIElement>, targetLayerId: string) => {
-    e.preventDefault();
-    
-    const draggedLayerId = e.dataTransfer.getData('text/plain');
-    if (!draggedLayerId || draggedLayerId === targetLayerId) {
-      setDragState({
-        isDragging: false,
-        draggedItemId: null,
-        dragOverItemId: null,
-        dropPosition: null,
-      });
-      return;
-    }
+  const handleDrop = useCallback(
+    async (e: React.DragEvent<HTMLLIElement>, targetLayerId: string) => {
+      e.preventDefault();
 
-    try {
-      // Calcular nova ordem
-      const currentOrder = layers.map(l => l.id);
-      const draggedIndex = currentOrder.indexOf(draggedLayerId);
-      const targetIndex = currentOrder.indexOf(targetLayerId);
-      
-      if (draggedIndex === -1 || targetIndex === -1) return;
-
-      // Remover item da posição atual
-      const newOrder = [...currentOrder];
-      newOrder.splice(draggedIndex, 1);
-
-      // Inserir na nova posição
-      let insertIndex = targetIndex;
-      if (draggedIndex < targetIndex) {
-        insertIndex -= 1; // Ajustar devido à remoção
-      }
-      
-      if (dragState.dropPosition === 'after') {
-        insertIndex += 1;
+      const draggedLayerId = e.dataTransfer.getData('text/plain');
+      if (!draggedLayerId || draggedLayerId === targetLayerId) {
+        setDragState({
+          isDragging: false,
+          draggedItemId: null,
+          dragOverItemId: null,
+          dropPosition: null,
+        });
+        return;
       }
 
-      newOrder.splice(insertIndex, 0, draggedLayerId);
+      try {
+        // Calcular nova ordem
+        const currentOrder = layers.map(l => l.id);
+        const draggedIndex = currentOrder.indexOf(draggedLayerId);
+        const targetIndex = currentOrder.indexOf(targetLayerId);
 
-      // Aplicar reordenação
-      await reorderLayers.mutateAsync(newOrder);
-      
-    } catch (error) {
-      console.error('Erro ao reordenar camadas:', error);
-    } finally {
-      setDragState({
-        isDragging: false,
-        draggedItemId: null,
-        dragOverItemId: null,
-        dropPosition: null,
-      });
-    }
-  }, [layers, dragState.dropPosition, reorderLayers]);
+        if (draggedIndex === -1 || targetIndex === -1) return;
+
+        // Remover item da posição atual
+        const newOrder = [...currentOrder];
+        newOrder.splice(draggedIndex, 1);
+
+        // Inserir na nova posição
+        let insertIndex = targetIndex;
+        if (draggedIndex < targetIndex) {
+          insertIndex -= 1; // Ajustar devido à remoção
+        }
+
+        if (dragState.dropPosition === 'after') {
+          insertIndex += 1;
+        }
+
+        newOrder.splice(insertIndex, 0, draggedLayerId);
+
+        // Aplicar reordenação
+        await reorderLayers.mutateAsync(newOrder);
+      } catch (error) {
+        console.error('Erro ao reordenar camadas:', error);
+      } finally {
+        setDragState({
+          isDragging: false,
+          draggedItemId: null,
+          dragOverItemId: null,
+          dropPosition: null,
+        });
+      }
+    },
+    [layers, dragState.dropPosition, reorderLayers]
+  );
 
   // Handler para alternar visibilidade
-  const handleToggleVisibility = useCallback(async (layerId: string, event: React.MouseEvent) => {
-    event.stopPropagation();
-    try {
-      await toggleVisibility.mutateAsync(layerId);
-    } catch (error) {
-      console.error('Erro ao alternar visibilidade:', error);
-    }
-  }, [toggleVisibility]);
+  const handleToggleVisibility = useCallback(
+    async (layerId: string, event: React.MouseEvent) => {
+      event.stopPropagation();
+      try {
+        await toggleVisibility.mutateAsync(layerId);
+      } catch (error) {
+        console.error('Erro ao alternar visibilidade:', error);
+      }
+    },
+    [toggleVisibility]
+  );
 
   // Handler para alterar opacidade
-  const handleOpacityChange = useCallback(async (layerId: string, opacity: number) => {
-    try {
-      await updateOpacity.mutateAsync({ id: layerId, opacity });
-    } catch (error) {
-      console.error('Erro ao alterar opacidade:', error);
-    }
-  }, [updateOpacity]);
+  const handleOpacityChange = useCallback(
+    async (layerId: string, opacity: number) => {
+      try {
+        await updateOpacity.mutateAsync({ id: layerId, opacity });
+      } catch (error) {
+        console.error('Erro ao alterar opacidade:', error);
+      }
+    },
+    [updateOpacity]
+  );
 
   // Estilo do indicador de drop
   const getDropIndicatorStyle = (layerId: string) => {
@@ -257,7 +281,7 @@ export const DraggableLayerList: React.FC<DraggableLayerListProps> = ({
       boxShadow: '0 0 4px rgba(25, 118, 210, 0.5)',
     };
 
-    return dragState.dropPosition === 'before' 
+    return dragState.dropPosition === 'before'
       ? { ...baseStyle, top: -1 }
       : { ...baseStyle, bottom: -1 };
   };
@@ -287,18 +311,16 @@ export const DraggableLayerList: React.FC<DraggableLayerListProps> = ({
               }}
             >
               {/* Indicador de drop */}
-              {isDropTarget && (
-                <Box sx={getDropIndicatorStyle(layer.id)} />
-              )}
+              {isDropTarget && <Box sx={getDropIndicatorStyle(layer.id)} />}
 
               <ListItem
                 ref={isDraggedItem ? dragItemRef : null}
                 draggable
-                onDragStart={(e) => handleDragStart(e, layer.id)}
+                onDragStart={e => handleDragStart(e, layer.id)}
                 onDragEnd={handleDragEnd}
-                onDragOver={(e) => handleDragOver(e, layer.id)}
+                onDragOver={e => handleDragOver(e, layer.id)}
                 onDragLeave={handleDragLeave}
-                onDrop={(e) => handleDrop(e, layer.id)}
+                onDrop={e => handleDrop(e, layer.id)}
                 sx={{
                   cursor: dragState.isDragging ? 'grabbing' : 'grab',
                   borderRadius: 1,
@@ -308,17 +330,17 @@ export const DraggableLayerList: React.FC<DraggableLayerListProps> = ({
               >
                 <ListItemIcon>
                   <Tooltip title="Arrastar para reordenar">
-                    <DragIcon 
-                      sx={{ 
+                    <DragIcon
+                      sx={{
                         cursor: 'grab',
                         color: 'text.secondary',
                         '&:hover': { color: 'primary.main' },
                         '&:active': { cursor: 'grabbing' },
-                      }} 
+                      }}
                     />
                   </Tooltip>
                 </ListItemIcon>
-                
+
                 <ListItemText
                   primary={
                     <Box display="flex" alignItems="center" gap={1}>
@@ -327,9 +349,9 @@ export const DraggableLayerList: React.FC<DraggableLayerListProps> = ({
                       </Typography>
                       <Zoom in={stats.featureCount > 0} timeout={200}>
                         <Badge badgeContent={stats.featureCount} color="primary" max={999}>
-                          <Chip 
-                            size="small" 
-                            label="Features" 
+                          <Chip
+                            size="small"
+                            label="Features"
                             variant="outlined"
                             sx={{ fontSize: '0.7rem' }}
                           />
@@ -345,7 +367,7 @@ export const DraggableLayerList: React.FC<DraggableLayerListProps> = ({
                           control={
                             <Switch
                               checked={layer.visible}
-                              onChange={(e) => handleToggleVisibility(layer.id, e)}
+                              onChange={e => handleToggleVisibility(layer.id, e)}
                               size="small"
                               color="primary"
                             />
@@ -368,7 +390,7 @@ export const DraggableLayerList: React.FC<DraggableLayerListProps> = ({
                             max={1}
                             step={0.1}
                             size="small"
-                            sx={{ 
+                            sx={{
                               mt: 0.5,
                               '& .MuiSlider-thumb': {
                                 transition: 'box-shadow 0.2s ease-in-out',
@@ -380,7 +402,7 @@ export const DraggableLayerList: React.FC<DraggableLayerListProps> = ({
                           />
                         </Box>
                       </Box>
-                      
+
                       {/* Tipos de geometria */}
                       {Object.keys(stats.geometryTypes).length > 0 && (
                         <Fade in={true} timeout={400}>
@@ -392,8 +414,8 @@ export const DraggableLayerList: React.FC<DraggableLayerListProps> = ({
                                 label={`${count}`}
                                 size="small"
                                 variant="outlined"
-                                sx={{ 
-                                  fontSize: '0.65rem', 
+                                sx={{
+                                  fontSize: '0.65rem',
                                   height: 20,
                                   '& .MuiChip-icon': { fontSize: '0.8rem' },
                                 }}
@@ -405,7 +427,7 @@ export const DraggableLayerList: React.FC<DraggableLayerListProps> = ({
                     </Box>
                   }
                 />
-                
+
                 <ListItemSecondaryAction>
                   <Box display="flex" alignItems="center" gap={0.5}>
                     <Tooltip title="Tabela de Atributos">
@@ -427,7 +449,7 @@ export const DraggableLayerList: React.FC<DraggableLayerListProps> = ({
                         </IconButton>
                       </span>
                     </Tooltip>
-                    
+
                     <Tooltip title="Transferir Features">
                       <span>
                         <IconButton
@@ -447,11 +469,11 @@ export const DraggableLayerList: React.FC<DraggableLayerListProps> = ({
                         </IconButton>
                       </span>
                     </Tooltip>
-                    
+
                     <Tooltip title="Mais opções">
                       <IconButton
                         size="small"
-                        onClick={(e) => onLayerMenuOpen(e, layer.id)}
+                        onClick={e => onLayerMenuOpen(e, layer.id)}
                         sx={{
                           transition: 'all 0.2s ease-in-out',
                           '&:hover': {

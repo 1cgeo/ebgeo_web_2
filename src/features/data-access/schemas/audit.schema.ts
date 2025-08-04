@@ -15,7 +15,7 @@ export type AuditFields = z.infer<typeof AuditFieldsSchema>;
 // Função para criar campos de auditoria
 export const createAuditFields = (ownerId?: string): AuditFields => {
   const now = new Date().toISOString();
-  
+
   return {
     createdAt: now,
     updatedAt: now,
@@ -24,10 +24,7 @@ export const createAuditFields = (ownerId?: string): AuditFields => {
 };
 
 // Função para atualizar campos de auditoria
-export const updateAuditFields = (
-  existingFields: AuditFields,
-  ownerId?: string
-): AuditFields => {
+export const updateAuditFields = (existingFields: AuditFields, ownerId?: string): AuditFields => {
   return {
     ...existingFields,
     updatedAt: new Date().toISOString(),

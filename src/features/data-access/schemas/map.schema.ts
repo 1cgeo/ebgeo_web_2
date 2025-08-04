@@ -3,9 +3,9 @@
 import { z } from 'zod';
 
 // Schema para posição geográfica
-const PositionSchema = z.tuple([z.number(), z.number()]).or(
-  z.tuple([z.number(), z.number(), z.number()])
-);
+const PositionSchema = z
+  .tuple([z.number(), z.number()])
+  .or(z.tuple([z.number(), z.number(), z.number()]));
 
 // Schema para configuração de mapa
 export const MapConfigSchema = z.object({
@@ -28,10 +28,7 @@ export const validateMapConfig = (map: unknown): MapConfig => {
 };
 
 // Função para criar mapa padrão
-export const createDefaultMap = (
-  name: string,
-  options: Partial<MapConfig> = {}
-): MapConfig => {
+export const createDefaultMap = (name: string, options: Partial<MapConfig> = {}): MapConfig => {
   const now = new Date().toISOString();
   const id = crypto.randomUUID();
 

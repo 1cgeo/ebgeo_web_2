@@ -1,4 +1,4 @@
-// Path: features/layers/components/FeatureTransferDialog.tsx
+// Path: features\layers\components\FeatureTransferDialog.tsx
 
 import React, { useState, useEffect, useMemo } from 'react';
 import {
@@ -70,14 +70,9 @@ export const FeatureTransferDialog: React.FC<FeatureTransferDialogProps> = ({
   const [transferSuccess, setTransferSuccess] = useState(false);
 
   // Hooks
-  const { 
-    selectedFeatures, 
-    moveSelectedToLayer, 
-    clearSelection,
-    selectFeatures,
-    selectionStats 
-  } = useFeatureSelection();
-  
+  const { selectedFeatures, moveSelectedToLayer, clearSelection, selectFeatures, selectionStats } =
+    useFeatureSelection();
+
   const { data: allLayers = [] } = useLayers();
   const activeMapId = useMapsStore(state => state.activeMapId);
 
@@ -86,7 +81,7 @@ export const FeatureTransferDialog: React.FC<FeatureTransferDialogProps> = ({
     if (!activeMapId) return [];
     const mapData = useMapsStore.getState().loadedMaps.get(activeMapId);
     if (!mapData) return allLayers;
-    
+
     return allLayers.filter(layer => mapData.layerIds.includes(layer.id));
   }, [allLayers, activeMapId]);
 
@@ -101,20 +96,26 @@ export const FeatureTransferDialog: React.FC<FeatureTransferDialogProps> = ({
   // Estatísticas das features selecionadas para transferência
   const transferStats = useMemo(() => {
     const features = availableFeatures.filter(f => selectedForTransfer.has(f.id));
-    
-    const byGeometry = features.reduce((acc, feature) => {
-      const type = feature.geometry.type;
-      acc[type] = (acc[type] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>);
 
-    const byLayer = features.reduce((acc, feature) => {
-      const layerId = feature.properties.layerId;
-      const layer = mapLayers.find(l => l.id === layerId);
-      const layerName = layer?.name || 'Camada desconhecida';
-      acc[layerName] = (acc[layerName] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>);
+    const byGeometry = features.reduce(
+      (acc, feature) => {
+        const type = feature.geometry.type;
+        acc[type] = (acc[type] || 0) + 1;
+        return acc;
+      },
+      {} as Record<string, number>
+    );
+
+    const byLayer = features.reduce(
+      (acc, feature) => {
+        const layerId = feature.properties.layerId;
+        const layer = mapLayers.find(l => l.id === layerId);
+        const layerName = layer?.name || 'Camada desconhecida';
+        acc[layerName] = (acc[layerName] || 0) + 1;
+        return acc;
+      },
+      {} as Record<string, number>
+    );
 
     return {
       total: features.length,
@@ -126,10 +127,14 @@ export const FeatureTransferDialog: React.FC<FeatureTransferDialogProps> = ({
   // Ícones por tipo de geometria
   const getGeometryIcon = (type: string) => {
     switch (type) {
-      case 'Point': return <PointIcon fontSize="small" />;
-      case 'LineString': return <LineIcon fontSize="small" />;
-      case 'Polygon': return <PolygonIcon fontSize="small" />;
-      default: return <TextIcon fontSize="small" />;
+      case 'Point':
+        return <PointIcon fontSize="small" />;
+      case 'LineString':
+        return <LineIcon fontSize="small" />;
+      case 'Polygon':
+        return <PolygonIcon fontSize="small" />;
+      default:
+        return <TextIcon fontSize="small" />;
     }
   };
 
@@ -176,17 +181,16 @@ export const FeatureTransferDialog: React.FC<FeatureTransferDialogProps> = ({
       // Selecionar apenas as features escolhidas
       const featureIds = Array.from(selectedForTransfer);
       selectFeatures(featureIds, 'replace');
-      
+
       // Executar transferência
       await moveSelectedToLayer(targetLayerId);
-      
+
       setTransferSuccess(true);
-      
+
       // Fechar após sucesso
       setTimeout(() => {
         onClose();
       }, 1500);
-      
     } catch (error) {
       setTransferError(error instanceof Error ? error.message : 'Erro na transferência');
     } finally {
@@ -205,16 +209,14 @@ export const FeatureTransferDialog: React.FC<FeatureTransferDialogProps> = ({
       maxWidth="md"
       fullWidth
       PaperProps={{
-        sx: { minHeight: '60vh' }
+        sx: { minHeight: '60vh' },
       }}
     >
       <DialogTitle>
         <Box display="flex" alignItems="center" justifyContent="space-between">
           <Box display="flex" alignItems="center" gap={1}>
             <TransferIcon color="primary" />
-            <Typography variant="h6">
-              Transferir Features entre Camadas
-            </Typography>
+            <Typography variant="h6">Transferir Features entre Camadas</Typography>
           </Box>
           <IconButton size="small" onClick={onClose}>
             <CloseIcon />
@@ -227,7 +229,8 @@ export const FeatureTransferDialog: React.FC<FeatureTransferDialogProps> = ({
           <Alert severity="success" icon={<SuccessIcon />}>
             <Typography variant="h6">Transferência Concluída!</Typography>
             <Typography>
-              {selectedForTransfer.size} feature(s) transferida(s) com sucesso para "{targetLayer?.name}".
+              {selectedForTransfer.size} feature(s) transferida(s) com sucesso para "
+              {targetLayer?.name}".
             </Typography>
           </Alert>
         ) : (
@@ -241,7 +244,10 @@ export const FeatureTransferDialog: React.FC<FeatureTransferDialogProps> = ({
             )}
 
             {/* Seleção de Features */}
-            <Accordion expanded={!showPreview} onChange={(_, expanded) => setShowPreview(!expanded)}>
+            <Accordion
+              expanded={!showPreview}
+              onChange={(_, expanded) => setShowPreview(!expanded)}
+            >
               <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                 <Typography variant="h6">
                   Selecionar Features ({selectedForTransfer.size} de {availableFeatures.length})
@@ -254,7 +260,10 @@ export const FeatureTransferDialog: React.FC<FeatureTransferDialogProps> = ({
                       control={
                         <Checkbox
                           checked={selectedForTransfer.size === availableFeatures.length}
-                          indeterminate={selectedForTransfer.size > 0 && selectedForTransfer.size < availableFeatures.length}
+                          indeterminate={
+                            selectedForTransfer.size > 0 &&
+                            selectedForTransfer.size < availableFeatures.length
+                          }
                           onChange={handleSelectAll}
                         />
                       }
@@ -264,27 +273,25 @@ export const FeatureTransferDialog: React.FC<FeatureTransferDialogProps> = ({
 
                   <Paper variant="outlined" sx={{ maxHeight: 300, overflow: 'auto' }}>
                     <List dense>
-                      {availableFeatures.map((feature) => {
+                      {availableFeatures.map(feature => {
                         const isSelected = selectedForTransfer.has(feature.id);
                         const layer = mapLayers.find(l => l.id === feature.properties.layerId);
-                        
+
                         return (
                           <ListItem
                             key={feature.id}
                             dense
-                            sx={{ 
+                            sx={{
                               cursor: 'pointer',
                               bgcolor: isSelected ? 'action.selected' : 'inherit',
-                              '&:hover': { bgcolor: 'action.hover' }
+                              '&:hover': { bgcolor: 'action.hover' },
                             }}
                             onClick={() => handleToggleFeature(feature.id)}
                           >
                             <ListItemIcon>
                               <Checkbox checked={isSelected} />
                             </ListItemIcon>
-                            <ListItemIcon>
-                              {getGeometryIcon(feature.geometry.type)}
-                            </ListItemIcon>
+                            <ListItemIcon>{getGeometryIcon(feature.geometry.type)}</ListItemIcon>
                             <ListItemText
                               primary={
                                 <Box display="flex" alignItems="center" gap={1}>
@@ -323,18 +330,16 @@ export const FeatureTransferDialog: React.FC<FeatureTransferDialogProps> = ({
                 <InputLabel>Selecionar camada</InputLabel>
                 <Select
                   value={targetLayerId}
-                  onChange={(e) => setTargetLayerId(e.target.value)}
+                  onChange={e => setTargetLayerId(e.target.value)}
                   label="Selecionar camada"
                   disabled={isTransferring}
                 >
-                  {mapLayers.map((layer) => (
+                  {mapLayers.map(layer => (
                     <MenuItem key={layer.id} value={layer.id}>
                       <Box display="flex" alignItems="center" gap={1}>
                         <LayersIcon fontSize="small" />
                         <Typography>{layer.name}</Typography>
-                        {!layer.visible && (
-                          <Chip size="small" label="Oculta" variant="outlined" />
-                        )}
+                        {!layer.visible && <Chip size="small" label="Oculta" variant="outlined" />}
                       </Box>
                     </MenuItem>
                   ))}
@@ -344,18 +349,20 @@ export const FeatureTransferDialog: React.FC<FeatureTransferDialogProps> = ({
 
             {/* Preview da Transferência */}
             {canTransfer && (
-              <Accordion expanded={showPreview} onChange={(_, expanded) => setShowPreview(expanded)}>
+              <Accordion
+                expanded={showPreview}
+                onChange={(_, expanded) => setShowPreview(expanded)}
+              >
                 <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                  <Typography variant="h6">
-                    Visualizar Transferência
-                  </Typography>
+                  <Typography variant="h6">Visualizar Transferência</Typography>
                 </AccordionSummary>
                 <AccordionDetails>
                   <Box display="flex" flexDirection="column" gap={2}>
                     <Alert severity="info" icon={<WarningIcon />}>
                       <Typography variant="subtitle2">Resumo da Operação</Typography>
                       <Typography variant="body2">
-                        {transferStats.total} feature(s) serão transferidas para "{targetLayer?.name}".
+                        {transferStats.total} feature(s) serão transferidas para "
+                        {targetLayer?.name}".
                       </Typography>
                     </Alert>
 

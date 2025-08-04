@@ -1,4 +1,4 @@
-// Path: features/layers/components/AttributeTable.tsx
+// Path: features\layers\components\AttributeTable.tsx
 
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import {
@@ -118,16 +118,56 @@ export const AttributeTable: React.FC<AttributeTableProps> = ({
   const layer = allLayers.find(l => l.id === layerId);
 
   // Configuração das colunas
-  const columns: ColumnConfig[] = useMemo(() => [
-    { field: 'name', label: 'Nome', sortable: true, editable: true, type: 'text', width: 200 },
-    { field: 'description', label: 'Descrição', sortable: true, editable: true, type: 'text', width: 250 },
-    { field: 'geometryType', label: 'Geometria', sortable: true, editable: false, type: 'geometry', width: 120 },
-    ...(showCoordinates ? [
-      { field: 'coordinates', label: 'Coordenadas', sortable: false, editable: false, type: 'coordinates', width: 200 }
-    ] : []),
-    { field: 'createdAt', label: 'Criado em', sortable: true, editable: false, type: 'date', width: 150 },
-    { field: 'updatedAt', label: 'Atualizado em', sortable: true, editable: false, type: 'date', width: 150 },
-  ], [showCoordinates]);
+  const columns: ColumnConfig[] = useMemo(
+    () => [
+      { field: 'name', label: 'Nome', sortable: true, editable: true, type: 'text', width: 200 },
+      {
+        field: 'description',
+        label: 'Descrição',
+        sortable: true,
+        editable: true,
+        type: 'text',
+        width: 250,
+      },
+      {
+        field: 'geometryType',
+        label: 'Geometria',
+        sortable: true,
+        editable: false,
+        type: 'geometry',
+        width: 120,
+      },
+      ...(showCoordinates
+        ? [
+            {
+              field: 'coordinates',
+              label: 'Coordenadas',
+              sortable: false,
+              editable: false,
+              type: 'coordinates',
+              width: 200,
+            },
+          ]
+        : []),
+      {
+        field: 'createdAt',
+        label: 'Criado em',
+        sortable: true,
+        editable: false,
+        type: 'date',
+        width: 150,
+      },
+      {
+        field: 'updatedAt',
+        label: 'Atualizado em',
+        sortable: true,
+        editable: false,
+        type: 'date',
+        width: 150,
+      },
+    ],
+    [showCoordinates]
+  );
 
   // Features filtradas e ordenadas
   const processedFeatures = useMemo(() => {
@@ -136,11 +176,12 @@ export const AttributeTable: React.FC<AttributeTableProps> = ({
     // Filtro por busca
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
-      filtered = filtered.filter(feature => 
-        (feature.properties.name?.toLowerCase().includes(term)) ||
-        (feature.properties.description?.toLowerCase().includes(term)) ||
-        feature.id.toLowerCase().includes(term) ||
-        feature.geometry.type.toLowerCase().includes(term)
+      filtered = filtered.filter(
+        feature =>
+          feature.properties.name?.toLowerCase().includes(term) ||
+          feature.properties.description?.toLowerCase().includes(term) ||
+          feature.id.toLowerCase().includes(term) ||
+          feature.geometry.type.toLowerCase().includes(term)
       );
     }
 
@@ -173,9 +214,7 @@ export const AttributeTable: React.FC<AttributeTableProps> = ({
 
       // Comparação
       if (typeof aValue === 'string') {
-        return sortOrder === 'asc' 
-          ? aValue.localeCompare(bValue)
-          : bValue.localeCompare(aValue);
+        return sortOrder === 'asc' ? aValue.localeCompare(bValue) : bValue.localeCompare(aValue);
       }
 
       if (typeof aValue === 'number') {
@@ -265,8 +304,8 @@ export const AttributeTable: React.FC<AttributeTableProps> = ({
             ...feature.properties,
             [editingCell.field]: editValue,
             updatedAt: new Date().toISOString(),
-          }
-        }
+          },
+        },
       });
 
       setEditingCell(null);
@@ -310,10 +349,14 @@ export const AttributeTable: React.FC<AttributeTableProps> = ({
   // Utility functions
   const getGeometryIcon = (type: string) => {
     switch (type) {
-      case 'Point': return <PointIcon fontSize="small" />;
-      case 'LineString': return <LineIcon fontSize="small" />;
-      case 'Polygon': return <PolygonIcon fontSize="small" />;
-      default: return <TextIcon fontSize="small" />;
+      case 'Point':
+        return <PointIcon fontSize="small" />;
+      case 'LineString':
+        return <LineIcon fontSize="small" />;
+      case 'Polygon':
+        return <PolygonIcon fontSize="small" />;
+      default:
+        return <TextIcon fontSize="small" />;
     }
   };
 
@@ -367,15 +410,13 @@ export const AttributeTable: React.FC<AttributeTableProps> = ({
       maxWidth="xl"
       fullWidth
       PaperProps={{
-        sx: { height: '80vh', display: 'flex', flexDirection: 'column' }
+        sx: { height: '80vh', display: 'flex', flexDirection: 'column' },
       }}
     >
       <DialogTitle>
         <Box display="flex" alignItems="center" justifyContent="space-between">
           <Box>
-            <Typography variant="h6">
-              Tabela de Atributos - {layer?.name}
-            </Typography>
+            <Typography variant="h6">Tabela de Atributos - {layer?.name}</Typography>
             <Typography variant="caption" color="textSecondary">
               {processedFeatures.length} de {layerFeatures.length} feature(s)
             </Typography>
@@ -394,7 +435,7 @@ export const AttributeTable: React.FC<AttributeTableProps> = ({
             size="small"
             placeholder="Buscar features..."
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={e => setSearchTerm(e.target.value)}
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
@@ -417,7 +458,7 @@ export const AttributeTable: React.FC<AttributeTableProps> = ({
             <InputLabel>Geometria</InputLabel>
             <Select
               value={geometryFilter}
-              onChange={(e) => setGeometryFilter(e.target.value)}
+              onChange={e => setGeometryFilter(e.target.value)}
               label="Geometria"
             >
               <MenuItem value="all">Todas</MenuItem>
@@ -437,7 +478,7 @@ export const AttributeTable: React.FC<AttributeTableProps> = ({
             control={
               <Switch
                 checked={showCoordinates}
-                onChange={(e) => setShowCoordinates(e.target.checked)}
+                onChange={e => setShowCoordinates(e.target.checked)}
                 size="small"
               />
             }
@@ -449,16 +490,8 @@ export const AttributeTable: React.FC<AttributeTableProps> = ({
           {/* Ações */}
           {selectedRows.size > 0 && (
             <>
-              <Chip 
-                label={`${selectedRows.size} selecionada(s)`} 
-                color="primary" 
-                size="small" 
-              />
-              <Button
-                size="small"
-                startIcon={<TransferIcon />}
-                onClick={handleTransferSelected}
-              >
+              <Chip label={`${selectedRows.size} selecionada(s)`} color="primary" size="small" />
+              <Button size="small" startIcon={<TransferIcon />} onClick={handleTransferSelected}>
                 Transferir
               </Button>
               <Button
@@ -485,12 +518,20 @@ export const AttributeTable: React.FC<AttributeTableProps> = ({
             Erro ao carregar features da camada
           </Alert>
         ) : processedFeatures.length === 0 ? (
-          <Box display="flex" flexDirection="column" alignItems="center" justifyContent="center" height="100%">
+          <Box
+            display="flex"
+            flexDirection="column"
+            alignItems="center"
+            justifyContent="center"
+            height="100%"
+          >
             <Typography variant="h6" color="textSecondary">
               Nenhuma feature encontrada
             </Typography>
             <Typography variant="body2" color="textSecondary">
-              {layerFeatures.length === 0 ? 'Esta camada não possui features' : 'Tente ajustar os filtros'}
+              {layerFeatures.length === 0
+                ? 'Esta camada não possui features'
+                : 'Tente ajustar os filtros'}
             </Typography>
           </Box>
         ) : (
@@ -500,12 +541,17 @@ export const AttributeTable: React.FC<AttributeTableProps> = ({
                 <TableRow>
                   <TableCell padding="checkbox">
                     <Checkbox
-                      checked={selectedRows.size === paginatedFeatures.length && paginatedFeatures.length > 0}
-                      indeterminate={selectedRows.size > 0 && selectedRows.size < paginatedFeatures.length}
+                      checked={
+                        selectedRows.size === paginatedFeatures.length &&
+                        paginatedFeatures.length > 0
+                      }
+                      indeterminate={
+                        selectedRows.size > 0 && selectedRows.size < paginatedFeatures.length
+                      }
                       onChange={handleSelectAll}
                     />
                   </TableCell>
-                  {columns.map((column) => (
+                  {columns.map(column => (
                     <TableCell
                       key={column.field}
                       style={{ width: column.width }}
@@ -528,7 +574,7 @@ export const AttributeTable: React.FC<AttributeTableProps> = ({
                 </TableRow>
               </TableHead>
               <TableBody>
-                {paginatedFeatures.map((feature) => (
+                {paginatedFeatures.map(feature => (
                   <TableRow
                     key={feature.id}
                     selected={selectedRows.has(feature.id)}
@@ -541,8 +587,10 @@ export const AttributeTable: React.FC<AttributeTableProps> = ({
                         onChange={() => handleSelectRow(feature.id)}
                       />
                     </TableCell>
-                    {columns.map((column) => {
-                      const isEditing = editingCell?.featureId === feature.id && editingCell?.field === column.field;
+                    {columns.map(column => {
+                      const isEditing =
+                        editingCell?.featureId === feature.id &&
+                        editingCell?.field === column.field;
                       const value = formatCellValue(feature, column);
 
                       return (
@@ -552,8 +600,8 @@ export const AttributeTable: React.FC<AttributeTableProps> = ({
                               <TextField
                                 size="small"
                                 value={editValue}
-                                onChange={(e) => setEditValue(e.target.value)}
-                                onKeyDown={(e) => {
+                                onChange={e => setEditValue(e.target.value)}
+                                onKeyDown={e => {
                                   if (e.key === 'Enter') handleEditSave();
                                   if (e.key === 'Escape') handleEditCancel();
                                 }}
@@ -572,7 +620,9 @@ export const AttributeTable: React.FC<AttributeTableProps> = ({
                               display="flex"
                               alignItems="center"
                               gap={1}
-                              onClick={() => column.editable && handleEditStart(feature.id, column.field, value)}
+                              onClick={() =>
+                                column.editable && handleEditStart(feature.id, column.field, value)
+                              }
                               sx={{ cursor: column.editable ? 'text' : 'default' }}
                             >
                               {column.field === 'geometryType' && (
@@ -586,9 +636,7 @@ export const AttributeTable: React.FC<AttributeTableProps> = ({
                                   {value}
                                 </Typography>
                               )}
-                              {column.editable && (
-                                <EditIcon sx={{ fontSize: 14, opacity: 0.5 }} />
-                              )}
+                              {column.editable && <EditIcon sx={{ fontSize: 14, opacity: 0.5 }} />}
                             </Box>
                           )}
                         </TableCell>
@@ -596,10 +644,7 @@ export const AttributeTable: React.FC<AttributeTableProps> = ({
                     })}
                     <TableCell>
                       <Tooltip title="Selecionar no mapa">
-                        <IconButton
-                          size="small"
-                          onClick={() => handleFeatureSelect(feature.id)}
-                        >
+                        <IconButton size="small" onClick={() => handleFeatureSelect(feature.id)}>
                           <VisibilityIcon />
                         </IconButton>
                       </Tooltip>
@@ -619,7 +664,7 @@ export const AttributeTable: React.FC<AttributeTableProps> = ({
           page={page}
           onPageChange={(_, newPage) => setPage(newPage)}
           rowsPerPage={rowsPerPage}
-          onRowsPerPageChange={(e) => {
+          onRowsPerPageChange={e => {
             setRowsPerPage(parseInt(e.target.value, 10));
             setPage(0);
           }}

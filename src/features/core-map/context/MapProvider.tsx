@@ -47,11 +47,11 @@ export const MapProvider: React.FC<MapProviderProps> = ({ children }) => {
           tiles: [
             'https://a.tile.openstreetmap.org/{z}/{x}/{y}.png',
             'https://b.tile.openstreetmap.org/{z}/{x}/{y}.png',
-            'https://c.tile.openstreetmap.org/{z}/{x}/{y}.png'
+            'https://c.tile.openstreetmap.org/{z}/{x}/{y}.png',
           ],
           tileSize: 256,
-          attribution: '© OpenStreetMap contributors'
-        }
+          attribution: '© OpenStreetMap contributors',
+        },
       },
       layers: [
         {
@@ -59,9 +59,9 @@ export const MapProvider: React.FC<MapProviderProps> = ({ children }) => {
           type: 'raster' as const,
           source: 'osm-tiles',
           minzoom: 0,
-          maxzoom: 19
-        }
-      ]
+          maxzoom: 19,
+        },
+      ],
     },
     center: [-51.2177, -30.0346] as [number, number], // Porto Alegre
     zoom: 10,
@@ -77,7 +77,7 @@ export const MapProvider: React.FC<MapProviderProps> = ({ children }) => {
 
     try {
       console.log('Inicializando mapa...');
-      
+
       const newMap = new maplibregl.Map({
         container: mapContainer,
         ...defaultMapConfig,
@@ -97,7 +97,7 @@ export const MapProvider: React.FC<MapProviderProps> = ({ children }) => {
       newMap.on('load', () => {
         console.log('Mapa carregado com sucesso');
         setIsMapLoaded(true);
-        
+
         // Adicionar sources que serão usadas para features
         newMap.addSource('cold-features', {
           type: 'geojson',
@@ -135,13 +135,13 @@ export const MapProvider: React.FC<MapProviderProps> = ({ children }) => {
               'case',
               ['has', 'markerSize', ['get', 'style']],
               ['get', 'markerSize', ['get', 'style']],
-              8
+              8,
             ],
             'circle-color': [
               'case',
               ['has', 'markerColor', ['get', 'style']],
               ['get', 'markerColor', ['get', 'style']],
-              '#1976d2'
+              '#1976d2',
             ],
             'circle-stroke-width': 2,
             'circle-stroke-color': '#ffffff',
@@ -159,19 +159,19 @@ export const MapProvider: React.FC<MapProviderProps> = ({ children }) => {
               'case',
               ['has', 'strokeWidth', ['get', 'style']],
               ['get', 'strokeWidth', ['get', 'style']],
-              3
+              3,
             ],
             'line-color': [
               'case',
               ['has', 'strokeColor', ['get', 'style']],
               ['get', 'strokeColor', ['get', 'style']],
-              '#1976d2'
+              '#1976d2',
             ],
             'line-opacity': [
               'case',
               ['has', 'strokeOpacity', ['get', 'style']],
               ['get', 'strokeOpacity', ['get', 'style']],
-              1
+              1,
             ],
           },
           layout: {
@@ -191,7 +191,7 @@ export const MapProvider: React.FC<MapProviderProps> = ({ children }) => {
               'case',
               ['has', 'markerSize', ['get', 'style']],
               ['*', ['get', 'markerSize', ['get', 'style']], 1.2],
-              10
+              10,
             ],
             'circle-color': '#ff6b35',
             'circle-stroke-width': 3,
@@ -210,7 +210,7 @@ export const MapProvider: React.FC<MapProviderProps> = ({ children }) => {
               'case',
               ['has', 'strokeWidth', ['get', 'style']],
               ['+', ['get', 'strokeWidth', ['get', 'style']], 2],
-              5
+              5,
             ],
             'line-color': '#ff6b35',
             'line-opacity': 0.8,
@@ -252,12 +252,11 @@ export const MapProvider: React.FC<MapProviderProps> = ({ children }) => {
         });
       });
 
-      newMap.on('error', (e) => {
+      newMap.on('error', e => {
         console.error('Erro no mapa:', e.error);
       });
 
       setMap(newMap);
-      
     } catch (error) {
       console.error('Erro ao inicializar mapa:', error);
     }
@@ -307,9 +306,5 @@ export const MapProvider: React.FC<MapProviderProps> = ({ children }) => {
     destroyMap,
   };
 
-  return (
-    <MapContext.Provider value={value}>
-      {children}
-    </MapContext.Provider>
-  );
+  return <MapContext.Provider value={value}>{children}</MapContext.Provider>;
 };

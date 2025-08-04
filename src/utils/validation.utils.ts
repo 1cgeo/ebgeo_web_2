@@ -64,9 +64,14 @@ export const validateCoordinates = {
     // Validar precisão (warning)
     const lngDecimals = (lng.toString().split('.')[1] || '').length;
     const latDecimals = (lat.toString().split('.')[1] || '').length;
-    
-    if (lngDecimals > DATA_LIMITS.maxCoordinatePrecision || latDecimals > DATA_LIMITS.maxCoordinatePrecision) {
-      warnings.push(`Precisão muito alta nas coordenadas (máximo ${DATA_LIMITS.maxCoordinatePrecision} casas decimais)`);
+
+    if (
+      lngDecimals > DATA_LIMITS.maxCoordinatePrecision ||
+      latDecimals > DATA_LIMITS.maxCoordinatePrecision
+    ) {
+      warnings.push(
+        `Precisão muito alta nas coordenadas (máximo ${DATA_LIMITS.maxCoordinatePrecision} casas decimais)`
+      );
     }
 
     return {
@@ -107,7 +112,7 @@ export const validateCoordinates = {
       const [lng1, lat1] = positions[i];
       const [lng2, lat2] = positions[i + 1];
       const distance = Math.sqrt((lng2 - lng1) ** 2 + (lat2 - lat1) ** 2);
-      
+
       if (distance < VALIDATION_CONFIG.geometryTolerance) {
         warnings.push(`Pontos ${i} e ${i + 1} são muito próximos`);
       }
@@ -239,7 +244,9 @@ export const validateGeometry = {
 
     // Verificar número mínimo de pontos (incluindo fechamento)
     if (outerRing.length < DATA_LIMITS.minVerticesPerPolygon + 1) {
-      errors.push(`Polígono deve ter pelo menos ${DATA_LIMITS.minVerticesPerPolygon + 1} pontos (incluindo fechamento)`);
+      errors.push(
+        `Polígono deve ter pelo menos ${DATA_LIMITS.minVerticesPerPolygon + 1} pontos (incluindo fechamento)`
+      );
     }
 
     // Verificar número máximo de pontos
@@ -251,16 +258,18 @@ export const validateGeometry = {
     if (outerRing.length >= 2) {
       const first = outerRing[0];
       const last = outerRing[outerRing.length - 1];
-      
+
       if (!Array.isArray(first) || !Array.isArray(last)) {
         errors.push('Pontos do anel devem ser arrays');
       } else {
         const [lng1, lat1] = first;
         const [lng2, lat2] = last;
         const distance = Math.sqrt((lng2 - lng1) ** 2 + (lat2 - lat1) ** 2);
-        
+
         if (distance > VALIDATION_CONFIG.geometryTolerance) {
-          errors.push('Anel do polígono deve ser fechado (primeiro e último pontos devem ser iguais)');
+          errors.push(
+            'Anel do polígono deve ser fechado (primeiro e último pontos devem ser iguais)'
+          );
         }
       }
     }
@@ -282,7 +291,7 @@ export const validateGeometry = {
     let totalCoordinates = outerRing.length;
     for (let i = 1; i < geometry.coordinates.length; i++) {
       const innerRing = geometry.coordinates[i];
-      
+
       if (!Array.isArray(innerRing)) {
         errors.push(`Anel interior ${i} deve ser um array`);
         continue;
@@ -294,12 +303,12 @@ export const validateGeometry = {
       if (innerRing.length >= 2) {
         const first = innerRing[0];
         const last = innerRing[innerRing.length - 1];
-        
+
         if (Array.isArray(first) && Array.isArray(last)) {
           const [lng1, lat1] = first;
           const [lng2, lat2] = last;
           const distance = Math.sqrt((lng2 - lng1) ** 2 + (lat2 - lat1) ** 2);
-          
+
           if (distance > VALIDATION_CONFIG.geometryTolerance) {
             errors.push(`Anel interior ${i} deve ser fechado`);
           }
@@ -394,21 +403,41 @@ export const validateFeature = {
       }
 
       // Validar tamanhos de propriedades
-      if (feature.properties.name && feature.properties.name.length > DATA_LIMITS.maxFeatureNameLength) {
+      if (
+        feature.properties.name &&
+        feature.properties.name.length > DATA_LIMITS.maxFeatureNameLength
+      ) {
         errors.push(`Nome muito longo (máximo ${DATA_LIMITS.maxFeatureNameLength} caracteres)`);
       }
 
-      if (feature.properties.description && feature.properties.description.length > DATA_LIMITS.maxFeatureDescriptionLength) {
-        errors.push(`Descrição muito longa (máximo ${DATA_LIMITS.maxFeatureDescriptionLength} caracteres)`);
+      if (
+        feature.properties.description &&
+        feature.properties.description.length > DATA_LIMITS.maxFeatureDescriptionLength
+      ) {
+        errors.push(
+          `Descrição muito longa (máximo ${DATA_LIMITS.maxFeatureDescriptionLength} caracteres)`
+        );
       }
 
       // Contar propriedades customizadas
-      const customPropsCount = Object.keys(feature.properties).filter(key => 
-        !['id', 'layerId', 'name', 'description', 'style', 'createdAt', 'updatedAt', 'ownerId'].includes(key)
+      const customPropsCount = Object.keys(feature.properties).filter(
+        key =>
+          ![
+            'id',
+            'layerId',
+            'name',
+            'description',
+            'style',
+            'createdAt',
+            'updatedAt',
+            'ownerId',
+          ].includes(key)
       ).length;
 
       if (customPropsCount > DATA_LIMITS.maxPropertiesCount) {
-        warnings.push(`Muitas propriedades customizadas (máximo recomendado: ${DATA_LIMITS.maxPropertiesCount})`);
+        warnings.push(
+          `Muitas propriedades customizadas (máximo recomendado: ${DATA_LIMITS.maxPropertiesCount})`
+        );
       }
     }
 
@@ -463,7 +492,7 @@ export const validateFeature = {
     if (properties.createdAt && properties.updatedAt) {
       const created = new Date(properties.createdAt);
       const updated = new Date(properties.updatedAt);
-      
+
       if (updated < created) {
         errors.push('updatedAt não pode ser anterior a createdAt');
       }
@@ -491,13 +520,13 @@ function isValidISODate(dateString: string): boolean {
 function calculateSignedArea(coordinates: Position[]): number {
   let area = 0;
   const n = coordinates.length;
-  
+
   for (let i = 0; i < n - 1; i++) {
     const [x1, y1] = coordinates[i];
     const [x2, y2] = coordinates[i + 1];
     area += (x2 - x1) * (y2 + y1);
   }
-  
+
   return area / 2;
 }
 
@@ -526,10 +555,10 @@ function checkLineIntersection(coordinates: Position[]): boolean {
   for (let i = 0; i < coordinates.length - 3; i++) {
     for (let j = i + 2; j < coordinates.length - 1; j++) {
       if (j === coordinates.length - 1 && i === 0) continue; // Pular fechamento do polígono
-      
+
       const seg1 = [coordinates[i], coordinates[i + 1]];
       const seg2 = [coordinates[j], coordinates[j + 1]];
-      
+
       if (segmentsIntersect(seg1[0], seg1[1], seg2[0], seg2[1])) {
         return true;
       }

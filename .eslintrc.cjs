@@ -1,39 +1,58 @@
-// .eslintrc.cjs
-
 module.exports = {
   root: true,
   env: {
     browser: true,
-    es2020: true,
+    es2022: true,
     node: true,
   },
   extends: [
     'eslint:recommended',
     '@typescript-eslint/recommended',
-    'plugin:react-hooks/recommended',
+    'airbnb-typescript',
     'plugin:react/recommended',
-    'plugin:react/jsx-runtime',
+    'plugin:react-hooks/recommended',
     'plugin:jsx-a11y/recommended',
     'plugin:import/recommended',
     'plugin:import/typescript',
   ],
-  ignorePatterns: ['dist', '.eslintrc.cjs'],
+  ignorePatterns: [
+    'dist',
+    'build',
+    'node_modules',
+    '*.config.js',
+    'vite.config.ts',
+    '.eslintrc.cjs',
+  ],
   parser: '@typescript-eslint/parser',
   parserOptions: {
     ecmaVersion: 'latest',
     sourceType: 'module',
+    project: './tsconfig.json',
     ecmaFeatures: {
       jsx: true,
     },
   },
   plugins: [
-    'react-refresh',
-    '@typescript-eslint',
     'react',
     'react-hooks',
+    'react-refresh',
+    '@typescript-eslint',
     'jsx-a11y',
     'import',
   ],
+  settings: {
+    react: {
+      version: 'detect',
+    },
+    'import/resolver': {
+      typescript: {
+        project: './tsconfig.json',
+      },
+      node: {
+        extensions: ['.js', '.jsx', '.ts', '.tsx'],
+      },
+    },
+  },
   rules: {
     // React Refresh
     'react-refresh/only-export-components': [
@@ -41,19 +60,21 @@ module.exports = {
       { allowConstantExport: true },
     ],
 
-    // React
-    'react/react-in-jsx-scope': 'off',
-    'react/prop-types': 'off',
-    'react/display-name': 'off',
-    'react/no-unescaped-entities': 'off',
-    'react/jsx-props-no-spreading': 'off',
-    'react/require-default-props': 'off',
+    // React specific
+    'react/react-in-jsx-scope': 'off', // Not needed with React 18+
+    'react/jsx-uses-react': 'off', // Not needed with React 18+
+    'react/prop-types': 'off', // Using TypeScript instead
+    'react/require-default-props': 'off', // Using TypeScript default params
+    'react/jsx-props-no-spreading': 'off', // Allow prop spreading
+    'react/function-component-definition': [
+      'error',
+      {
+        namedComponents: 'arrow-function',
+        unnamedComponents: 'arrow-function',
+      },
+    ],
 
-    // React Hooks
-    'react-hooks/rules-of-hooks': 'error',
-    'react-hooks/exhaustive-deps': 'warn',
-
-    // TypeScript
+    // TypeScript specific
     '@typescript-eslint/no-unused-vars': [
       'error',
       {
@@ -62,80 +83,75 @@ module.exports = {
         caughtErrorsIgnorePattern: '^_',
       },
     ],
-    '@typescript-eslint/no-explicit-any': 'warn',
     '@typescript-eslint/explicit-function-return-type': 'off',
     '@typescript-eslint/explicit-module-boundary-types': 'off',
-    '@typescript-eslint/ban-ts-comment': 'off',
+    '@typescript-eslint/no-explicit-any': 'warn',
     '@typescript-eslint/no-non-null-assertion': 'warn',
+    '@typescript-eslint/prefer-nullish-coalescing': 'error',
+    '@typescript-eslint/prefer-optional-chain': 'error',
 
-    // Import
-    'import/no-unresolved': 'error',
-    'import/no-named-as-default-member': 'off',
-    'import/order': [
+    // Import rules
+    'import/prefer-default-export': 'off',
+    'import/no-default-export': 'off',
+    'import/extensions': 'off',
+    'import/no-extraneous-dependencies': [
       'error',
       {
-        groups: [
-          'builtin',
-          'external',
-          'internal',
-          ['sibling', 'parent'],
-          'index',
-          'unknown',
+        devDependencies: [
+          '**/*.test.ts',
+          '**/*.test.tsx',
+          '**/*.spec.ts',
+          '**/*.spec.tsx',
+          'vite.config.ts',
+          'vitest.config.ts',
+          '**/*.config.ts',
+          '**/*.config.js',
         ],
-        'newlines-between': 'always',
-        alphabetize: {
-          order: 'asc',
-          caseInsensitive: true,
-        },
       },
     ],
 
-    // General
+    // General code quality
     'no-console': ['warn', { allow: ['warn', 'error'] }],
     'no-debugger': 'warn',
     'prefer-const': 'error',
     'no-var': 'error',
-    'object-shorthand': 'error',
-    'prefer-template': 'error',
-    'template-curly-spacing': 'error',
-    'padding-line-between-statements': [
-      'error',
-      { blankLine: 'always', prev: '*', next: 'return' },
-      { blankLine: 'always', prev: ['const', 'let', 'var'], next: '*' },
-      {
-        blankLine: 'any',
-        prev: ['const', 'let', 'var'],
-        next: ['const', 'let', 'var'],
-      },
-    ],
 
     // Accessibility
-    'jsx-a11y/anchor-is-valid': 'off',
+    'jsx-a11y/anchor-is-valid': [
+      'error',
+      {
+        components: ['Link'],
+        specialLink: ['hrefLeft', 'hrefRight'],
+        aspects: ['invalidHref', 'preferButton'],
+      },
+    ],
     'jsx-a11y/click-events-have-key-events': 'warn',
     'jsx-a11y/no-static-element-interactions': 'warn',
-  },
-  settings: {
-    react: {
-      version: 'detect',
-    },
-    'import/resolver': {
-      typescript: {
-        alwaysTryTypes: true,
-        project: './tsconfig.json',
-      },
-      node: {
-        extensions: ['.js', '.jsx', '.ts', '.tsx'],
-      },
-    },
+
+    // Code style (handled by Prettier, so disable conflicting rules)
+    'max-len': 'off',
+    'object-curly-newline': 'off',
+    'operator-linebreak': 'off',
+    'implicit-arrow-linebreak': 'off',
+    'function-paren-newline': 'off',
   },
   overrides: [
     {
-      files: ['**/*.test.{ts,tsx}', '**/*.spec.{ts,tsx}'],
+      files: ['*.test.ts', '*.test.tsx', '*.spec.ts', '*.spec.tsx'],
       env: {
         jest: true,
+        'vitest-globals/env': true,
       },
+      extends: ['plugin:vitest-globals/recommended'],
       rules: {
         '@typescript-eslint/no-explicit-any': 'off',
+        'import/no-extraneous-dependencies': 'off',
+      },
+    },
+    {
+      files: ['vite.config.ts', '*.config.ts', '*.config.js'],
+      rules: {
+        'import/no-extraneous-dependencies': 'off',
       },
     },
   ],

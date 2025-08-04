@@ -8,12 +8,7 @@ import { AbstractTool, MapMouseEvent, ToolConfig, ToolCallbacks } from './Abstra
 export class PointTool extends AbstractTool {
   private activeLayerId: string | null = null;
 
-  constructor(
-    map: maplibregl.Map,
-    config: ToolConfig,
-    callbacks: ToolCallbacks,
-    layerId?: string
-  ) {
+  constructor(map: maplibregl.Map, config: ToolConfig, callbacks: ToolCallbacks, layerId?: string) {
     super(map, config, callbacks);
     this.activeLayerId = layerId || null;
   }
@@ -50,31 +45,35 @@ export class PointTool extends AbstractTool {
     try {
       // Aplicar snap se habilitado
       const snapResult = this.snapToFeatures([e.lngLat.lng, e.lngLat.lat]);
-      const position: Position = snapResult.snapped ? snapResult.position : [e.lngLat.lng, e.lngLat.lat];
+      const position: Position = snapResult.snapped
+        ? snapResult.position
+        : [e.lngLat.lng, e.lngLat.lat];
 
       // Criar feature de ponto
       const pointFeature = this.createPointFeature(position);
-      
+
       if (pointFeature) {
         this.callbacks.onFeatureComplete(pointFeature);
         this.callbacks.onStatusChange('Ponto criado com sucesso');
-        
+
         // Dar feedback visual
         this.showCreationFeedback(position);
       }
     } catch (error) {
-      this.callbacks.onError(`Erro ao criar ponto: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+      this.callbacks.onError(
+        `Erro ao criar ponto: ${error instanceof Error ? error.message : 'Erro desconhecido'}`
+      );
     }
   }
 
   protected onMouseMove(e: MapMouseEvent): void {
     super.onMouseMove(e);
-    
+
     if (!this.isActive) return;
 
     // Mostrar preview do ponto
     this.showPointPreview([e.lngLat.lng, e.lngLat.lat]);
-    
+
     // Atualizar status com coordenadas
     if (this.config.showCoordinates) {
       const coords = [e.lngLat.lng.toFixed(6), e.lngLat.lat.toFixed(6)];
@@ -127,7 +126,7 @@ export class PointTool extends AbstractTool {
     try {
       // Criar feature temporária para preview
       const previewFeature = this.createTempFeature([position], 'Point');
-      
+
       // Atualizar source hot-features com o preview
       const source = this.map.getSource('hot-features') as maplibregl.GeoJSONSource;
       if (source) {
@@ -191,7 +190,7 @@ export class PointTool extends AbstractTool {
 
     try {
       const pointFeature = this.createPointFeature(position);
-      
+
       // Aplicar propriedades adicionais se fornecidas
       if (properties) {
         pointFeature.properties = {
@@ -202,10 +201,12 @@ export class PointTool extends AbstractTool {
 
       this.callbacks.onFeatureComplete(pointFeature);
       this.callbacks.onStatusChange('Ponto criado programaticamente');
-      
+
       return pointFeature;
     } catch (error) {
-      this.callbacks.onError(`Erro ao criar ponto: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+      this.callbacks.onError(
+        `Erro ao criar ponto: ${error instanceof Error ? error.message : 'Erro desconhecido'}`
+      );
       return null;
     }
   }

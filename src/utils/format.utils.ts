@@ -40,7 +40,7 @@ export const formatCoordinates = {
   dms: (lng: number, lat: number): string => {
     const latDMS = decimalToDMS(lat, 'lat');
     const lngDMS = decimalToDMS(lng, 'lng');
-    
+
     return `${formatDMS(latDMS)} ${formatDMS(lngDMS)}`;
   },
 
@@ -89,7 +89,7 @@ export const decimalToDMS = (decimal: number, type: 'lat' | 'lng'): DMSCoordinat
  */
 export const dmsToDecimal = (dms: DMSCoordinate): number => {
   const decimal = dms.degrees + dms.minutes / 60 + dms.seconds / 3600;
-  return (dms.direction === 'S' || dms.direction === 'W') ? -decimal : decimal;
+  return dms.direction === 'S' || dms.direction === 'W' ? -decimal : decimal;
 };
 
 /**
@@ -130,7 +130,7 @@ export const formatDistance = {
 
     const conversion = conversions[unit];
     const value = meters / conversion.factor;
-    
+
     if (value < 10) {
       return `${value.toFixed(2)} ${conversion.symbol}`;
     } else if (value < 100) {
@@ -180,7 +180,7 @@ export const formatArea = {
 
     const conversion = conversions[unit];
     const value = sqMeters / conversion.factor;
-    
+
     if (value < 10) {
       return `${value.toFixed(3)} ${conversion.symbol}`;
     } else if (value < 100) {
@@ -325,9 +325,7 @@ export const formatText = {
    * Título (primeira letra de cada palavra)
    */
   title: (text: string): string => {
-    return text.replace(/\w\S*/g, (txt) => 
-      txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase()
-    );
+    return text.replace(/\w\S*/g, txt => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase());
   },
 
   /**
@@ -390,7 +388,7 @@ export const formatGeometry = {
    */
   position: (position: Position, format: CoordinateFormat = 'decimal'): string => {
     const [lng, lat] = position;
-    
+
     switch (format) {
       case 'dms':
         return formatCoordinates.dms(lng, lat);
@@ -450,7 +448,7 @@ export const formatArea = {
 
     const conversion = conversions[unit];
     const value = sqMeters / conversion.factor;
-    
+
     if (value < 10) {
       return `${value.toFixed(2)} ${conversion.symbol}`;
     } else if (value < 100) {
@@ -469,7 +467,8 @@ export const validation = {
    * Validar email com regex mais robusta
    */
   email: (email: string): boolean => {
-    const regex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
+    const regex =
+      /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
     return regex.test(email);
   },
 
@@ -502,7 +501,7 @@ export const formatTable = {
    */
   cellValue: (value: any, type: 'text' | 'number' | 'date' | 'coordinates' = 'text'): string => {
     if (value == null) return '';
-    
+
     switch (type) {
       case 'date':
         return new Date(value).toLocaleString();

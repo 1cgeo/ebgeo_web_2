@@ -28,17 +28,17 @@ export class HotSource {
   private map: maplibregl.Map;
   private callbacks: HotSourceCallbacks;
   private config: EditConfig;
-  
+
   // Features sendo editadas
   private hotFeatures: Map<string, ExtendedFeature> = new Map();
   private editingFeatureId: string | null = null;
-  
+
   // Estado de edição de vértices
   private isDragging: boolean = false;
   private dragVertexIndex: number = -1;
   private vertexHandles: maplibregl.Marker[] = [];
   private midpointHandles: maplibregl.Marker[] = [];
-  
+
   // Event listeners
   private boundHandlers: Map<string, EventListener> = new Map();
 
@@ -96,14 +96,30 @@ export class HotSource {
     this.updateHotSource();
   }
 
+  // Adicionar feature para edição com suporte a drag (nova funcionalidade)
+  addFeatureForDrag(feature: ExtendedFeature): void {
+    // Criar cópia da feature com identificação para drag
+    const dragFeature: ExtendedFeature = {
+      ...feature,
+      properties: {
+        ...feature.properties,
+        handle: 'body', // Identificador para o corpo da geometria
+        featureId: feature.id,
+      },
+    };
+
+    this.hotFeatures.set(feature.id, dragFeature);
+    this.updateHotSource();
+  }
+
   // Remover feature da edição
   removeFeature(featureId: string): void {
     this.hotFeatures.delete(featureId);
-    
+
     if (this.editingFeatureId === featureId) {
       this.stopEditingVertices();
     }
-    
+
     this.updateHotSource();
   }
 
@@ -119,12 +135,30 @@ export class HotSource {
     if (this.hotFeatures.has(feature.id)) {
       this.hotFeatures.set(feature.id, feature);
       this.updateHotSource();
-      
+
       // Atualizar handles de vértices se estiver editando
       if (this.editingFeatureId === feature.id) {
         this.updateVertexHandles(feature);
       }
     }
+  }
+
+  // Atualizar geometria de uma feature (usado durante drag)
+  updateGeometry(featureId: string, newGeometry: GeoJSON.Geometry): void {
+    const feature = this.hotFeatures.get(featureId);
+    if (feature) {
+      const updatedFeature: ExtendedFeature = {
+        ...feature,
+        geometry: newGeometry,
+      };
+      this.hotFeatures.set(featureId, updatedFeature);
+      this.updateHotSource();
+    }
+  }
+
+  // Obter feature específica
+  getFeature(featureId: string): ExtendedFeature | undefined {
+    return this.hotFeatures.get(featureId);
   }
 
   // Iniciar edição de vértices para uma feature
@@ -167,126 +201,140 @@ export class HotSource {
         });
       }
     } catch (error) {
-      this.callbacks.onError(`Erro ao atualizar hot source: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+      this.callbacks.onError(
+        `Erro ao atualizar hot source: ${error instanceof Error ? error.message : 'Erro desconhecido'}`
+      );
     }
   }
 
-  // Criar handles de vértices para edição
+  // Criar handles visuais para os vértices
   private createVertexHandles(feature: ExtendedFeature): void {
-    if (feature.geometry.type === 'Point') {
-      this.createPointHandle(feature);
-    } else if (feature.geometry.type === 'LineString') {
-      this.createLineHandles(feature);
-    } else if (feature.geometry.type === 'Polygon') {
-      this.createPolygonHandles(feature);
-    }
-  }
+    this.clearVertexHandles();
 
-  // Criar handle para ponto
-  private createPointHandle(feature: ExtendedFeature): void {
-    const coords = feature.geometry.coordinates as Position;
-    const handle = this.createVertexMarker(coords, 0);
-    this.vertexHandles.push(handle);
-  }
+    const vertices = this.getFeatureVertices(feature);
 
-  // Criar handles para linha
-  private createLineHandles(feature: ExtendedFeature): void {
-    const coords = feature.geometry.coordinates as Position[];
-    
-    // Criar handles nos vértices
-    coords.forEach((coord, index) => {
-      const handle = this.createVertexMarker(coord, index);
-      this.vertexHandles.push(handle);
+    // Criar handles para cada vértice
+    vertices.forEach((vertex, index) => {
+      this.createVertexMarker(vertex, index);
     });
 
-    // Criar handles nos pontos médios (para adicionar vértices)
-    if (this.config.enableVertexAdd) {
-      for (let i = 0; i < coords.length - 1; i++) {
-        const midpoint = this.calculateMidpoint(coords[i], coords[i + 1]);
-        const midHandle = this.createMidpointMarker(midpoint, i);
-        this.midpointHandles.push(midHandle);
-      }
+    // Criar handles de midpoint se habilitado
+    if (this.config.enableVertexAdd && vertices.length > 1) {
+      this.createMidpointHandles(vertices);
     }
   }
 
-  // Criar handles para polígono
-  private createPolygonHandles(feature: ExtendedFeature): void {
-    // Para polígonos, trabalhar com o anel exterior
-    const coords = feature.geometry.coordinates[0] as Position[];
-    
-    // Remover último ponto (que é igual ao primeiro)
-    const vertices = coords.slice(0, -1);
-    
-    vertices.forEach((coord, index) => {
-      const handle = this.createVertexMarker(coord, index);
-      this.vertexHandles.push(handle);
-    });
-
-    // Pontos médios
-    if (this.config.enableVertexAdd) {
-      for (let i = 0; i < vertices.length; i++) {
-        const nextIndex = (i + 1) % vertices.length;
-        const midpoint = this.calculateMidpoint(vertices[i], vertices[nextIndex]);
-        const midHandle = this.createMidpointMarker(midpoint, i);
-        this.midpointHandles.push(midHandle);
-      }
-    }
-  }
-
-  // Criar marcador de vértice
-  private createVertexMarker(position: Position, index: number): maplibregl.Marker {
+  // Criar marker para um vértice
+  private createVertexMarker(position: Position, index: number): void {
     const el = document.createElement('div');
     el.className = 'vertex-handle';
     el.style.width = `${this.config.vertexRadius * 2}px`;
     el.style.height = `${this.config.vertexRadius * 2}px`;
-    el.dataset.vertexIndex = index.toString();
-    
+    el.style.backgroundColor = '#ffffff';
+    el.style.border = '2px solid #1976d2';
+    el.style.borderRadius = '50%';
+    el.style.cursor = 'move';
+    el.style.boxShadow = '0 2px 4px rgba(0,0,0,0.3)';
+
     // Event listeners para arrastar
-    el.addEventListener('mousedown', (e) => {
-      e.stopPropagation();
+    el.addEventListener('mousedown', e => {
       this.startDragVertex(index, e);
     });
 
-    // Double click para remover vértice
+    // Context menu para remover vértice
     if (this.config.enableVertexRemove) {
-      el.addEventListener('dblclick', (e) => {
-        e.stopPropagation();
+      el.addEventListener('contextmenu', e => {
+        e.preventDefault();
         this.removeVertex(index);
       });
     }
 
-    const marker = new maplibregl.Marker({ element: el, draggable: false })
+    const marker = new maplibregl.Marker({
+      element: el,
+      draggable: false, // Controlamos o drag manualmente
+    })
       .setLngLat([position[0], position[1]])
       .addTo(this.map);
 
-    return marker;
+    this.vertexHandles.push(marker);
   }
 
-  // Criar marcador de ponto médio
-  private createMidpointMarker(position: Position, afterIndex: number): maplibregl.Marker {
+  // Criar handles de midpoint para adicionar vértices
+  private createMidpointHandles(vertices: Position[]): void {
+    for (let i = 0; i < vertices.length - 1; i++) {
+      const midpoint = this.calculateMidpoint(vertices[i], vertices[i + 1]);
+      this.createMidpointMarker(midpoint, i + 1);
+    }
+
+    // Para polígonos, adicionar midpoint entre último e primeiro vértice
+    const feature = this.hotFeatures.get(this.editingFeatureId!);
+    if (feature && feature.geometry.type === 'Polygon') {
+      const lastIndex = vertices.length - 1;
+      const midpoint = this.calculateMidpoint(vertices[lastIndex], vertices[0]);
+      this.createMidpointMarker(midpoint, 0);
+    }
+  }
+
+  // Criar marker de midpoint
+  private createMidpointMarker(position: Position, insertIndex: number): void {
     const el = document.createElement('div');
-    el.className = 'vertex-midpoint';
+    el.className = 'midpoint-handle';
     el.style.width = `${this.config.midpointRadius * 2}px`;
     el.style.height = `${this.config.midpointRadius * 2}px`;
-    
-    el.addEventListener('click', (e) => {
+    el.style.backgroundColor = '#ffffff';
+    el.style.border = '1px solid #757575';
+    el.style.borderRadius = '50%';
+    el.style.cursor = 'pointer';
+    el.style.opacity = '0.7';
+
+    el.addEventListener('mousedown', e => {
       e.stopPropagation();
-      this.addVertex(afterIndex + 1, position);
+      this.addVertex(insertIndex, position);
     });
 
-    const marker = new maplibregl.Marker({ element: el, draggable: false })
+    const marker = new maplibregl.Marker({
+      element: el,
+      draggable: false,
+    })
       .setLngLat([position[0], position[1]])
       .addTo(this.map);
 
-    return marker;
+    this.midpointHandles.push(marker);
+  }
+
+  // Limpar todos os handles
+  private clearVertexHandles(): void {
+    this.vertexHandles.forEach(marker => marker.remove());
+    this.vertexHandles = [];
+
+    this.midpointHandles.forEach(marker => marker.remove());
+    this.midpointHandles = [];
+  }
+
+  // Recriar handles após mudança na geometria
+  private recreateVertexHandles(feature: ExtendedFeature): void {
+    if (this.editingFeatureId === feature.id) {
+      this.createVertexHandles(feature);
+    }
+  }
+
+  // Obter vértices de uma feature
+  private getFeatureVertices(feature: ExtendedFeature): Position[] {
+    switch (feature.geometry.type) {
+      case 'Point':
+        return [feature.geometry.coordinates as Position];
+      case 'LineString':
+        return feature.geometry.coordinates as Position[];
+      case 'Polygon':
+        return (feature.geometry.coordinates as Position[][])[0].slice(0, -1); // Remove último ponto duplicado
+      default:
+        return [];
+    }
   }
 
   // Calcular ponto médio entre duas posições
   private calculateMidpoint(pos1: Position, pos2: Position): Position {
-    return [
-      (pos1[0] + pos2[0]) / 2,
-      (pos1[1] + pos2[1]) / 2
-    ];
+    return [(pos1[0] + pos2[0]) / 2, (pos1[1] + pos2[1]) / 2];
   }
 
   // Iniciar arrastar vértice
@@ -307,10 +355,7 @@ export class HotSource {
 
     // Converter posição do mouse para coordenadas do mapa
     const rect = this.map.getContainer().getBoundingClientRect();
-    const point = new maplibregl.Point(
-      e.clientX - rect.left,
-      e.clientY - rect.top
-    );
+    const point = new maplibregl.Point(e.clientX - rect.left, e.clientY - rect.top);
     const lngLat = this.map.unproject(point);
     const newPosition: Position = [lngLat.lng, lngLat.lat];
 
@@ -337,7 +382,9 @@ export class HotSource {
       this.updateFeature(updatedFeature);
       this.callbacks.onVertexMoved(this.editingFeatureId, vertexIndex, newPosition);
     } catch (error) {
-      this.callbacks.onError(`Erro ao mover vértice: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+      this.callbacks.onError(
+        `Erro ao mover vértice: ${error instanceof Error ? error.message : 'Erro desconhecido'}`
+      );
     }
   }
 
@@ -354,7 +401,9 @@ export class HotSource {
       this.recreateVertexHandles(updatedFeature);
       this.callbacks.onVertexAdded(this.editingFeatureId, vertexIndex, position);
     } catch (error) {
-      this.callbacks.onError(`Erro ao adicionar vértice: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+      this.callbacks.onError(
+        `Erro ao adicionar vértice: ${error instanceof Error ? error.message : 'Erro desconhecido'}`
+      );
     }
   }
 
@@ -373,12 +422,18 @@ export class HotSource {
         this.callbacks.onVertexRemoved(this.editingFeatureId, vertexIndex);
       }
     } catch (error) {
-      this.callbacks.onError(`Erro ao remover vértice: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+      this.callbacks.onError(
+        `Erro ao remover vértice: ${error instanceof Error ? error.message : 'Erro desconhecido'}`
+      );
     }
   }
 
   // Métodos auxiliares para manipulação de geometria
-  private updateVertexPosition(feature: ExtendedFeature, vertexIndex: number, newPosition: Position): ExtendedFeature {
+  private updateVertexPosition(
+    feature: ExtendedFeature,
+    vertexIndex: number,
+    newPosition: Position
+  ): ExtendedFeature {
     const updatedFeature = { ...feature };
 
     if (feature.geometry.type === 'Point') {
@@ -397,12 +452,12 @@ export class HotSource {
       const coords = [...feature.geometry.coordinates] as Position[][];
       const ring = [...coords[0]];
       ring[vertexIndex] = newPosition;
-      
+
       // Atualizar último ponto se for igual ao primeiro
       if (vertexIndex === 0) {
         ring[ring.length - 1] = newPosition;
       }
-      
+
       coords[0] = ring;
       updatedFeature.geometry = {
         ...feature.geometry,
@@ -413,7 +468,11 @@ export class HotSource {
     return updatedFeature;
   }
 
-  private insertVertex(feature: ExtendedFeature, vertexIndex: number, position: Position): ExtendedFeature {
+  private insertVertex(
+    feature: ExtendedFeature,
+    vertexIndex: number,
+    position: Position
+  ): ExtendedFeature {
     const updatedFeature = { ...feature };
 
     if (feature.geometry.type === 'LineString') {
@@ -455,7 +514,8 @@ export class HotSource {
     } else if (feature.geometry.type === 'Polygon') {
       const coords = [...feature.geometry.coordinates] as Position[][];
       const ring = [...coords[0]];
-      if (ring.length <= 4) { // 3 pontos + fechamento
+      if (ring.length <= 4) {
+        // 3 pontos + fechamento
         this.callbacks.onError('Polígono deve ter pelo menos 3 pontos');
         return null;
       }
@@ -477,62 +537,23 @@ export class HotSource {
   private updateVertexHandles(feature: ExtendedFeature): void {
     // Atualizar posições dos handles existentes
     const coords = this.getFeatureVertices(feature);
-    
-    this.vertexHandles.forEach((handle, index) => {
-      if (index < coords.length) {
-        handle.setLngLat([coords[index][0], coords[index][1]]);
+
+    this.vertexHandles.forEach((marker, index) => {
+      if (coords[index]) {
+        marker.setLngLat([coords[index][0], coords[index][1]]);
       }
     });
-  }
-
-  // Recriar handles de vértices
-  private recreateVertexHandles(feature: ExtendedFeature): void {
-    this.clearVertexHandles();
-    this.createVertexHandles(feature);
-  }
-
-  // Obter vértices da feature
-  private getFeatureVertices(feature: ExtendedFeature): Position[] {
-    if (feature.geometry.type === 'Point') {
-      return [feature.geometry.coordinates as Position];
-    } else if (feature.geometry.type === 'LineString') {
-      return feature.geometry.coordinates as Position[];
-    } else if (feature.geometry.type === 'Polygon') {
-      return (feature.geometry.coordinates[0] as Position[]).slice(0, -1);
-    }
-    return [];
-  }
-
-  // Limpar handles de vértices
-  private clearVertexHandles(): void {
-    this.vertexHandles.forEach(handle => handle.remove());
-    this.midpointHandles.forEach(handle => handle.remove());
-    this.vertexHandles = [];
-    this.midpointHandles = [];
   }
 
   // Cleanup
   destroy(): void {
     this.stopEditingVertices();
     this.clear();
-    
+
     // Remover event listeners
     this.boundHandlers.forEach((handler, event) => {
       document.removeEventListener(event, handler);
     });
     this.boundHandlers.clear();
-  }
-
-  // Getters
-  get features(): ExtendedFeature[] {
-    return Array.from(this.hotFeatures.values());
-  }
-
-  get editingFeature(): string | null {
-    return this.editingFeatureId;
-  }
-
-  get isEditingVertices(): boolean {
-    return this.editingFeatureId !== null;
   }
 }

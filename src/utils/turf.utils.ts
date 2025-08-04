@@ -26,7 +26,7 @@ export const measurements = {
    */
   length: (coordinates: Position[], unit: DistanceUnit = 'meters'): number => {
     if (coordinates.length < 2) return 0;
-    
+
     const line = turf.lineString(coordinates);
     return turf.length(line, { units: unit });
   },
@@ -36,10 +36,10 @@ export const measurements = {
    */
   area: (coordinates: Position[][], unit: AreaUnit = 'meters'): number => {
     if (coordinates.length === 0 || coordinates[0].length < 4) return 0;
-    
+
     const polygon = turf.polygon(coordinates);
     const areaInMeters = turf.area(polygon);
-    
+
     // Converter para unidade desejada
     switch (unit) {
       case 'kilometers':
@@ -62,7 +62,7 @@ export const measurements = {
    */
   perimeter: (coordinates: Position[][], unit: DistanceUnit = 'meters'): number => {
     if (coordinates.length === 0 || coordinates[0].length < 4) return 0;
-    
+
     const polygon = turf.polygon(coordinates);
     const line = turf.polygonToLine(polygon);
     return turf.length(line, { units: unit });
@@ -170,7 +170,7 @@ export const spatial = {
     unit: DistanceUnit = 'meters'
   ): ExtendedFeature[] => {
     const centerPoint = turf.point(center);
-    
+
     return features.filter(feature => {
       try {
         const featureCenter = turf.centroid(feature.geometry as any);
@@ -196,7 +196,7 @@ export const spatial = {
           featureBBox[0] >= bbox[0] && // minX
           featureBBox[1] >= bbox[1] && // minY
           featureBBox[2] <= bbox[2] && // maxX
-          featureBBox[3] <= bbox[3]    // maxY
+          featureBBox[3] <= bbox[3] // maxY
         );
       } catch {
         return false;
@@ -222,7 +222,7 @@ export const spatial = {
       try {
         const featureCenter = turf.centroid(feature.geometry as any);
         const distance = turf.distance(targetPoint, featureCenter, { units: 'meters' });
-        
+
         if (distance < minDistance) {
           minDistance = distance;
           nearest = feature;
@@ -243,7 +243,11 @@ export const transform = {
   /**
    * Simplificar geometria (reduzir número de vértices)
    */
-  simplify: (geometry: Geometry, tolerance: number = 0.01, highQuality: boolean = false): Geometry => {
+  simplify: (
+    geometry: Geometry,
+    tolerance: number = 0.01,
+    highQuality: boolean = false
+  ): Geometry => {
     try {
       const simplified = turf.simplify(geometry as any, { tolerance, highQuality });
       return simplified.geometry;
@@ -262,7 +266,7 @@ export const transform = {
 
     for (let iter = 0; iter < iterations; iter++) {
       const newCoords: Position[] = [];
-      
+
       for (let i = 0; i < smoothed.length; i++) {
         if (i === 0 || i === smoothed.length - 1) {
           // Manter primeiro e último pontos
@@ -272,14 +276,14 @@ export const transform = {
           const prev = smoothed[i - 1];
           const curr = smoothed[i];
           const next = smoothed[i + 1];
-          
+
           const newX = (prev[0] + 2 * curr[0] + next[0]) / 4;
           const newY = (prev[1] + 2 * curr[1] + next[1]) / 4;
-          
+
           newCoords.push([newX, newY]);
         }
       }
-      
+
       smoothed = newCoords;
     }
 
@@ -291,7 +295,9 @@ export const transform = {
    */
   translate: (geometry: Geometry, distance: number, direction: number): Geometry => {
     try {
-      const transformed = turf.transformTranslate(geometry as any, distance, direction, { units: 'meters' });
+      const transformed = turf.transformTranslate(geometry as any, distance, direction, {
+        units: 'meters',
+      });
       return transformed.geometry;
     } catch {
       return geometry;
@@ -347,11 +353,11 @@ export const analysis = {
   isValidPolygon: (coordinates: Position[][]): boolean => {
     try {
       const polygon = turf.polygon(coordinates);
-      
+
       // Verificar área
       const area = turf.area(polygon);
       if (area === 0) return false;
-      
+
       // Verificar auto-interseção
       return !analysis.hasSelfIntersection(coordinates);
     } catch {
@@ -367,11 +373,11 @@ export const analysis = {
       const pointFeatures = points.map(p => turf.point(p));
       const featureCollection = turf.featureCollection(pointFeatures);
       const hull = turf.convex(featureCollection);
-      
+
       if (hull && hull.geometry.type === 'Polygon') {
         return hull.geometry.coordinates[0];
       }
-      
+
       return null;
     } catch {
       return null;
@@ -385,11 +391,11 @@ export const analysis = {
     try {
       const featureCollection = turf.featureCollection(features as any);
       const env = turf.envelope(featureCollection);
-      
+
       if (env.geometry.type === 'Polygon') {
         return env.geometry.coordinates;
       }
-      
+
       return null;
     } catch {
       return null;
@@ -461,17 +467,17 @@ export const conversion = {
   lineToPoints: (coordinates: Position[], distance?: number): Position[] => {
     try {
       const line = turf.lineString(coordinates);
-      
+
       if (distance) {
         // Pontos em intervalos específicos
         const length = turf.length(line, { units: 'meters' });
         const points: Position[] = [];
-        
+
         for (let i = 0; i <= length; i += distance) {
           const point = turf.along(line, i, { units: 'meters' });
           points.push(point.geometry.coordinates as Position);
         }
-        
+
         return points;
       } else {
         // Apenas vértices
@@ -487,11 +493,11 @@ export const conversion = {
    */
   lineSegments: (coordinates: Position[]): Position[][] => {
     const segments: Position[][] = [];
-    
+
     for (let i = 0; i < coordinates.length - 1; i++) {
       segments.push([coordinates[i], coordinates[i + 1]]);
     }
-    
+
     return segments;
   },
 };
@@ -513,10 +519,10 @@ export const snap = {
 
     features.forEach(feature => {
       const vertices = extractVertices(feature.geometry);
-      
+
       vertices.forEach((vertex, index) => {
         const distance = measurements.distance(point, vertex, 'meters');
-        
+
         if (distance < minDistance) {
           minDistance = distance;
           nearest = {
@@ -530,17 +536,14 @@ export const snap = {
 
     // Converter tolerância de pixels para metros (aproximado)
     const toleranceMeters = tolerance * 0.1; // Aproximação simples
-    
+
     return nearest && minDistance <= toleranceMeters ? nearest : null;
   },
 
   /**
    * Encontrar ponto mais próximo em uma linha para snap
    */
-  nearestPointOnLine: (
-    point: Position,
-    lineCoordinates: Position[]
-  ): Position => {
+  nearestPointOnLine: (point: Position, lineCoordinates: Position[]): Position => {
     try {
       const targetPoint = turf.point(point);
       const line = turf.lineString(lineCoordinates);
@@ -556,17 +559,17 @@ export const snap = {
    */
   toGrid: (point: Position, gridSize: number): Position => {
     const [lng, lat] = point;
-    
+
     // Converter para metros (aproximado)
     const meterToDegreeLng = 1 / 111320;
     const meterToDegreeLat = 1 / 110540;
-    
+
     const gridSizeLng = gridSize * meterToDegreeLng;
     const gridSizeLat = gridSize * meterToDegreeLat;
-    
+
     const snappedLng = Math.round(lng / gridSizeLng) * gridSizeLng;
     const snappedLat = Math.round(lat / gridSizeLat) * gridSizeLat;
-    
+
     return [snappedLng, snappedLat];
   },
 };

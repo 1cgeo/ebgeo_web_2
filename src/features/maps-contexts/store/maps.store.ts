@@ -10,20 +10,20 @@ interface MapsState {
   // Mapa ativo
   activeMapId: string | null;
   activeMap: MapConfig | null;
-  
+
   // Cache de mapas carregados
   loadedMaps: Map<string, MapConfig>;
-  
+
   // Cache de layers por mapa
   mapLayers: Map<string, LayerConfig[]>;
-  
+
   // Estados de carregamento
   isLoadingMap: boolean;
   isInitializing: boolean;
-  
+
   // Erros
   error: string | null;
-  
+
   // UI States
   showMapSwitcher: boolean;
   lastViewports: Map<string, { center: [number, number]; zoom: number }>;
@@ -35,39 +35,39 @@ interface MapsActions {
   setActiveMap: (mapId: string | null) => void;
   setActiveMapData: (map: MapConfig | null) => void;
   updateActiveMapData: (updates: Partial<MapConfig>) => void;
-  
+
   // Cache de mapas
   addLoadedMap: (map: MapConfig) => void;
   removeLoadedMap: (mapId: string) => void;
   updateLoadedMap: (mapId: string, updates: Partial<MapConfig>) => void;
   clearLoadedMaps: () => void;
-  
+
   // Cache de layers
   setMapLayers: (mapId: string, layers: LayerConfig[]) => void;
   updateMapLayer: (mapId: string, layerId: string, updates: Partial<LayerConfig>) => void;
   removeMapLayer: (mapId: string, layerId: string) => void;
   clearMapLayers: (mapId: string) => void;
-  
+
   // Estados de carregamento
   setLoadingMap: (loading: boolean) => void;
   setInitializing: (initializing: boolean) => void;
-  
+
   // Gerenciamento de erros
   setError: (error: string | null) => void;
   clearError: () => void;
-  
+
   // UI
   toggleMapSwitcher: () => void;
   setShowMapSwitcher: (show: boolean) => void;
-  
+
   // Viewport management
   saveViewport: (mapId: string, center: [number, number], zoom: number) => void;
   getLastViewport: (mapId: string) => { center: [number, number]; zoom: number } | null;
-  
+
   // Utilitários
   getActiveMapLayers: () => LayerConfig[] | null;
   isMapLoaded: (mapId: string) => boolean;
-  
+
   // Reset
   reset: () => void;
 }
@@ -93,9 +93,9 @@ export const useMapsStore = create<MapsState & MapsActions>()(
         ...initialState,
 
         // Gerenciamento do mapa ativo
-        setActiveMap: (mapId) => {
+        setActiveMap: mapId => {
           set(
-            (state) => ({
+            state => ({
               activeMapId: mapId,
               activeMap: mapId ? state.loadedMaps.get(mapId) || null : null,
               error: null,
@@ -105,14 +105,14 @@ export const useMapsStore = create<MapsState & MapsActions>()(
           );
         },
 
-        setActiveMapData: (map) => {
+        setActiveMapData: map => {
           set(
-            (state) => {
+            state => {
               const newLoadedMaps = new Map(state.loadedMaps);
               if (map) {
                 newLoadedMaps.set(map.id, map);
               }
-              
+
               return {
                 activeMap: map,
                 activeMapId: map?.id || null,
@@ -125,9 +125,9 @@ export const useMapsStore = create<MapsState & MapsActions>()(
           );
         },
 
-        updateActiveMapData: (updates) => {
+        updateActiveMapData: updates => {
           set(
-            (state) => {
+            state => {
               if (!state.activeMap) return state;
 
               const updatedMap = { ...state.activeMap, ...updates };
@@ -145,12 +145,12 @@ export const useMapsStore = create<MapsState & MapsActions>()(
         },
 
         // Cache de mapas
-        addLoadedMap: (map) => {
+        addLoadedMap: map => {
           set(
-            (state) => {
+            state => {
               const newLoadedMaps = new Map(state.loadedMaps);
               newLoadedMaps.set(map.id, map);
-              
+
               return {
                 loadedMaps: newLoadedMaps,
               };
@@ -160,15 +160,17 @@ export const useMapsStore = create<MapsState & MapsActions>()(
           );
         },
 
-        removeLoadedMap: (mapId) => {
+        removeLoadedMap: mapId => {
           set(
-            (state) => {
+            state => {
               const newLoadedMaps = new Map(state.loadedMaps);
               newLoadedMaps.delete(mapId);
-              
+
               // Se era o mapa ativo, limpar
               const newActiveMapId = state.activeMapId === mapId ? null : state.activeMapId;
-              const newActiveMap = newActiveMapId ? newLoadedMaps.get(newActiveMapId) || null : null;
+              const newActiveMap = newActiveMapId
+                ? newLoadedMaps.get(newActiveMapId) || null
+                : null;
 
               return {
                 loadedMaps: newLoadedMaps,
@@ -183,7 +185,7 @@ export const useMapsStore = create<MapsState & MapsActions>()(
 
         updateLoadedMap: (mapId, updates) => {
           set(
-            (state) => {
+            state => {
               const existingMap = state.loadedMaps.get(mapId);
               if (!existingMap) return state;
 
@@ -219,10 +221,10 @@ export const useMapsStore = create<MapsState & MapsActions>()(
         // Cache de layers
         setMapLayers: (mapId, layers) => {
           set(
-            (state) => {
+            state => {
               const newMapLayers = new Map(state.mapLayers);
               newMapLayers.set(mapId, layers);
-              
+
               return {
                 mapLayers: newMapLayers,
               };
@@ -234,11 +236,11 @@ export const useMapsStore = create<MapsState & MapsActions>()(
 
         updateMapLayer: (mapId, layerId, updates) => {
           set(
-            (state) => {
+            state => {
               const existingLayers = state.mapLayers.get(mapId);
               if (!existingLayers) return state;
 
-              const updatedLayers = existingLayers.map(layer => 
+              const updatedLayers = existingLayers.map(layer =>
                 layer.id === layerId ? { ...layer, ...updates } : layer
               );
 
@@ -256,7 +258,7 @@ export const useMapsStore = create<MapsState & MapsActions>()(
 
         removeMapLayer: (mapId, layerId) => {
           set(
-            (state) => {
+            state => {
               const existingLayers = state.mapLayers.get(mapId);
               if (!existingLayers) return state;
 
@@ -273,12 +275,12 @@ export const useMapsStore = create<MapsState & MapsActions>()(
           );
         },
 
-        clearMapLayers: (mapId) => {
+        clearMapLayers: mapId => {
           set(
-            (state) => {
+            state => {
               const newMapLayers = new Map(state.mapLayers);
               newMapLayers.delete(mapId);
-              
+
               return {
                 mapLayers: newMapLayers,
               };
@@ -289,16 +291,16 @@ export const useMapsStore = create<MapsState & MapsActions>()(
         },
 
         // Estados de carregamento
-        setLoadingMap: (loading) => {
+        setLoadingMap: loading => {
           set({ isLoadingMap: loading }, false, 'setLoadingMap');
         },
 
-        setInitializing: (initializing) => {
+        setInitializing: initializing => {
           set({ isInitializing: initializing }, false, 'setInitializing');
         },
 
         // Gerenciamento de erros
-        setError: (error) => {
+        setError: error => {
           set({ error }, false, 'setError');
         },
 
@@ -308,24 +310,20 @@ export const useMapsStore = create<MapsState & MapsActions>()(
 
         // UI
         toggleMapSwitcher: () => {
-          set(
-            (state) => ({ showMapSwitcher: !state.showMapSwitcher }),
-            false,
-            'toggleMapSwitcher'
-          );
+          set(state => ({ showMapSwitcher: !state.showMapSwitcher }), false, 'toggleMapSwitcher');
         },
 
-        setShowMapSwitcher: (show) => {
+        setShowMapSwitcher: show => {
           set({ showMapSwitcher: show }, false, 'setShowMapSwitcher');
         },
 
         // Viewport management
         saveViewport: (mapId, center, zoom) => {
           set(
-            (state) => {
+            state => {
               const newLastViewports = new Map(state.lastViewports);
               newLastViewports.set(mapId, { center, zoom });
-              
+
               return {
                 lastViewports: newLastViewports,
               };
@@ -335,7 +333,7 @@ export const useMapsStore = create<MapsState & MapsActions>()(
           );
         },
 
-        getLastViewport: (mapId) => {
+        getLastViewport: mapId => {
           const state = get();
           return state.lastViewports.get(mapId) || null;
         },
@@ -347,7 +345,7 @@ export const useMapsStore = create<MapsState & MapsActions>()(
           return state.mapLayers.get(state.activeMapId) || null;
         },
 
-        isMapLoaded: (mapId) => {
+        isMapLoaded: mapId => {
           const state = get();
           return state.loadedMaps.has(mapId);
         },
@@ -360,19 +358,19 @@ export const useMapsStore = create<MapsState & MapsActions>()(
       {
         name: 'maps-store',
         // Apenas persistir dados essenciais
-        partialize: (state) => ({
+        partialize: state => ({
           activeMapId: state.activeMapId,
           lastViewports: state.lastViewports,
         }),
         // Converter Map para object para serialização
-        serialize: (state) => {
+        serialize: state => {
           return JSON.stringify({
             ...state.state,
             lastViewports: Object.fromEntries(state.state.lastViewports),
           });
         },
         // Converter object de volta para Map na deserialização
-        deserialize: (str) => {
+        deserialize: str => {
           const data = JSON.parse(str);
           return {
             ...data,
@@ -390,7 +388,7 @@ export const useMapsStore = create<MapsState & MapsActions>()(
 // Seletores úteis
 export const useMapsSelectors = () => {
   const store = useMapsStore();
-  
+
   return {
     // Estados derivados
     hasActiveMap: store.activeMap !== null,
@@ -399,11 +397,11 @@ export const useMapsSelectors = () => {
     loadedMapCount: store.loadedMaps.size,
     isReady: !store.isInitializing && !store.isLoadingMap,
     hasError: store.error !== null,
-    
+
     // Configurações ativas
-    currentCenter: store.activeMap?.center || [-51.2177, -30.0346] as [number, number],
+    currentCenter: store.activeMap?.center || ([-51.2177, -30.0346] as [number, number]),
     currentZoom: store.activeMap?.zoom || 10,
-    
+
     // Layers do mapa ativo
     activeLayers: store.getActiveMapLayers(),
     visibleLayers: store.getActiveMapLayers()?.filter(layer => layer.visible) || [],
@@ -412,7 +410,7 @@ export const useMapsSelectors = () => {
 
 // Hook para ações específicas de mapas
 export const useMapsActions = () => {
-  const actions = useMapsStore((state) => ({
+  const actions = useMapsStore(state => ({
     setActiveMap: state.setActiveMap,
     setActiveMapData: state.setActiveMapData,
     updateActiveMapData: state.updateActiveMapData,
@@ -432,13 +430,13 @@ export const useMapsActions = () => {
 // Hook para cache management
 export const useMapsCache = () => {
   const store = useMapsStore();
-  
+
   return {
     // Verificações
     isMapLoaded: store.isMapLoaded,
     getLoadedMap: (mapId: string) => store.loadedMaps.get(mapId),
     getMapLayers: (mapId: string) => store.mapLayers.get(mapId),
-    
+
     // Operações de cache
     addLoadedMap: store.addLoadedMap,
     updateLoadedMap: store.updateLoadedMap,

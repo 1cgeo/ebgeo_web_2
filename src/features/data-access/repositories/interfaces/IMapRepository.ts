@@ -8,39 +8,31 @@ import { IRepository } from './IRepository';
 export interface IMapRepository extends IRepository<MapConfig> {
   // Busca por nome
   getByName(name: string): Promise<MapConfig | null>;
-  
+
   // Verificar se nome existe
   nameExists(name: string, excludeId?: string): Promise<boolean>;
-  
+
   // Obter mapa com suas camadas
   getWithLayers(id: string): Promise<{
     map: MapConfig;
     layers: LayerConfig[];
   } | null>;
-  
+
   // Adicionar camada ao mapa
   addLayer(mapId: string, layerId: string): Promise<MapConfig>;
-  
+
   // Remover camada do mapa
   removeLayer(mapId: string, layerId: string): Promise<MapConfig>;
-  
+
   // Reordenar camadas no mapa
   reorderLayers(mapId: string, layerIds: string[]): Promise<MapConfig>;
-  
+
   // Duplicar mapa (com ou sem features)
-  duplicate(
-    id: string, 
-    newName: string, 
-    includeFeatures?: boolean
-  ): Promise<MapConfig>;
-  
+  duplicate(id: string, newName: string, includeFeatures?: boolean): Promise<MapConfig>;
+
   // Atualizar viewport (centro e zoom)
-  updateViewport(
-    id: string, 
-    center: [number, number], 
-    zoom: number
-  ): Promise<MapConfig>;
-  
+  updateViewport(id: string, center: [number, number], zoom: number): Promise<MapConfig>;
+
   // Obter estatísticas do mapa
   getMapStats(id: string): Promise<{
     layerCount: number;
@@ -48,17 +40,17 @@ export interface IMapRepository extends IRepository<MapConfig> {
     lastModified: string;
     boundingBox?: [number, number, number, number];
   }>;
-  
+
   // Validar integridade do mapa
   validateMap(id: string): Promise<{
     valid: boolean;
     issues: string[];
     missingLayers: string[];
   }>;
-  
+
   // Limpar referências de camadas deletadas
   cleanupLayerReferences(deletedLayerId: string): Promise<MapConfig[]>;
-  
+
   // Exportar dados do mapa
   exportMapData(id: string): Promise<{
     map: MapConfig;

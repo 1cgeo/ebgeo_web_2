@@ -1,4 +1,4 @@
-// Path: components/ui/KeyboardShortcutsHelp.tsx
+// Path: components\ui\KeyboardShortcutsHelp.tsx
 
 import React, { useState } from 'react';
 import {
@@ -65,10 +65,7 @@ const TabPanel: React.FC<TabPanelProps> = ({ children, value, index, ...other })
   );
 };
 
-export const KeyboardShortcutsHelp: React.FC<KeyboardShortcutsHelpProps> = ({
-  open,
-  onClose,
-}) => {
+export const KeyboardShortcutsHelp: React.FC<KeyboardShortcutsHelpProps> = ({ open, onClose }) => {
   const theme = useTheme();
   const [tabValue, setTabValue] = useState(0);
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(['drawing']));
@@ -191,9 +188,7 @@ export const KeyboardShortcutsHelp: React.FC<KeyboardShortcutsHelpProps> = ({
         <Box display="flex" alignItems="center" justifyContent="space-between">
           <Box display="flex" alignItems="center" gap={1}>
             <KeyboardIcon color="primary" />
-            <Typography variant="h6">
-              Atalhos de Teclado e Gestos
-            </Typography>
+            <Typography variant="h6">Atalhos de Teclado e Gestos</Typography>
           </Box>
           <IconButton onClick={onClose} size="small">
             <CloseIcon />
@@ -215,7 +210,7 @@ export const KeyboardShortcutsHelp: React.FC<KeyboardShortcutsHelpProps> = ({
         {/* Tab de Atalhos de Teclado */}
         <TabPanel value={tabValue} index={0}>
           <Box sx={{ px: 3 }}>
-            {categories.map((category) => {
+            {categories.map(category => {
               const categoryShortcuts = getShortcutsByCategory(category.id as any);
               const isExpanded = expandedSections.has(category.id);
 
@@ -223,8 +218,8 @@ export const KeyboardShortcutsHelp: React.FC<KeyboardShortcutsHelpProps> = ({
                 <Paper
                   key={category.id}
                   elevation={1}
-                  sx={{ 
-                    mb: 2, 
+                  sx={{
+                    mb: 2,
                     overflow: 'hidden',
                     border: 1,
                     borderColor: 'divider',
@@ -245,9 +240,7 @@ export const KeyboardShortcutsHelp: React.FC<KeyboardShortcutsHelpProps> = ({
                     onClick={() => handleToggleSection(category.id)}
                   >
                     <Box display="flex" alignItems="center" gap={2}>
-                      <Box color={`${category.color}.main`}>
-                        {category.icon}
-                      </Box>
+                      <Box color={`${category.color}.main`}>{category.icon}</Box>
                       <Box>
                         <Typography variant="subtitle1" fontWeight="medium">
                           {category.label}
@@ -285,10 +278,12 @@ export const KeyboardShortcutsHelp: React.FC<KeyboardShortcutsHelpProps> = ({
                           >
                             <ListItemText
                               primary={
-                                <Box display="flex" alignItems="center" justifyContent="space-between">
-                                  <Typography variant="body2">
-                                    {shortcut.description}
-                                  </Typography>
+                                <Box
+                                  display="flex"
+                                  alignItems="center"
+                                  justifyContent="space-between"
+                                >
+                                  <Typography variant="body2">{shortcut.description}</Typography>
                                   {renderShortcutChip(formatShortcut(shortcut))}
                                 </Box>
                               }
@@ -319,16 +314,12 @@ export const KeyboardShortcutsHelp: React.FC<KeyboardShortcutsHelpProps> = ({
                 {mouseGestures.map((gesture, index) => (
                   <ListItem key={index} sx={{ py: 1 }}>
                     <ListItemIcon>
-                      <Box color="primary.main">
-                        {gesture.icon}
-                      </Box>
+                      <Box color="primary.main">{gesture.icon}</Box>
                     </ListItemIcon>
                     <ListItemText
                       primary={
                         <Box display="flex" alignItems="center" justifyContent="space-between">
-                          <Typography variant="body2">
-                            {gesture.description}
-                          </Typography>
+                          <Typography variant="body2">{gesture.description}</Typography>
                           <Chip
                             label={gesture.action}
                             size="small"

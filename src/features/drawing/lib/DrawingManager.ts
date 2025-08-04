@@ -6,6 +6,8 @@ import { DrawingTool } from '../../../types/feature.types';
 import { AbstractTool, ToolConfig, ToolCallbacks } from '../tools/AbstractTool';
 import { PointTool } from '../tools/PointTool';
 import { LineTool } from '../tools/LineTool';
+import { SelectTool, SelectToolCallbacks } from '../tools/SelectTool';
+import { HotSource } from './HotSource';
 
 // Interface para configuração do manager
 export interface DrawingManagerConfig {
@@ -21,6 +23,18 @@ export interface DrawingManagerCallbacks {
   onToolChanged: (tool: DrawingTool) => void;
   onError: (error: string) => void;
   onStatusChange: (status: string) => void;
+  // Novos callbacks para seleção e drag
+  onFeatureSelected?: (featureId: string, mode: 'single' | 'add' | 'toggle') => void;
+  onFeaturesDeselected?: () => void;
+  onFeatureDragStart?: (featureId: string) => void;
+  onFeatureDragEnd?: (featureId: string, finalGeometry: GeoJSON.Geometry) => void;
+}
+
+// Estado global de dragging
+interface GlobalDragState {
+  isDragging: boolean;
+  draggedFeatureId: string | null;
+  startTime: number | null;
 }
 
 // Classe principal que gerencia todas as ferramentas de desenho
@@ -28,25 +42,35 @@ export class DrawingManager {
   private map: maplibregl.Map;
   private config: DrawingManagerConfig;
   private callbacks: DrawingManagerCallbacks;
-  
+  private hotSource: HotSource;
+
   // Ferramentas disponíveis
   private tools: Map<DrawingTool, AbstractTool> = new Map();
   private activeTool: AbstractTool | null = null;
   private activeLayerId: string | null = null;
-  
+
   // Estado do manager
   private isEnabled: boolean = false;
   private isInitialized: boolean = false;
 
+  // Estado global de dragging
+  private dragState: GlobalDragState = {
+    isDragging: false,
+    draggedFeatureId: null,
+    startTime: null,
+  };
+
   constructor(
     map: maplibregl.Map,
+    hotSource: HotSource,
     config: DrawingManagerConfig,
     callbacks: DrawingManagerCallbacks
   ) {
     this.map = map;
+    this.hotSource = hotSource;
     this.config = config;
     this.callbacks = callbacks;
-    
+
     this.initialize();
   }
 
@@ -55,28 +79,56 @@ export class DrawingManager {
     if (this.isInitialized) return;
 
     try {
-      // Criar callbacks para as ferramentas
-      const toolCallbacks: ToolCallbacks = {
-        onFeatureComplete: (feature) => {
+      // Criar callbacks base para as ferramentas
+      const baseToolCallbacks: ToolCallbacks = {
+        onFeatureComplete: feature => {
           this.callbacks.onFeatureCreated(feature);
         },
-        onFeatureUpdate: (feature) => {
+        onFeatureUpdate: feature => {
           this.callbacks.onFeatureUpdated(feature);
         },
         onCancel: () => {
           this.callbacks.onStatusChange('Operação cancelada');
         },
-        onError: (error) => {
+        onError: error => {
           this.callbacks.onError(error);
         },
-        onStatusChange: (status) => {
+        onStatusChange: status => {
           this.callbacks.onStatusChange(status);
         },
       };
 
-      // Criar instâncias das ferramentas
-      this.tools.set('point', new PointTool(this.map, this.config.toolConfig, toolCallbacks));
-      this.tools.set('line', new LineTool(this.map, this.config.toolConfig, toolCallbacks));
+      // Callbacks específicos para SelectTool
+      const selectToolCallbacks: SelectToolCallbacks = {
+        ...baseToolCallbacks,
+        onFeatureSelected: (featureId, mode) => {
+          this.callbacks.onFeatureSelected?.(featureId, mode);
+        },
+        onFeaturesDeselected: () => {
+          this.callbacks.onFeaturesDeselected?.();
+        },
+        onDragStart: featureId => {
+          this.startGlobalDrag(featureId);
+          this.callbacks.onFeatureDragStart?.(featureId);
+        },
+        onDragEnd: (featureId, finalGeometry) => {
+          this.endGlobalDrag();
+          this.callbacks.onFeatureDragEnd?.(featureId, finalGeometry);
+        },
+      };
+
+      // Criar ferramentas
+      this.tools.set(
+        'select',
+        new SelectTool(this.map, this.config.toolConfig, selectToolCallbacks, this.hotSource)
+      );
+
+      this.tools.set('point', new PointTool(this.map, this.config.toolConfig, baseToolCallbacks));
+
+      this.tools.set('line', new LineTool(this.map, this.config.toolConfig, baseToolCallbacks));
+
+      // Ativar ferramenta padrão
+      this.setActiveTool(this.config.defaultTool);
 
       // Configurar atalhos de teclado se habilitado
       if (this.config.enableKeyboardShortcuts) {
@@ -85,169 +137,204 @@ export class DrawingManager {
 
       this.isInitialized = true;
       this.callbacks.onStatusChange('Drawing Manager inicializado');
-      
-      // Ativar ferramenta padrão
-      this.setActiveTool(this.config.defaultTool);
-      
     } catch (error) {
-      this.callbacks.onError(`Erro ao inicializar Drawing Manager: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+      this.callbacks.onError(
+        `Erro ao inicializar Drawing Manager: ${error instanceof Error ? error.message : 'Erro desconhecido'}`
+      );
     }
   }
 
-  // Ativar/desativar o manager
-  enable(): void {
-    if (!this.isInitialized) {
-      this.callbacks.onError('Drawing Manager não foi inicializado');
-      return;
-    }
-
-    this.isEnabled = true;
-    if (this.activeTool) {
-      this.activeTool.activate();
-    }
-    this.callbacks.onStatusChange('Drawing Manager ativado');
-  }
-
-  disable(): void {
-    this.isEnabled = false;
-    if (this.activeTool) {
-      this.activeTool.deactivate();
-    }
-    this.callbacks.onStatusChange('Drawing Manager desativado');
-  }
-
-  // Gerenciamento de ferramentas
-  setActiveTool(tool: DrawingTool): void {
-    if (!this.isInitialized) {
-      this.callbacks.onError('Drawing Manager não foi inicializado');
-      return;
-    }
-
-    // Desativar ferramenta atual
-    if (this.activeTool) {
-      this.activeTool.deactivate();
-    }
-
-    // Ativar nova ferramenta
-    const newTool = this.tools.get(tool);
-    if (!newTool) {
-      this.callbacks.onError(`Ferramenta ${tool} não encontrada`);
-      return;
-    }
-
-    this.activeTool = newTool;
-    
-    // Configurar camada ativa na ferramenta
-    if (this.activeLayerId) {
-      this.setActiveLayerForTool(this.activeLayerId);
-    }
-
-    // Ativar se o manager estiver habilitado
-    if (this.isEnabled) {
-      this.activeTool.activate();
-    }
-
-    this.callbacks.onToolChanged(tool);
-    this.callbacks.onStatusChange(`Ferramenta ${newTool.getName()} selecionada`);
-  }
-
-  getActiveTool(): DrawingTool | null {
-    return this.activeTool?.getToolType() || null;
-  }
-
-  // Gerenciamento de camadas
-  setActiveLayer(layerId: string): void {
-    this.activeLayerId = layerId;
-    this.setActiveLayerForTool(layerId);
-    this.callbacks.onStatusChange(`Camada ativa: ${layerId}`);
-  }
-
-  getActiveLayer(): string | null {
-    return this.activeLayerId;
-  }
-
-  private setActiveLayerForTool(layerId: string): void {
-    // Configurar camada ativa em todas as ferramentas que suportam
-    this.tools.forEach(tool => {
-      if (tool instanceof PointTool || tool instanceof LineTool) {
-        (tool as any).setActiveLayer(layerId);
-      }
-    });
-  }
-
-  // Configuração de ferramentas
-  updateToolConfig(config: Partial<ToolConfig>): void {
-    this.config.toolConfig = { ...this.config.toolConfig, ...config };
-    
-    // Atualizar configuração em todas as ferramentas
-    this.tools.forEach(tool => {
-      (tool as any).config = this.config.toolConfig;
-    });
-
-    this.callbacks.onStatusChange('Configurações de ferramentas atualizadas');
-  }
-
-  getToolConfig(): ToolConfig {
-    return { ...this.config.toolConfig };
-  }
-
-  // Atalhos de teclado
+  // Configurar atalhos de teclado
   private setupKeyboardShortcuts(): void {
-    const handleKeyDown = (e: KeyboardEvent) => {
+    const keyboardHandler = (e: KeyboardEvent) => {
       if (!this.isEnabled) return;
 
-      // Verificar se não está em um input
-      const target = e.target as HTMLElement;
-      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.contentEditable === 'true') {
+      // Não processar se estiver em um input
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
         return;
       }
 
-      switch (e.key.toLowerCase()) {
-        case 'p':
-          this.setActiveTool('point');
-          e.preventDefault();
+      switch (e.key) {
+        case '1':
+          if (e.ctrlKey) {
+            e.preventDefault();
+            this.setActiveTool('select');
+          }
           break;
-        case 'l':
-          this.setActiveTool('line');
-          e.preventDefault();
+        case '2':
+          if (e.ctrlKey) {
+            e.preventDefault();
+            this.setActiveTool('point');
+          }
           break;
-        case 's':
-          this.setActiveTool('select');
-          e.preventDefault();
+        case '3':
+          if (e.ctrlKey) {
+            e.preventDefault();
+            this.setActiveTool('line');
+          }
           break;
-        case 'escape':
-          this.cancelCurrentOperation();
-          e.preventDefault();
+        case 'Escape':
+          if (this.dragState.isDragging) {
+            e.preventDefault();
+            this.cancelDrag();
+          }
           break;
       }
     };
 
-    document.addEventListener('keydown', handleKeyDown);
-    
-    // Armazenar referência para cleanup
-    (this as any).keyboardHandler = handleKeyDown;
+    document.addEventListener('keydown', keyboardHandler);
+    (this as any).keyboardHandler = keyboardHandler;
   }
 
-  // Operações de controle
-  cancelCurrentOperation(): void {
-    if (this.activeTool && this.activeTool.drawing) {
-      (this.activeTool as any).cancel();
-      this.callbacks.onStatusChange('Operação cancelada');
+  // Gerenciamento de ferramentas
+  setActiveTool(toolType: DrawingTool): boolean {
+    if (!this.isInitialized) {
+      this.callbacks.onError('Drawing Manager não inicializado');
+      return false;
+    }
+
+    // Não permitir troca de ferramenta durante drag
+    if (this.dragState.isDragging) {
+      this.callbacks.onError('Não é possível trocar de ferramenta durante arraste');
+      return false;
+    }
+
+    const tool = this.tools.get(toolType);
+    if (!tool) {
+      this.callbacks.onError(`Ferramenta ${toolType} não encontrada`);
+      return false;
+    }
+
+    try {
+      // Desativar ferramenta atual
+      if (this.activeTool) {
+        this.activeTool.deactivate();
+      }
+
+      // Ativar nova ferramenta
+      this.activeTool = tool;
+
+      if (this.isEnabled) {
+        this.activeTool.activate();
+      }
+
+      // Configurar camada ativa se disponível
+      if (this.activeLayerId && 'setActiveLayer' in tool) {
+        (tool as any).setActiveLayer(this.activeLayerId);
+      }
+
+      // Configurar HotSource para SelectTool
+      if (toolType === 'select' && tool instanceof SelectTool) {
+        tool.setHotSource(this.hotSource);
+      }
+
+      this.callbacks.onToolChanged(toolType);
+      this.callbacks.onStatusChange(`Ferramenta ${tool.getName()} ativada`);
+
+      return true;
+    } catch (error) {
+      this.callbacks.onError(
+        `Erro ao ativar ferramenta: ${error instanceof Error ? error.message : 'Erro desconhecido'}`
+      );
+      return false;
     }
   }
 
-  finishCurrentOperation(): void {
-    if (this.activeTool && this.activeTool.drawing) {
-      (this.activeTool as any).finishDrawing();
+  // Habilitar/desabilitar manager
+  enable(): void {
+    if (!this.isInitialized) {
+      this.callbacks.onError('Drawing Manager não inicializado');
+      return;
     }
+
+    this.isEnabled = true;
+
+    if (this.activeTool) {
+      this.activeTool.activate();
+    }
+
+    this.callbacks.onStatusChange('Drawing Manager habilitado');
   }
 
-  // Informações sobre o estado atual
-  getCurrentToolInfo(): {
+  disable(): void {
+    // Cancelar drag se estiver ativo
+    if (this.dragState.isDragging) {
+      this.cancelDrag();
+    }
+
+    this.isEnabled = false;
+
+    if (this.activeTool) {
+      this.activeTool.deactivate();
+    }
+
+    this.callbacks.onStatusChange('Drawing Manager desabilitado');
+  }
+
+  // Gerenciamento de camada ativa
+  setActiveLayer(layerId: string): void {
+    this.activeLayerId = layerId;
+
+    // Atualizar ferramenta ativa se tiver o método
+    if (this.activeTool && 'setActiveLayer' in this.activeTool) {
+      (this.activeTool as any).setActiveLayer(layerId);
+    }
+
+    this.callbacks.onStatusChange(`Camada ativa: ${layerId}`);
+  }
+
+  // Gerenciamento de estado de drag
+  private startGlobalDrag(featureId: string): void {
+    this.dragState = {
+      isDragging: true,
+      draggedFeatureId: featureId,
+      startTime: Date.now(),
+    };
+
+    // Desabilitar interações do mapa que podem interferir
+    this.map.boxZoom.disable();
+    this.map.doubleClickZoom.disable();
+
+    this.callbacks.onStatusChange(`Iniciando arraste da feature: ${featureId}`);
+  }
+
+  private endGlobalDrag(): void {
+    const duration = this.dragState.startTime ? Date.now() - this.dragState.startTime : 0;
+
+    this.dragState = {
+      isDragging: false,
+      draggedFeatureId: null,
+      startTime: null,
+    };
+
+    // Reabilitar interações do mapa
+    this.map.boxZoom.enable();
+    this.map.doubleClickZoom.enable();
+
+    this.callbacks.onStatusChange(`Arraste finalizado em ${duration}ms`);
+  }
+
+  private cancelDrag(): void {
+    if (!this.dragState.isDragging) return;
+
+    // Notificar ferramenta ativa para cancelar drag
+    if (this.activeTool instanceof SelectTool) {
+      // Forçar cancelamento via ESC
+      this.activeTool['onKeyDown']({
+        originalEvent: new KeyboardEvent('keydown', { key: 'Escape' }),
+      });
+    }
+
+    this.endGlobalDrag();
+    this.callbacks.onStatusChange('Arraste cancelado');
+  }
+
+  // Métodos de informação
+  getActiveToolInfo(): {
     name: string;
     description: string;
     isDrawing: boolean;
-    canFinish?: boolean;
+    canFinish: boolean;
   } | null {
     if (!this.activeTool) return null;
 
@@ -255,12 +342,25 @@ export class DrawingManager {
       name: this.activeTool.getName(),
       description: this.activeTool.getDescription(),
       isDrawing: this.activeTool.drawing,
-      canFinish: (this.activeTool as any).canFinish,
+      canFinish: (this.activeTool as any).canFinish || false,
     };
   }
 
+  // Verificações de estado
   isDrawing(): boolean {
     return this.activeTool?.drawing || false;
+  }
+
+  isDragging(): boolean {
+    return this.dragState.isDragging;
+  }
+
+  getDraggedFeatureId(): string | null {
+    return this.dragState.draggedFeatureId;
+  }
+
+  canSwitchTool(): boolean {
+    return !this.isDrawing() && !this.isDragging();
   }
 
   // Métodos para criação programática
@@ -286,6 +386,11 @@ export class DrawingManager {
 
   // Cleanup
   destroy(): void {
+    // Cancelar drag se estiver ativo
+    if (this.dragState.isDragging) {
+      this.cancelDrag();
+    }
+
     // Desativar ferramenta atual
     if (this.activeTool) {
       this.activeTool.deactivate();
@@ -317,13 +422,22 @@ export class DrawingManager {
   get availableTools(): DrawingTool[] {
     return Array.from(this.tools.keys());
   }
+
+  get activeToolType(): DrawingTool | null {
+    return this.activeTool?.getToolType() || null;
+  }
+
+  get dragState(): GlobalDragState {
+    return { ...this.dragState };
+  }
 }
 
 // Factory function para criar o manager
 export const createDrawingManager = (
   map: maplibregl.Map,
-  config: Partial<DrawingManagerConfig>,
-  callbacks: DrawingManagerCallbacks
+  hotSource: HotSource,
+  callbacks: DrawingManagerCallbacks,
+  config?: Partial<DrawingManagerConfig>
 ): DrawingManager => {
   const defaultConfig: DrawingManagerConfig = {
     defaultTool: 'select',
@@ -338,5 +452,5 @@ export const createDrawingManager = (
   };
 
   const finalConfig = { ...defaultConfig, ...config };
-  return new DrawingManager(map, finalConfig, callbacks);
+  return new DrawingManager(map, hotSource, finalConfig, callbacks);
 };

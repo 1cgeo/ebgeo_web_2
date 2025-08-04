@@ -43,20 +43,19 @@
     "noImplicitOverride": true,
     "noPropertyAccessFromIndexSignature": false,
     "noUncheckedIndexedAccess": true,
-    
+
     /* Type definitions */
-    "types": ["vite/client", "node"]
+    "types": ["vite/client"]
   },
-  "include": [
-    "src",
-    "vite.config.ts"
-  ],
+  "include": ["src/**/*"],
   "exclude": [
     "node_modules",
     "dist",
-    "build"
-  ],
-  "references": [
-    { "path": "./tsconfig.node.json" }
+    "build",
+    "vite.config.ts",
+    "**/*.test.ts",
+    "**/*.test.tsx",
+    "**/*.spec.ts",
+    "**/*.spec.tsx"
   ]
 }

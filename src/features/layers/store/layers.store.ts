@@ -9,21 +9,21 @@ interface LayersState {
   // Layer ativa para desenho
   activeLayerId: string | null;
   activeLayer: LayerConfig | null;
-  
+
   // Layer selecionada para tabela de atributos
   selectedLayerId: string | null;
-  
+
   // Visibilidade de layers (override local)
   layerVisibility: Map<string, boolean>;
-  
+
   // Opacidade de layers (override local)
   layerOpacity: Map<string, number>;
-  
+
   // Estados de UI
   showLayerManager: boolean;
   showAttributeTable: boolean;
   attributeTableLayerId: string | null;
-  
+
   // Filtros da tabela de atributos
   attributeTableFilters: {
     search: string;
@@ -31,11 +31,11 @@ interface LayersState {
     sortDirection: 'asc' | 'desc';
     showSelected: boolean;
   };
-  
+
   // Estados de carregamento
   isLoadingLayers: boolean;
   isCreatingLayer: boolean;
-  
+
   // Erros
   error: string | null;
 }
@@ -45,45 +45,45 @@ interface LayersActions {
   // Gerenciamento da layer ativa
   setActiveLayer: (layerId: string | null) => void;
   setActiveLayerData: (layer: LayerConfig | null) => void;
-  
+
   // Layer selecionada
   setSelectedLayer: (layerId: string | null) => void;
-  
+
   // Visibilidade
   setLayerVisibility: (layerId: string, visible: boolean) => void;
   toggleLayerVisibility: (layerId: string) => void;
   setAllLayersVisibility: (visible: boolean, layerIds: string[]) => void;
   getLayerVisibility: (layerId: string, defaultVisible?: boolean) => boolean;
-  
+
   // Opacidade
   setLayerOpacity: (layerId: string, opacity: number) => void;
   getLayerOpacity: (layerId: string, defaultOpacity?: number) => number;
-  
+
   // UI States
   setShowLayerManager: (show: boolean) => void;
   toggleLayerManager: () => void;
   setShowAttributeTable: (show: boolean, layerId?: string) => void;
   toggleAttributeTable: (layerId?: string) => void;
-  
+
   // Filtros da tabela de atributos
   setAttributeTableSearch: (search: string) => void;
   setAttributeTableSort: (column: string | null, direction: 'asc' | 'desc') => void;
   toggleAttributeTableSort: (column: string) => void;
   setShowSelectedInTable: (showSelected: boolean) => void;
   clearAttributeTableFilters: () => void;
-  
+
   // Estados de carregamento
   setLoadingLayers: (loading: boolean) => void;
   setCreatingLayer: (creating: boolean) => void;
-  
+
   // Gerenciamento de erros
   setError: (error: string | null) => void;
   clearError: () => void;
-  
+
   // Utilitários
   getVisibleLayerIds: (allLayers: LayerConfig[]) => string[];
   getActiveLayerForDrawing: () => LayerConfig | null;
-  
+
   // Reset
   reset: () => void;
   clearForMap: () => void; // Limpar estado ao trocar de mapa
@@ -118,7 +118,7 @@ export const useLayersStore = create<LayersState & LayersActions>()(
         ...initialState,
 
         // Gerenciamento da layer ativa
-        setActiveLayer: (layerId) => {
+        setActiveLayer: layerId => {
           set(
             {
               activeLayerId: layerId,
@@ -130,7 +130,7 @@ export const useLayersStore = create<LayersState & LayersActions>()(
           );
         },
 
-        setActiveLayerData: (layer) => {
+        setActiveLayerData: layer => {
           set(
             {
               activeLayer: layer,
@@ -143,17 +143,17 @@ export const useLayersStore = create<LayersState & LayersActions>()(
         },
 
         // Layer selecionada
-        setSelectedLayer: (layerId) => {
+        setSelectedLayer: layerId => {
           set({ selectedLayerId: layerId }, false, 'setSelectedLayer');
         },
 
         // Visibilidade
         setLayerVisibility: (layerId, visible) => {
           set(
-            (state) => {
+            state => {
               const newLayerVisibility = new Map(state.layerVisibility);
               newLayerVisibility.set(layerId, visible);
-              
+
               return {
                 layerVisibility: newLayerVisibility,
               };
@@ -163,7 +163,7 @@ export const useLayersStore = create<LayersState & LayersActions>()(
           );
         },
 
-        toggleLayerVisibility: (layerId) => {
+        toggleLayerVisibility: layerId => {
           const state = get();
           const currentVisibility = state.getLayerVisibility(layerId, true);
           state.setLayerVisibility(layerId, !currentVisibility);
@@ -171,12 +171,12 @@ export const useLayersStore = create<LayersState & LayersActions>()(
 
         setAllLayersVisibility: (visible, layerIds) => {
           set(
-            (state) => {
+            state => {
               const newLayerVisibility = new Map(state.layerVisibility);
               layerIds.forEach(layerId => {
                 newLayerVisibility.set(layerId, visible);
               });
-              
+
               return {
                 layerVisibility: newLayerVisibility,
               };
@@ -194,10 +194,10 @@ export const useLayersStore = create<LayersState & LayersActions>()(
         // Opacidade
         setLayerOpacity: (layerId, opacity) => {
           set(
-            (state) => {
+            state => {
               const newLayerOpacity = new Map(state.layerOpacity);
               newLayerOpacity.set(layerId, Math.max(0, Math.min(1, opacity)));
-              
+
               return {
                 layerOpacity: newLayerOpacity,
               };
@@ -213,13 +213,13 @@ export const useLayersStore = create<LayersState & LayersActions>()(
         },
 
         // UI States
-        setShowLayerManager: (show) => {
+        setShowLayerManager: show => {
           set({ showLayerManager: show }, false, 'setShowLayerManager');
         },
 
         toggleLayerManager: () => {
           set(
-            (state) => ({ showLayerManager: !state.showLayerManager }),
+            state => ({ showLayerManager: !state.showLayerManager }),
             false,
             'toggleLayerManager'
           );
@@ -229,23 +229,23 @@ export const useLayersStore = create<LayersState & LayersActions>()(
           set(
             {
               showAttributeTable: show,
-              attributeTableLayerId: show ? (layerId || null) : null,
+              attributeTableLayerId: show ? layerId || null : null,
             },
             false,
             'setShowAttributeTable'
           );
         },
 
-        toggleAttributeTable: (layerId) => {
+        toggleAttributeTable: layerId => {
           const state = get();
           const newShow = !state.showAttributeTable;
           state.setShowAttributeTable(newShow, layerId);
         },
 
         // Filtros da tabela de atributos
-        setAttributeTableSearch: (search) => {
+        setAttributeTableSearch: search => {
           set(
-            (state) => ({
+            state => ({
               attributeTableFilters: {
                 ...state.attributeTableFilters,
                 search,
@@ -258,7 +258,7 @@ export const useLayersStore = create<LayersState & LayersActions>()(
 
         setAttributeTableSort: (column, direction) => {
           set(
-            (state) => ({
+            state => ({
               attributeTableFilters: {
                 ...state.attributeTableFilters,
                 sortColumn: column,
@@ -270,14 +270,14 @@ export const useLayersStore = create<LayersState & LayersActions>()(
           );
         },
 
-        toggleAttributeTableSort: (column) => {
+        toggleAttributeTableSort: column => {
           const state = get();
           const currentColumn = state.attributeTableFilters.sortColumn;
           const currentDirection = state.attributeTableFilters.sortDirection;
-          
+
           let newColumn = column;
           let newDirection: 'asc' | 'desc' = 'asc';
-          
+
           if (currentColumn === column) {
             if (currentDirection === 'asc') {
               newDirection = 'desc';
@@ -287,13 +287,13 @@ export const useLayersStore = create<LayersState & LayersActions>()(
               newDirection = 'asc';
             }
           }
-          
+
           state.setAttributeTableSort(newColumn, newDirection);
         },
 
-        setShowSelectedInTable: (showSelected) => {
+        setShowSelectedInTable: showSelected => {
           set(
-            (state) => ({
+            state => ({
               attributeTableFilters: {
                 ...state.attributeTableFilters,
                 showSelected,
@@ -306,7 +306,7 @@ export const useLayersStore = create<LayersState & LayersActions>()(
 
         clearAttributeTableFilters: () => {
           set(
-            (state) => ({
+            state => ({
               attributeTableFilters: {
                 search: '',
                 sortColumn: null,
@@ -320,16 +320,16 @@ export const useLayersStore = create<LayersState & LayersActions>()(
         },
 
         // Estados de carregamento
-        setLoadingLayers: (loading) => {
+        setLoadingLayers: loading => {
           set({ isLoadingLayers: loading }, false, 'setLoadingLayers');
         },
 
-        setCreatingLayer: (creating) => {
+        setCreatingLayer: creating => {
           set({ isCreatingLayer: creating }, false, 'setCreatingLayer');
         },
 
         // Gerenciamento de erros
-        setError: (error) => {
+        setError: error => {
           set({ error }, false, 'setError');
         },
 
@@ -338,7 +338,7 @@ export const useLayersStore = create<LayersState & LayersActions>()(
         },
 
         // Utilitários
-        getVisibleLayerIds: (allLayers) => {
+        getVisibleLayerIds: allLayers => {
           const state = get();
           return allLayers
             .filter(layer => state.getLayerVisibility(layer.id, layer.visible))
@@ -375,14 +375,14 @@ export const useLayersStore = create<LayersState & LayersActions>()(
       {
         name: 'layers-store',
         // Apenas persistir dados essenciais
-        partialize: (state) => ({
+        partialize: state => ({
           layerVisibility: state.layerVisibility,
           layerOpacity: state.layerOpacity,
           showLayerManager: state.showLayerManager,
           attributeTableFilters: state.attributeTableFilters,
         }),
         // Converter Map para object para serialização
-        serialize: (state) => {
+        serialize: state => {
           return JSON.stringify({
             ...state.state,
             layerVisibility: Object.fromEntries(state.state.layerVisibility),
@@ -390,7 +390,7 @@ export const useLayersStore = create<LayersState & LayersActions>()(
           });
         },
         // Converter object de volta para Map na deserialização
-        deserialize: (str) => {
+        deserialize: str => {
           const data = JSON.parse(str);
           return {
             ...data,
@@ -409,7 +409,7 @@ export const useLayersStore = create<LayersState & LayersActions>()(
 // Seletores úteis
 export const useLayersSelectors = () => {
   const store = useLayersStore();
-  
+
   return {
     // Estados derivados
     hasActiveLayer: store.activeLayer !== null,
@@ -421,11 +421,11 @@ export const useLayersSelectors = () => {
       store.attributeTableFilters.sortColumn ||
       store.attributeTableFilters.showSelected
     ),
-    
+
     // Estados de loading
     isReady: !store.isLoadingLayers && !store.isCreatingLayer,
     hasError: store.error !== null,
-    
+
     // UI
     canDraw: store.activeLayer !== null,
   };
@@ -433,7 +433,7 @@ export const useLayersSelectors = () => {
 
 // Hook para ações específicas de layers
 export const useLayersActions = () => {
-  const actions = useLayersStore((state) => ({
+  const actions = useLayersStore(state => ({
     setActiveLayer: state.setActiveLayer,
     setActiveLayerData: state.setActiveLayerData,
     setSelectedLayer: state.setSelectedLayer,
@@ -456,18 +456,18 @@ export const useLayersActions = () => {
 // Hook para filtros da tabela de atributos
 export const useAttributeTableFilters = () => {
   const store = useLayersStore();
-  
+
   return {
     // Estado atual
     filters: store.attributeTableFilters,
-    
+
     // Ações
     setSearch: store.setAttributeTableSearch,
     setSort: store.setAttributeTableSort,
     toggleSort: store.toggleAttributeTableSort,
     setShowSelected: store.setShowSelectedInTable,
     clearFilters: store.clearAttributeTableFilters,
-    
+
     // Helpers
     isSearching: store.attributeTableFilters.search.length > 0,
     isSorted: store.attributeTableFilters.sortColumn !== null,
@@ -478,19 +478,19 @@ export const useAttributeTableFilters = () => {
 // Hook para visibilidade de layers
 export const useLayerVisibility = () => {
   const store = useLayersStore();
-  
+
   return {
     // Getters
     getVisibility: store.getLayerVisibility,
     getOpacity: store.getLayerOpacity,
     getVisibleLayerIds: store.getVisibleLayerIds,
-    
+
     // Setters
     setVisibility: store.setLayerVisibility,
     toggleVisibility: store.toggleLayerVisibility,
     setAllVisibility: store.setAllLayersVisibility,
     setOpacity: store.setLayerOpacity,
-    
+
     // Estado atual
     layerVisibility: store.layerVisibility,
     layerOpacity: store.layerOpacity,

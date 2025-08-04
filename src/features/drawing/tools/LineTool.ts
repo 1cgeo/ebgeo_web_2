@@ -12,12 +12,7 @@ export class LineTool extends AbstractTool {
   private lastClickTime: number = 0;
   private doubleClickDelay: number = 300; // ms
 
-  constructor(
-    map: maplibregl.Map,
-    config: ToolConfig,
-    callbacks: ToolCallbacks,
-    layerId?: string
-  ) {
+  constructor(map: maplibregl.Map, config: ToolConfig, callbacks: ToolCallbacks, layerId?: string) {
     super(map, config, callbacks);
     this.activeLayerId = layerId || null;
   }
@@ -70,43 +65,53 @@ export class LineTool extends AbstractTool {
     try {
       // Aplicar snap se habilitado
       const snapResult = this.snapToFeatures([e.lngLat.lng, e.lngLat.lat]);
-      const position: Position = snapResult.snapped ? snapResult.position : [e.lngLat.lng, e.lngLat.lat];
+      const position: Position = snapResult.snapped
+        ? snapResult.position
+        : [e.lngLat.lng, e.lngLat.lat];
 
       if (!this.isDrawing) {
         // Iniciar nova linha
         this.startDrawing();
         this.addPoint(position);
-        this.callbacks.onStatusChange(`Linha iniciada. ${this.coordinateCount}/${this.maxPoints} pontos`);
+        this.callbacks.onStatusChange(
+          `Linha iniciada. ${this.coordinateCount}/${this.maxPoints} pontos`
+        );
       } else {
         // Adicionar ponto à linha existente
         if (this.coordinateCount < this.maxPoints) {
           this.addPoint(position);
-          this.callbacks.onStatusChange(`${this.coordinateCount}/${this.maxPoints} pontos. Duplo clique para finalizar`);
+          this.callbacks.onStatusChange(
+            `${this.coordinateCount}/${this.maxPoints} pontos. Duplo clique para finalizar`
+          );
         } else {
-          this.callbacks.onStatusChange('Número máximo de pontos atingido. Duplo clique para finalizar');
+          this.callbacks.onStatusChange(
+            'Número máximo de pontos atingido. Duplo clique para finalizar'
+          );
         }
       }
 
       this.updateTempFeature();
     } catch (error) {
-      this.callbacks.onError(`Erro ao adicionar ponto: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+      this.callbacks.onError(
+        `Erro ao adicionar ponto: ${error instanceof Error ? error.message : 'Erro desconhecido'}`
+      );
     }
   }
 
   protected onMouseMove(e: MapMouseEvent): void {
     super.onMouseMove(e);
-    
+
     if (!this.isActive) return;
 
     if (this.isDrawing) {
       // Mostrar preview da linha com o cursor
       this.showLinePreview([e.lngLat.lng, e.lngLat.lat]);
     }
-    
+
     // Atualizar status com coordenadas
     if (this.config.showCoordinates) {
       const coords = [e.lngLat.lng.toFixed(6), e.lngLat.lat.toFixed(6)];
-      const status = this.isDrawing 
+      const status = this.isDrawing
         ? `${this.coordinateCount} pontos - Posição: ${coords[1]}, ${coords[0]}`
         : `Posição: ${coords[1]}, ${coords[0]}`;
       this.callbacks.onStatusChange(status);
@@ -122,9 +127,9 @@ export class LineTool extends AbstractTool {
 
   protected onKeyDown(e: MapKeyboardEvent): void {
     super.onKeyDown(e);
-    
+
     const key = e.originalEvent.key;
-    
+
     if (this.isDrawing) {
       switch (key) {
         case 'Backspace':
@@ -174,7 +179,7 @@ export class LineTool extends AbstractTool {
 
     try {
       let tempCoords = [...this.coordinates];
-      
+
       // Adicionar posição do mouse se houver pelo menos um ponto
       if (this.lastMousePosition && this.coordinates.length >= 1) {
         tempCoords.push([this.lastMousePosition.lng, this.lastMousePosition.lat]);
@@ -209,7 +214,7 @@ export class LineTool extends AbstractTool {
     if (this.coordinates.length > 0) {
       const lastPoint = this.coordinates[this.coordinates.length - 1];
       const distance = this.calculateDistance(lastPoint, position);
-      
+
       // Distância mínima de 1 metro entre pontos
       if (distance < 1) {
         this.callbacks.onStatusChange('Ponto muito próximo do anterior');
@@ -224,11 +229,13 @@ export class LineTool extends AbstractTool {
     if (this.coordinates.length > 0) {
       this.coordinates.pop();
       this.updateTempFeature();
-      
+
       if (this.coordinates.length === 0) {
         this.cancel();
       } else {
-        this.callbacks.onStatusChange(`${this.coordinateCount} pontos. Backspace para remover ponto`);
+        this.callbacks.onStatusChange(
+          `${this.coordinateCount} pontos. Backspace para remover ponto`
+        );
       }
     }
   }
@@ -243,7 +250,7 @@ export class LineTool extends AbstractTool {
         ...previewFeature.properties.style,
         strokeOpacity: 0.6,
       };
-      
+
       this.showTempFeature(previewFeature);
     } catch (error) {
       console.warn('Erro ao mostrar preview da linha:', error);
@@ -268,15 +275,18 @@ export class LineTool extends AbstractTool {
     // Cálculo simples de distância em metros (aproximado)
     const [lng1, lat1] = point1;
     const [lng2, lat2] = point2;
-    
+
     const R = 6371000; // Raio da Terra em metros
-    const dLat = (lat2 - lat1) * Math.PI / 180;
-    const dLng = (lng2 - lng1) * Math.PI / 180;
-    
-    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-              Math.sin(dLng / 2) * Math.sin(dLng / 2);
-    
+    const dLat = ((lat2 - lat1) * Math.PI) / 180;
+    const dLng = ((lng2 - lng1) * Math.PI) / 180;
+
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos((lat1 * Math.PI) / 180) *
+        Math.cos((lat2 * Math.PI) / 180) *
+        Math.sin(dLng / 2) *
+        Math.sin(dLng / 2);
+
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     return R * c;
   }
@@ -323,10 +333,12 @@ export class LineTool extends AbstractTool {
 
       this.callbacks.onFeatureComplete(feature);
       this.callbacks.onStatusChange('Linha criada programaticamente');
-      
+
       return feature;
     } catch (error) {
-      this.callbacks.onError(`Erro ao criar linha: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+      this.callbacks.onError(
+        `Erro ao criar linha: ${error instanceof Error ? error.message : 'Erro desconhecido'}`
+      );
       return null;
     }
   }

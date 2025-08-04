@@ -1,4 +1,4 @@
-// Path: features/selection/components/FeatureContextMenu.tsx
+// Path: features\selection\components\FeatureContextMenu.tsx
 
 import React, { useState, useEffect } from 'react';
 import {
@@ -56,12 +56,8 @@ export const FeatureContextMenu: React.FC<FeatureContextMenuProps> = ({
   const [isDuplicating, setIsDuplicating] = useState(false);
 
   // Hooks
-  const { 
-    selectFeatures, 
-    duplicateSelected,
-    isSelected,
-    selectedFeatureIds,
-  } = useFeatureSelection();
+  const { selectFeatures, duplicateSelected, isSelected, selectedFeatureIds } =
+    useFeatureSelection();
   const featureTransfer = useFeatureTransfer();
   const deleteManyFeatures = useDeleteManyFeatures();
   const { data: allLayers = [] } = useLayers();
@@ -82,10 +78,14 @@ export const FeatureContextMenu: React.FC<FeatureContextMenuProps> = ({
   // Ícone por tipo de geometria
   const getGeometryIcon = (type: string) => {
     switch (type) {
-      case 'Point': return <PointIcon fontSize="small" />;
-      case 'LineString': return <LineIcon fontSize="small" />;
-      case 'Polygon': return <PolygonIcon fontSize="small" />;
-      default: return <TextIcon fontSize="small" />;
+      case 'Point':
+        return <PointIcon fontSize="small" />;
+      case 'LineString':
+        return <LineIcon fontSize="small" />;
+      case 'Polygon':
+        return <PolygonIcon fontSize="small" />;
+      default:
+        return <TextIcon fontSize="small" />;
     }
   };
 
@@ -117,7 +117,7 @@ export const FeatureContextMenu: React.FC<FeatureContextMenuProps> = ({
 
   const handleDelete = async () => {
     if (!feature) return;
-    
+
     setIsDeleting(true);
     try {
       await deleteManyFeatures.mutateAsync([feature.id]);
@@ -131,7 +131,7 @@ export const FeatureContextMenu: React.FC<FeatureContextMenuProps> = ({
 
   const handleDeleteSelected = async () => {
     if (selectedFeatureIds.length === 0) return;
-    
+
     setIsDeleting(true);
     try {
       await deleteManyFeatures.mutateAsync(selectedFeatureIds);
@@ -145,7 +145,7 @@ export const FeatureContextMenu: React.FC<FeatureContextMenuProps> = ({
 
   const handleDuplicate = async () => {
     if (!feature) return;
-    
+
     setIsDuplicating(true);
     try {
       await duplicateSelected(feature.properties.layerId);
@@ -284,10 +284,7 @@ export const FeatureContextMenu: React.FC<FeatureContextMenuProps> = ({
         <ListItemIcon>
           <CopyIcon />
         </ListItemIcon>
-        <ListItemText 
-          primary={isDuplicating ? "Duplicando..." : "Duplicar"} 
-          secondary="Ctrl+D" 
-        />
+        <ListItemText primary={isDuplicating ? 'Duplicando...' : 'Duplicar'} secondary="Ctrl+D" />
       </MenuItem>
 
       <MenuItem onClick={handleTransfer}>
@@ -305,21 +302,23 @@ export const FeatureContextMenu: React.FC<FeatureContextMenuProps> = ({
             <ListItemIcon>
               <TransferIcon />
             </ListItemIcon>
-            <ListItemText 
+            <ListItemText
               primary={`Transferir ${selectedFeatureIds.length} Features`}
               secondary="Shift+T"
             />
           </MenuItem>
-          <MenuItem 
-            onClick={handleDeleteSelected} 
+          <MenuItem
+            onClick={handleDeleteSelected}
             disabled={isDeleting}
             sx={{ color: 'error.main' }}
           >
             <ListItemIcon>
               <DeleteIcon color="error" />
             </ListItemIcon>
-            <ListItemText 
-              primary={isDeleting ? "Deletando..." : `Deletar ${selectedFeatureIds.length} Features`}
+            <ListItemText
+              primary={
+                isDeleting ? 'Deletando...' : `Deletar ${selectedFeatureIds.length} Features`
+              }
               secondary="Shift+Del"
             />
           </MenuItem>
@@ -328,18 +327,11 @@ export const FeatureContextMenu: React.FC<FeatureContextMenuProps> = ({
 
       {/* Deletar feature individual */}
       <Divider />
-      <MenuItem 
-        onClick={handleDelete} 
-        disabled={isDeleting}
-        sx={{ color: 'error.main' }}
-      >
+      <MenuItem onClick={handleDelete} disabled={isDeleting} sx={{ color: 'error.main' }}>
         <ListItemIcon>
           <DeleteIcon color="error" />
         </ListItemIcon>
-        <ListItemText 
-          primary={isDeleting ? "Deletando..." : "Deletar"} 
-          secondary="Del" 
-        />
+        <ListItemText primary={isDeleting ? 'Deletando...' : 'Deletar'} secondary="Del" />
       </MenuItem>
     </Menu>
   );

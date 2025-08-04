@@ -3,10 +3,14 @@
 import { db } from '../../db';
 import { MapConfig, validateMapConfig } from '../../schemas/map.schema';
 import { LayerConfig } from '../../schemas/layer.schema';
-import { IMapRepository, CreateMapOptions, DuplicateMapOptions, MapValidationResult } from '../interfaces/IMapRepository';
+import {
+  IMapRepository,
+  CreateMapOptions,
+  DuplicateMapOptions,
+  MapValidationResult,
+} from '../interfaces/IMapRepository';
 
 export class IndexedDBMapRepository implements IMapRepository {
-  
   async create(map: MapConfig): Promise<MapConfig> {
     try {
       const validatedMap = validateMapConfig(map);
@@ -14,7 +18,9 @@ export class IndexedDBMapRepository implements IMapRepository {
       return validatedMap;
     } catch (error) {
       console.error('Erro ao criar mapa:', error);
-      throw new Error(`Falha ao criar mapa: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+      throw new Error(
+        `Falha ao criar mapa: ${error instanceof Error ? error.message : 'Erro desconhecido'}`
+      );
     }
   }
 
@@ -24,7 +30,9 @@ export class IndexedDBMapRepository implements IMapRepository {
       return map || null;
     } catch (error) {
       console.error('Erro ao buscar mapa por ID:', error);
-      throw new Error(`Falha ao buscar mapa: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+      throw new Error(
+        `Falha ao buscar mapa: ${error instanceof Error ? error.message : 'Erro desconhecido'}`
+      );
     }
   }
 
@@ -33,7 +41,9 @@ export class IndexedDBMapRepository implements IMapRepository {
       return await db.maps.orderBy('updatedAt').reverse().toArray();
     } catch (error) {
       console.error('Erro ao buscar todos os mapas:', error);
-      throw new Error(`Falha ao buscar mapas: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+      throw new Error(
+        `Falha ao buscar mapas: ${error instanceof Error ? error.message : 'Erro desconhecido'}`
+      );
     }
   }
 
@@ -55,7 +65,9 @@ export class IndexedDBMapRepository implements IMapRepository {
       return validatedMap;
     } catch (error) {
       console.error('Erro ao atualizar mapa:', error);
-      throw new Error(`Falha ao atualizar mapa: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+      throw new Error(
+        `Falha ao atualizar mapa: ${error instanceof Error ? error.message : 'Erro desconhecido'}`
+      );
     }
   }
 
@@ -67,7 +79,9 @@ export class IndexedDBMapRepository implements IMapRepository {
       }
     } catch (error) {
       console.error('Erro ao deletar mapa:', error);
-      throw new Error(`Falha ao deletar mapa: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+      throw new Error(
+        `Falha ao deletar mapa: ${error instanceof Error ? error.message : 'Erro desconhecido'}`
+      );
     }
   }
 
@@ -78,7 +92,9 @@ export class IndexedDBMapRepository implements IMapRepository {
       return validatedMaps;
     } catch (error) {
       console.error('Erro ao criar múltiplos mapas:', error);
-      throw new Error(`Falha ao criar mapas: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+      throw new Error(
+        `Falha ao criar mapas: ${error instanceof Error ? error.message : 'Erro desconhecido'}`
+      );
     }
   }
 
@@ -87,7 +103,9 @@ export class IndexedDBMapRepository implements IMapRepository {
       await db.maps.bulkDelete(ids);
     } catch (error) {
       console.error('Erro ao deletar múltiplos mapas:', error);
-      throw new Error(`Falha ao deletar mapas: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+      throw new Error(
+        `Falha ao deletar mapas: ${error instanceof Error ? error.message : 'Erro desconhecido'}`
+      );
     }
   }
 
@@ -96,7 +114,9 @@ export class IndexedDBMapRepository implements IMapRepository {
       return await db.maps.count();
     } catch (error) {
       console.error('Erro ao contar mapas:', error);
-      throw new Error(`Falha ao contar mapas: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+      throw new Error(
+        `Falha ao contar mapas: ${error instanceof Error ? error.message : 'Erro desconhecido'}`
+      );
     }
   }
 
@@ -116,7 +136,9 @@ export class IndexedDBMapRepository implements IMapRepository {
       return map || null;
     } catch (error) {
       console.error('Erro ao buscar mapa por nome:', error);
-      throw new Error(`Falha ao buscar mapa: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+      throw new Error(
+        `Falha ao buscar mapa: ${error instanceof Error ? error.message : 'Erro desconhecido'}`
+      );
     }
   }
 
@@ -141,14 +163,16 @@ export class IndexedDBMapRepository implements IMapRepository {
       }
 
       const layers = await db.layers.where('id').anyOf(map.layerIds).toArray();
-      
+
       // Ordenar layers pelo zIndex
       layers.sort((a, b) => a.zIndex - b.zIndex);
 
       return { map, layers };
     } catch (error) {
       console.error('Erro ao buscar mapa com camadas:', error);
-      throw new Error(`Falha ao buscar mapa com camadas: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+      throw new Error(
+        `Falha ao buscar mapa com camadas: ${error instanceof Error ? error.message : 'Erro desconhecido'}`
+      );
     }
   }
 
@@ -179,7 +203,9 @@ export class IndexedDBMapRepository implements IMapRepository {
       return await this.update(mapId, { layerIds: updatedLayerIds });
     } catch (error) {
       console.error('Erro ao adicionar camada ao mapa:', error);
-      throw new Error(`Falha ao adicionar camada: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+      throw new Error(
+        `Falha ao adicionar camada: ${error instanceof Error ? error.message : 'Erro desconhecido'}`
+      );
     }
   }
 
@@ -192,14 +218,18 @@ export class IndexedDBMapRepository implements IMapRepository {
 
       // Verificar se é a última camada
       if (map.layerIds.length <= 1) {
-        throw new Error('Não é possível remover a última camada do mapa. Deve haver pelo menos 1 camada.');
+        throw new Error(
+          'Não é possível remover a última camada do mapa. Deve haver pelo menos 1 camada.'
+        );
       }
 
       const updatedLayerIds = map.layerIds.filter(id => id !== layerId);
       return await this.update(mapId, { layerIds: updatedLayerIds });
     } catch (error) {
       console.error('Erro ao remover camada do mapa:', error);
-      throw new Error(`Falha ao remover camada: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+      throw new Error(
+        `Falha ao remover camada: ${error instanceof Error ? error.message : 'Erro desconhecido'}`
+      );
     }
   }
 
@@ -211,21 +241,25 @@ export class IndexedDBMapRepository implements IMapRepository {
       }
 
       // Verificar se todos os IDs estão presentes
-      if (layerIds.length !== map.layerIds.length || 
-          !layerIds.every(id => map.layerIds.includes(id))) {
+      if (
+        layerIds.length !== map.layerIds.length ||
+        !layerIds.every(id => map.layerIds.includes(id))
+      ) {
         throw new Error('Lista de camadas inválida para reordenação');
       }
 
       return await this.update(mapId, { layerIds });
     } catch (error) {
       console.error('Erro ao reordenar camadas do mapa:', error);
-      throw new Error(`Falha ao reordenar camadas: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+      throw new Error(
+        `Falha ao reordenar camadas: ${error instanceof Error ? error.message : 'Erro desconhecido'}`
+      );
     }
   }
 
   async duplicate(
-    id: string, 
-    newName: string, 
+    id: string,
+    newName: string,
     includeFeatures: boolean = false
   ): Promise<MapConfig> {
     try {
@@ -244,7 +278,7 @@ export class IndexedDBMapRepository implements IMapRepository {
       if (includeFeatures) {
         // Duplicar todas as camadas e suas features
         const layers = await db.layers.where('id').anyOf(originalMap.layerIds).toArray();
-        
+
         for (const layer of layers) {
           // Duplicar camada
           const newLayerId = crypto.randomUUID();
@@ -255,7 +289,7 @@ export class IndexedDBMapRepository implements IMapRepository {
             createdAt: now,
             updatedAt: now,
           };
-          
+
           await db.layers.add(newLayer);
           newLayerIds.push(newLayerId);
 
@@ -273,7 +307,7 @@ export class IndexedDBMapRepository implements IMapRepository {
               updatedAt: now,
             },
           }));
-          
+
           if (newFeatures.length > 0) {
             await db.features.bulkAdd(newFeatures);
           }
@@ -296,20 +330,20 @@ export class IndexedDBMapRepository implements IMapRepository {
       return await this.create(newMap);
     } catch (error) {
       console.error('Erro ao duplicar mapa:', error);
-      throw new Error(`Falha ao duplicar mapa: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+      throw new Error(
+        `Falha ao duplicar mapa: ${error instanceof Error ? error.message : 'Erro desconhecido'}`
+      );
     }
   }
 
-  async updateViewport(
-    id: string, 
-    center: [number, number], 
-    zoom: number
-  ): Promise<MapConfig> {
+  async updateViewport(id: string, center: [number, number], zoom: number): Promise<MapConfig> {
     try {
       return await this.update(id, { center, zoom });
     } catch (error) {
       console.error('Erro ao atualizar viewport do mapa:', error);
-      throw new Error(`Falha ao atualizar viewport: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+      throw new Error(
+        `Falha ao atualizar viewport: ${error instanceof Error ? error.message : 'Erro desconhecido'}`
+      );
     }
   }
 
@@ -326,7 +360,7 @@ export class IndexedDBMapRepository implements IMapRepository {
       }
 
       const { map, layers } = mapWithLayers;
-      
+
       // Contar features de todas as camadas
       let totalFeatures = 0;
       let lastModified = map.updatedAt;
@@ -346,9 +380,9 @@ export class IndexedDBMapRepository implements IMapRepository {
           if (feature.geometry.type === 'Point') {
             allCoords.push(feature.geometry.coordinates as [number, number]);
           } else if (feature.geometry.type === 'LineString') {
-            allCoords.push(...feature.geometry.coordinates as [number, number][]);
+            allCoords.push(...(feature.geometry.coordinates as [number, number][]));
           } else if (feature.geometry.type === 'Polygon') {
-            allCoords.push(...feature.geometry.coordinates[0] as [number, number][]);
+            allCoords.push(...(feature.geometry.coordinates[0] as [number, number][]));
           }
         });
       }
@@ -374,7 +408,9 @@ export class IndexedDBMapRepository implements IMapRepository {
       };
     } catch (error) {
       console.error('Erro ao obter estatísticas do mapa:', error);
-      throw new Error(`Falha ao obter estatísticas: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+      throw new Error(
+        `Falha ao obter estatísticas: ${error instanceof Error ? error.message : 'Erro desconhecido'}`
+      );
     }
   }
 
@@ -425,7 +461,9 @@ export class IndexedDBMapRepository implements IMapRepository {
       console.error('Erro ao validar mapa:', error);
       return {
         valid: false,
-        issues: [`Erro na validação: ${error instanceof Error ? error.message : 'Erro desconhecido'}`],
+        issues: [
+          `Erro na validação: ${error instanceof Error ? error.message : 'Erro desconhecido'}`,
+        ],
         missingLayers: [],
       };
     }
@@ -439,13 +477,13 @@ export class IndexedDBMapRepository implements IMapRepository {
       for (const map of allMaps) {
         if (map.layerIds.includes(deletedLayerId)) {
           const newLayerIds = map.layerIds.filter(id => id !== deletedLayerId);
-          
+
           // Se ficar sem camadas, pular (será tratado pela validação)
           if (newLayerIds.length === 0) {
             console.warn(`Mapa ${map.name} ficou sem camadas após remoção de ${deletedLayerId}`);
             continue;
           }
-          
+
           const updatedMap = await this.update(map.id, { layerIds: newLayerIds });
           updatedMaps.push(updatedMap);
         }
@@ -454,7 +492,9 @@ export class IndexedDBMapRepository implements IMapRepository {
       return updatedMaps;
     } catch (error) {
       console.error('Erro ao limpar referências de camadas:', error);
-      throw new Error(`Falha na limpeza: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+      throw new Error(
+        `Falha na limpeza: ${error instanceof Error ? error.message : 'Erro desconhecido'}`
+      );
     }
   }
 
@@ -470,7 +510,7 @@ export class IndexedDBMapRepository implements IMapRepository {
       }
 
       const { map, layers } = mapWithLayers;
-      
+
       // Contar features
       let featureCount = 0;
       for (const layer of layers) {
@@ -485,7 +525,9 @@ export class IndexedDBMapRepository implements IMapRepository {
       };
     } catch (error) {
       console.error('Erro ao exportar dados do mapa:', error);
-      throw new Error(`Falha na exportação: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+      throw new Error(
+        `Falha na exportação: ${error instanceof Error ? error.message : 'Erro desconhecido'}`
+      );
     }
   }
 
@@ -493,7 +535,7 @@ export class IndexedDBMapRepository implements IMapRepository {
   async ensureDefaultMap(): Promise<MapConfig> {
     try {
       const mapCount = await this.count();
-      
+
       if (mapCount === 0) {
         // Criar mapa padrão
         const now = new Date().toISOString();
@@ -507,16 +549,18 @@ export class IndexedDBMapRepository implements IMapRepository {
           createdAt: now,
           updatedAt: now,
         };
-        
+
         return await this.create(defaultMap);
       }
-      
+
       // Retornar o primeiro mapa disponível
       const maps = await this.getAll();
       return maps[0];
     } catch (error) {
       console.error('Erro ao garantir mapa padrão:', error);
-      throw new Error(`Falha ao criar mapa padrão: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+      throw new Error(
+        `Falha ao criar mapa padrão: ${error instanceof Error ? error.message : 'Erro desconhecido'}`
+      );
     }
   }
 
@@ -528,7 +572,7 @@ export class IndexedDBMapRepository implements IMapRepository {
   }> {
     try {
       const mapCount = await this.count();
-      
+
       if (mapCount <= 1) {
         return {
           canDelete: false,
@@ -539,7 +583,7 @@ export class IndexedDBMapRepository implements IMapRepository {
       }
 
       const stats = await this.getMapStats(id);
-      
+
       return {
         canDelete: true,
         layerCount: stats.layerCount,

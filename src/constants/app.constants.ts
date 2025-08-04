@@ -15,15 +15,15 @@ export const PERFORMANCE_CONFIG = {
   // Limites de features para otimização
   maxFeaturesBeforeVirtualization: 1000,
   maxFeaturesPerLayer: 500,
-  
+
   // Timeouts
   mapLoadTimeout: 10000, // 10 segundos
   featureSaveTimeout: 5000, // 5 segundos
-  
+
   // Cache
   queryStaleTime: 30000, // 30 segundos
   queryCacheTime: 300000, // 5 minutos
-  
+
   // Rendering
   maxZoomLevel: 22,
   minZoomLevel: 0,
@@ -36,14 +36,14 @@ export const NETWORK_CONFIG = {
   maxRetries: 3,
   retryDelay: 1000, // Base delay em ms
   retryMultiplier: 2,
-  
+
   // Timeouts
   requestTimeout: 30000, // 30 segundos
-  
+
   // Batch sizes para operações em lote
   batchSize: 50,
   maxBatchSize: 100,
-  
+
   // Configurações de tiles
   tileTimeout: 15000,
   maxTileCacheSize: 100,
@@ -89,14 +89,14 @@ export const DEFAULT_STYLES = {
     markerColor: '#1976d2',
     markerSize: 8,
   },
-  
+
   // Linhas
   line: {
     strokeColor: '#1976d2',
     strokeWidth: 3,
     strokeOpacity: 1,
   },
-  
+
   // Polígonos
   polygon: {
     strokeColor: '#1976d2',
@@ -105,7 +105,7 @@ export const DEFAULT_STYLES = {
     fillColor: '#1976d2',
     fillOpacity: 0.3,
   },
-  
+
   // Seleção
   selection: {
     strokeColor: '#ff6b35',
@@ -113,7 +113,7 @@ export const DEFAULT_STYLES = {
     fillColor: '#ff6b35',
     fillOpacity: 0.2,
   },
-  
+
   // Edição (hot)
   editing: {
     strokeColor: '#4caf50',
@@ -121,7 +121,7 @@ export const DEFAULT_STYLES = {
     fillColor: '#4caf50',
     fillOpacity: 0.3,
   },
-  
+
   // Vértices
   vertex: {
     color: '#1976d2',
@@ -129,7 +129,7 @@ export const DEFAULT_STYLES = {
     strokeColor: '#ffffff',
     strokeWidth: 2,
   },
-  
+
   // Pontos médios
   midpoint: {
     color: 'rgba(25, 118, 210, 0.6)',
@@ -157,22 +157,22 @@ export const DATA_LIMITS = {
   maxCoordinatePrecision: 6, // casas decimais
   maxCoordinateValue: 180,
   minCoordinateValue: -180,
-  
+
   // Features
   maxFeatureNameLength: 100,
   maxFeatureDescriptionLength: 1000,
   maxPropertiesCount: 50,
-  
+
   // Geometrias
   maxVerticesPerLineString: 1000,
   maxVerticesPerPolygon: 1000,
   minVerticesPerLineString: 2,
   minVerticesPerPolygon: 3,
-  
+
   // Layers
   maxLayerNameLength: 50,
   maxLayersCount: 100,
-  
+
   // Maps
   maxMapNameLength: 50,
   maxMapsCount: 20,
@@ -208,7 +208,7 @@ export const VALIDATION_CONFIG = {
   // Tolerâncias geométricas
   geometryTolerance: 0.000001, // ~10cm na linha do equador
   selfIntersectionTolerance: 0.0001,
-  
+
   // Validação de dados
   requireFeatureName: false,
   allowEmptyGeometries: false,
@@ -220,11 +220,11 @@ export const IO_CONFIG = {
   // Formatos suportados
   supportedExportFormats: ['ebgeo', 'geojson', 'kml'],
   supportedImportFormats: ['ebgeo', 'geojson', 'kml', 'shapefile'],
-  
+
   // Limites de arquivo
   maxFileSize: 50 * 1024 * 1024, // 50MB
   maxFeaturesPerFile: 10000,
-  
+
   // Configurações de compressão
   compressionLevel: 6,
   includeStyles: true,
@@ -235,8 +235,9 @@ export const IO_CONFIG = {
 export const API_CONFIG = {
   // Base URLs
   baseUrl: import.meta.env.VITE_API_BASE_URL || '',
-  mapTilesUrl: import.meta.env.VITE_MAP_TILES_URL || 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-  
+  mapTilesUrl:
+    import.meta.env.VITE_MAP_TILES_URL || 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+
   // Endpoints
   endpoints: {
     features: '/api/features',
@@ -246,11 +247,11 @@ export const API_CONFIG = {
     export: '/api/export',
     import: '/api/import',
   },
-  
+
   // Headers
   headers: {
     'Content-Type': 'application/json',
-    'Accept': 'application/json',
+    Accept: 'application/json',
   },
 } as const;
 
@@ -272,12 +273,12 @@ export const LOCALE_CONFIG = {
   dateFormat: 'DD/MM/YYYY',
   timeFormat: 'HH:mm:ss',
   coordinateFormat: 'decimal', // decimal, dms, utm
-  
+
   // Coordenadas padrão para o Brasil
   defaultCenter: [-51.2177, -30.0346] as [number, number], // Porto Alegre
   defaultBounds: [
-    [-73.9872354804, -33.7683777809],  // Southwest
-    [-28.6341164009, 5.2842873289]     // Northeast
+    [-73.9872354804, -33.7683777809], // Southwest
+    [-28.6341164009, 5.2842873289], // Northeast
   ] as [[number, number], [number, number]],
 } as const;
 

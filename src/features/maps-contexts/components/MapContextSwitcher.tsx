@@ -44,14 +44,14 @@ import {
 
 import { useMapsStore, useMapsActions, useMapsSelectors } from '../store/maps.store';
 import { useLayersActions } from '../../layers/store/layers.store';
-import { 
-  useMaps, 
-  useCreateMap, 
-  useUpdateMap, 
-  useDeleteMap, 
+import {
+  useMaps,
+  useCreateMap,
+  useUpdateMap,
+  useDeleteMap,
   useDuplicateMap,
   useCanDeleteMap,
-  useMapStats 
+  useMapStats,
 } from '../../data-access/hooks/useMaps';
 import { MapConfig, createDefaultMap } from '../../data-access/schemas/map.schema';
 import { formatDate } from '../../../utils/format.utils';
@@ -130,11 +130,15 @@ export const MapContextSwitcher: React.FC<MapContextSwitcherProps> = ({
   const handleSwitchToMap = async (map: MapConfig) => {
     try {
       mapsActions.setLoadingMap(true);
-      
+
       // Salvar viewport atual se houver mapa ativo
       if (mapsSelectors.hasActiveMap && mapsSelectors.activeMapName) {
         // Este seria integrado com o MapView para obter viewport atual
-        mapsActions.saveViewport(activeMapId!, mapsSelectors.currentCenter, mapsSelectors.currentZoom);
+        mapsActions.saveViewport(
+          activeMapId!,
+          mapsSelectors.currentCenter,
+          mapsSelectors.currentZoom
+        );
       }
 
       // Limpar estado das camadas
@@ -169,7 +173,7 @@ export const MapContextSwitcher: React.FC<MapContextSwitcherProps> = ({
       });
 
       await createMap.mutateAsync(newMap);
-      
+
       setCreateDialogOpen(false);
       setNewMapName('');
       setNewMapDescription('');
@@ -186,7 +190,7 @@ export const MapContextSwitcher: React.FC<MapContextSwitcherProps> = ({
     try {
       await updateMap.mutateAsync({
         id: selectedMap.id,
-        updates: { 
+        updates: {
           name: editMapName.trim(),
           description: editMapDescription.trim() || undefined,
         },
@@ -231,7 +235,7 @@ export const MapContextSwitcher: React.FC<MapContextSwitcherProps> = ({
 
     try {
       await deleteMap.mutateAsync(selectedMap.id);
-      
+
       // Se era o mapa ativo, limpar
       if (activeMapId === selectedMap.id) {
         layersActions.clearForMap();
@@ -319,9 +323,7 @@ export const MapContextSwitcher: React.FC<MapContextSwitcherProps> = ({
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                   <LayersIcon fontSize="small" color="action" />
-                  <Typography variant="caption">
-                    {mapStats?.layerCount || 0} camada(s)
-                  </Typography>
+                  <Typography variant="caption">{mapStats?.layerCount || 0} camada(s)</Typography>
                 </Box>
 
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
@@ -332,16 +334,14 @@ export const MapContextSwitcher: React.FC<MapContextSwitcherProps> = ({
 
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                   <TimeIcon fontSize="small" color="action" />
-                  <Typography variant="caption">
-                    {formatDate.relative(map.updatedAt)}
-                  </Typography>
+                  <Typography variant="caption">{formatDate.relative(map.updatedAt)}</Typography>
                 </Box>
               </Box>
             </Box>
 
             <IconButton
               size="small"
-              onClick={(e) => {
+              onClick={e => {
                 e.stopPropagation();
                 handleMenuOpen(e, map.id);
               }}
@@ -393,9 +393,7 @@ export const MapContextSwitcher: React.FC<MapContextSwitcherProps> = ({
           }}
         >
           <Box>
-            <Typography variant="h6">
-              Mapas
-            </Typography>
+            <Typography variant="h6">Mapas</Typography>
             <Typography variant="caption" color="text.secondary">
               Gerenciar e alternar entre mapas
             </Typography>
@@ -430,9 +428,7 @@ export const MapContextSwitcher: React.FC<MapContextSwitcherProps> = ({
               <CircularProgress />
             </Box>
           ) : mapsError ? (
-            <Alert severity="error">
-              Erro ao carregar mapas
-            </Alert>
+            <Alert severity="error">Erro ao carregar mapas</Alert>
           ) : allMaps.length === 0 ? (
             <Box sx={{ textAlign: 'center', p: 3 }}>
               <Typography variant="body2" color="text.secondary">
@@ -440,9 +436,7 @@ export const MapContextSwitcher: React.FC<MapContextSwitcherProps> = ({
               </Typography>
             </Box>
           ) : (
-            allMaps.map((map) => (
-              <MapCard key={map.id} map={map} />
-            ))
+            allMaps.map(map => <MapCard key={map.id} map={map} />)
           )}
         </Box>
 
@@ -460,29 +454,29 @@ export const MapContextSwitcher: React.FC<MapContextSwitcherProps> = ({
       </Paper>
 
       {/* Menu de contexto */}
-      <Menu
-        anchorEl={menuAnchor}
-        open={Boolean(menuAnchor)}
-        onClose={handleMenuClose}
-      >
+      <Menu anchorEl={menuAnchor} open={Boolean(menuAnchor)} onClose={handleMenuClose}>
         {menuMapId && (
           <>
-            <MenuItem onClick={() => {
-              const map = allMaps.find(m => m.id === menuMapId);
-              if (map) openEditDialog(map);
-            }}>
+            <MenuItem
+              onClick={() => {
+                const map = allMaps.find(m => m.id === menuMapId);
+                if (map) openEditDialog(map);
+              }}
+            >
               <EditIcon sx={{ mr: 1 }} />
               Editar
             </MenuItem>
-            <MenuItem onClick={() => {
-              const map = allMaps.find(m => m.id === menuMapId);
-              if (map) openDuplicateDialog(map);
-            }}>
+            <MenuItem
+              onClick={() => {
+                const map = allMaps.find(m => m.id === menuMapId);
+                if (map) openDuplicateDialog(map);
+              }}
+            >
               <CopyIcon sx={{ mr: 1 }} />
               Duplicar
             </MenuItem>
             <Divider />
-            <MenuItem 
+            <MenuItem
               onClick={() => {
                 const map = allMaps.find(m => m.id === menuMapId);
                 if (map) openDeleteDialog(map);
@@ -497,7 +491,12 @@ export const MapContextSwitcher: React.FC<MapContextSwitcherProps> = ({
       </Menu>
 
       {/* Diálogo de criar mapa */}
-      <Dialog open={createDialogOpen} onClose={() => setCreateDialogOpen(false)} maxWidth="sm" fullWidth>
+      <Dialog
+        open={createDialogOpen}
+        onClose={() => setCreateDialogOpen(false)}
+        maxWidth="sm"
+        fullWidth
+      >
         <DialogTitle>Novo Mapa</DialogTitle>
         <DialogContent>
           <TextField
@@ -507,7 +506,7 @@ export const MapContextSwitcher: React.FC<MapContextSwitcherProps> = ({
             fullWidth
             variant="outlined"
             value={newMapName}
-            onChange={(e) => setNewMapName(e.target.value)}
+            onChange={e => setNewMapName(e.target.value)}
             sx={{ mb: 2 }}
           />
           <TextField
@@ -518,13 +517,13 @@ export const MapContextSwitcher: React.FC<MapContextSwitcherProps> = ({
             multiline
             rows={3}
             value={newMapDescription}
-            onChange={(e) => setNewMapDescription(e.target.value)}
+            onChange={e => setNewMapDescription(e.target.value)}
           />
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setCreateDialogOpen(false)}>Cancelar</Button>
-          <Button 
-            onClick={handleCreateMap} 
+          <Button
+            onClick={handleCreateMap}
             variant="contained"
             disabled={!newMapName.trim() || createMap.isPending}
           >
@@ -534,7 +533,12 @@ export const MapContextSwitcher: React.FC<MapContextSwitcherProps> = ({
       </Dialog>
 
       {/* Diálogo de editar mapa */}
-      <Dialog open={editDialogOpen} onClose={() => setEditDialogOpen(false)} maxWidth="sm" fullWidth>
+      <Dialog
+        open={editDialogOpen}
+        onClose={() => setEditDialogOpen(false)}
+        maxWidth="sm"
+        fullWidth
+      >
         <DialogTitle>Editar Mapa</DialogTitle>
         <DialogContent>
           <TextField
@@ -544,7 +548,7 @@ export const MapContextSwitcher: React.FC<MapContextSwitcherProps> = ({
             fullWidth
             variant="outlined"
             value={editMapName}
-            onChange={(e) => setEditMapName(e.target.value)}
+            onChange={e => setEditMapName(e.target.value)}
             sx={{ mb: 2 }}
           />
           <TextField
@@ -555,13 +559,13 @@ export const MapContextSwitcher: React.FC<MapContextSwitcherProps> = ({
             multiline
             rows={3}
             value={editMapDescription}
-            onChange={(e) => setEditMapDescription(e.target.value)}
+            onChange={e => setEditMapDescription(e.target.value)}
           />
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setEditDialogOpen(false)}>Cancelar</Button>
-          <Button 
-            onClick={handleEditMap} 
+          <Button
+            onClick={handleEditMap}
             variant="contained"
             disabled={!editMapName.trim() || updateMap.isPending}
           >
@@ -571,7 +575,12 @@ export const MapContextSwitcher: React.FC<MapContextSwitcherProps> = ({
       </Dialog>
 
       {/* Diálogo de duplicar mapa */}
-      <Dialog open={duplicateDialogOpen} onClose={() => setDuplicateDialogOpen(false)} maxWidth="sm" fullWidth>
+      <Dialog
+        open={duplicateDialogOpen}
+        onClose={() => setDuplicateDialogOpen(false)}
+        maxWidth="sm"
+        fullWidth
+      >
         <DialogTitle>Duplicar Mapa</DialogTitle>
         <DialogContent>
           <TextField
@@ -581,14 +590,14 @@ export const MapContextSwitcher: React.FC<MapContextSwitcherProps> = ({
             fullWidth
             variant="outlined"
             value={duplicateName}
-            onChange={(e) => setDuplicateName(e.target.value)}
+            onChange={e => setDuplicateName(e.target.value)}
             sx={{ mb: 2 }}
           />
           <FormControlLabel
             control={
               <Checkbox
                 checked={includeFeatures}
-                onChange={(e) => setIncludeFeatures(e.target.checked)}
+                onChange={e => setIncludeFeatures(e.target.checked)}
               />
             }
             label="Duplicar também as features (senão apenas as camadas serão referenciadas)"
@@ -596,8 +605,8 @@ export const MapContextSwitcher: React.FC<MapContextSwitcherProps> = ({
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setDuplicateDialogOpen(false)}>Cancelar</Button>
-          <Button 
-            onClick={handleDuplicateMap} 
+          <Button
+            onClick={handleDuplicateMap}
             variant="contained"
             disabled={!duplicateName.trim() || duplicateMap.isPending}
           >
@@ -607,20 +616,26 @@ export const MapContextSwitcher: React.FC<MapContextSwitcherProps> = ({
       </Dialog>
 
       {/* Diálogo de deletar mapa */}
-      <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)} maxWidth="sm" fullWidth>
+      <Dialog
+        open={deleteDialogOpen}
+        onClose={() => setDeleteDialogOpen(false)}
+        maxWidth="sm"
+        fullWidth
+      >
         <DialogTitle>Deletar Mapa</DialogTitle>
         <DialogContent>
           <Typography variant="body1" gutterBottom>
             Tem certeza que deseja deletar o mapa "{selectedMap?.name}"?
           </Typography>
           <Alert severity="warning" sx={{ mt: 2 }}>
-            Esta ação irá deletar o mapa e todas as suas camadas e features. Esta ação não pode ser desfeita.
+            Esta ação irá deletar o mapa e todas as suas camadas e features. Esta ação não pode ser
+            desfeita.
           </Alert>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setDeleteDialogOpen(false)}>Cancelar</Button>
-          <Button 
-            onClick={handleDeleteMap} 
+          <Button
+            onClick={handleDeleteMap}
             variant="contained"
             color="error"
             disabled={deleteMap.isPending}

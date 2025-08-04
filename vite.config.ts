@@ -1,5 +1,3 @@
-// vite.config.ts
-
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { resolve } from 'path';
@@ -9,14 +7,14 @@ import { ViteImageOptimizer } from 'vite-plugin-image-optimizer';
 export default defineConfig({
   plugins: [
     react(),
-    ViteImageOptimizer({ // Adicionar o plugin
+    ViteImageOptimizer({
       png: { quality: 80 },
       jpeg: { quality: 80 },
       webp: { quality: 80 },
     }),
   ],
-  
-  // Resolver aliases para imports mais limpos
+
+  // Path aliases for cleaner imports
   resolve: {
     alias: {
       '@': resolve(__dirname, './src'),
@@ -31,71 +29,75 @@ export default defineConfig({
     },
   },
 
-  // Configurações de desenvolvimento
+  // Development server configuration
   server: {
     host: true,
     port: 3000,
     open: true,
     cors: true,
+    // HMR configuration for better development experience
+    hmr: {
+      overlay: true,
+    },
   },
 
-  // Configurações de preview
+  // Preview server configuration
   preview: {
     host: true,
     port: 4173,
     open: true,
   },
 
-  // Configurações de build
+  // Build configuration
   build: {
     target: 'esnext',
     outDir: 'dist',
     sourcemap: true,
     minify: 'esbuild',
-    
-    // Otimizações para redes lentas (requisito do projeto)
+
+    // Rollup options for optimized bundles
     rollupOptions: {
       output: {
-        // Separar bibliotecas em chunks separados
+        // Manual chunk splitting for better caching
         manualChunks: {
-          // React e bibliotecas principais
+          // React ecosystem
           'react-vendor': ['react', 'react-dom'],
-          
-          // Material-UI
+
+          // UI library
           'mui-vendor': [
             '@mui/material',
             '@mui/icons-material',
             '@emotion/react',
             '@emotion/styled',
           ],
-          
-          // MapLibre e bibliotecas de mapa
-          'map-vendor': [
-            'maplibre-gl',
-            'react-map-gl',
-            '@turf/turf',
-          ],
-          
-          // React Query e estado
-          'state-vendor': [
-            '@tanstack/react-query',
-            'zustand',
-          ],
-          
-          // Utilitários
+
+          // Map and geospatial libraries
+          'map-vendor': ['maplibre-gl', 'react-map-gl', '@turf/turf'],
+
+          // State management and data fetching
+          'state-vendor': ['@tanstack/react-query', 'zustand'],
+
+          // Utilities and data handling
           'utils-vendor': [
             'zod',
             'dexie',
+            'jszip',
+            'file-saver',
+            'papaparse',
+            'browser-image-compression',
           ],
+
+          // Military symbols (potentially large)
+          'military-vendor': ['milsymbol'],
         },
       },
     },
-    
-    // Limite de warnings de tamanho de chunk
+
+    // Bundle size warning limit
     chunkSizeWarningLimit: 1000,
   },
 
-  // Otimizações de dependências
+  // Dependency optimization
   optimizeDeps: {
     include: [
       'react',
@@ -110,33 +112,34 @@ export default defineConfig({
       'dexie',
       '@turf/turf',
     ],
-    exclude: ['milsymbol'], // Biblioteca que pode ter problemas com pre-bundling
+    // Exclude libraries that might have issues with pre-bundling
+    exclude: ['milsymbol'],
   },
 
-  // Configurações específicas para trabalhar com MapLibre
+  // Global constants for client-side code
   define: {
-    // Necessário para algumas bibliotecas geoespaciais
+    // Required for some geospatial libraries
     global: 'globalThis',
   },
 
-  // Configurações para suporte a Web Workers (caso necessário no futuro)
+  // Web Workers configuration
   worker: {
     format: 'es',
   },
 
-  // Configurações de teste
-  test: {
-    globals: true,
-    environment: 'jsdom',
-    setupFiles: ['./src/test/setup.ts'],
-    css: true,
-  },
-
-  // Configurações CSS
+  // CSS configuration
   css: {
     devSourcemap: true,
     modules: {
       localsConvention: 'camelCase',
     },
+  },
+
+  // Testing configuration (if using Vitest)
+  test: {
+    globals: true,
+    environment: 'jsdom',
+    setupFiles: ['./src/test/setup.ts'],
+    css: true,
   },
 });

@@ -29,16 +29,14 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   const [mode, setMode] = useState<ThemeMode>('light');
 
   const toggleMode = () => {
-    setMode(prev => prev === 'light' ? 'dark' : 'light');
+    setMode(prev => (prev === 'light' ? 'dark' : 'light'));
   };
 
   const theme = mode === 'light' ? lightTheme : darkTheme;
 
   return (
     <ThemeContext.Provider value={{ mode, toggleMode }}>
-      <MuiThemeProvider theme={theme}>
-        {children}
-      </MuiThemeProvider>
+      <MuiThemeProvider theme={theme}>{children}</MuiThemeProvider>
     </ThemeContext.Provider>
   );
 };

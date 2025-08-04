@@ -1,5 +1,3 @@
-# .prettierignore
-
 # Dependencies
 node_modules/
 .pnp
@@ -16,11 +14,19 @@ node_modules/
 .cache
 .parcel-cache
 .size-limit.json
+*.tsbuildinfo
 
-# Coverage directory used by tools like istanbul
+# Coverage and test results
 coverage/
 *.lcov
 .nyc_output
+test-results/
+playwright-report/
+
+# Package manager lockfiles (version-dependent formatting)
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
 
 # Runtime data
 pids
@@ -35,25 +41,18 @@ yarn-error.log*
 lerna-debug.log*
 .pnpm-debug.log*
 
-# Diagnostic reports (https://nodejs.org/api/report.html)
+# Diagnostic reports
 report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 
-# Compiled binary addons (https://nodejs.org/api/addons.html)
+# Compiled binary addons
 build/Release
 
 # Dependency directories
 jspm_packages/
 
-# TypeScript cache
-*.tsbuildinfo
-
-# Optional npm cache directory
+# Optional caches
 .npm
-
-# Optional eslint cache
 .eslintcache
-
-# Optional stylelint cache
 .stylelintcache
 
 # Microbundle cache
@@ -71,15 +70,14 @@ jspm_packages/
 # Yarn Integrity file
 .yarn-integrity
 
-# dotenv environment variables file
+# Environment variables
 .env
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
 
-# parcel-bundler cache (https://parceljs.org/)
-.cache
+# Parcel-bundler cache
 .parcel-cache
 
 # Storybook build outputs
@@ -110,24 +108,39 @@ temp/
 .Trashes
 ehthumbs.db
 Thumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+*.lnk
 
-# Package manager lockfiles (version-dependent formatting)
-package-lock.json
-yarn.lock
-pnpm-lock.yaml
+# macOS specific
+.AppleDouble
+.LSOverride
+Icon
+.DocumentRevisions-V100
+.fseventsd
+.TemporaryItems
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
 
-# Generated documentation
-docs/build/
-docs/.docusaurus/
-
-# Test results
-test-results/
-playwright-report/
+# Linux specific
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+.nfs*
 
 # Auto-generated files
 src/types/generated/
 src/api/generated/
 public/icons/generated/
+src/styles/generated/
+public/css/generated/
+src/locales/generated/
 
 # Map files
 *.map
@@ -158,7 +171,7 @@ deploy.sh
 *.tar.gz
 *.rar
 
-# Large media files (should be in .gitignore anyway)
+# Large media files
 *.mov
 *.mp4
 *.mp3
@@ -173,13 +186,6 @@ vendor/
 lib/third-party/
 src/vendor/
 
-# Auto-generated CSS
-src/styles/generated/
-public/css/generated/
-
-# Translation files
-src/locales/generated/
-
 # API documentation
 docs/api/
 
@@ -193,60 +199,6 @@ coverage.xml
 # VS Code workspace files
 *.code-workspace
 
-# JetBrains IDE
-.idea/
-
-# Vim
-*.swp
-*.swo
-
-# Emacs
-*~
-\#*\#
-/.emacs.desktop
-/.emacs.desktop.lock
-*.elc
-auto-save-list
-tramp
-.\#*
-
-# Sublime Text
-*.sublime-project
-*.sublime-workspace
-
-# Windows
-Thumbs.db
-ehthumbs.db
-Desktop.ini
-$RECYCLE.BIN/
-*.lnk
-
-# macOS
-.DS_Store
-.AppleDouble
-.LSOverride
-Icon
-._*
-.DocumentRevisions-V100
-.fseventsd
-.Spotlight-V100
-.TemporaryItems
-.Trashes
-.VolumeIcon.icns
-.com.apple.timemachine.donotpresent
-.AppleDB
-.AppleDesktop
-Network Trash Folder
-Temporary Items
-.apdisk
-
-# Linux
-*~
-.fuse_hidden*
-.directory
-.Trash-*
-.nfs*
-
 # Security related
 .env.secret
 .secrets
@@ -254,7 +206,6 @@ secrets.json
 config/secrets/
 
 # Performance monitoring
-.size-limit.json
 bundle-analyzer/
 
 # Changelogs (often auto-generated)

@@ -8,14 +8,14 @@ export interface IRepository<T, K = string> {
   getAll(): Promise<T[]>;
   update(id: K, updates: Partial<T>): Promise<T>;
   delete(id: K): Promise<void>;
-  
+
   // Operações em lote
   createMany(entities: T[]): Promise<T[]>;
   deleteMany(ids: K[]): Promise<void>;
-  
+
   // Contagem
   count(): Promise<number>;
-  
+
   // Verificação de existência
   exists(id: K): Promise<boolean>;
 }
@@ -28,7 +28,10 @@ export interface ISearchableRepository<T, K = string> extends IRepository<T, K> 
 
 // Interface para operações de paginação
 export interface IPaginatedRepository<T, K = string> extends IRepository<T, K> {
-  getPage(page: number, pageSize: number): Promise<{
+  getPage(
+    page: number,
+    pageSize: number
+  ): Promise<{
     data: T[];
     total: number;
     page: number;

@@ -1,59 +1,33 @@
-// Path: features/io/hooks/useImportExport.ts
+// Path: features\io\hooks\useImportExport.ts
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { exportService, ExportOptions, ExportResult } from '../services/export.service';
 import { importService, ImportOptions, ImportResult } from '../services/import.service';
+import { useIOActions, useIOSelectors, useIOStore } from '../store/io.store';
+import { useMapsStore } from '../../maps-contexts/store/maps.store';
+import { useLayersStore } from '../../layers/store/layers.store';
+import { useDrawingStore } from '../../drawing/store/drawing.store';
 import { FEATURE_QUERY_KEYS } from '../../data-access/hooks/useFeatures';
 import { LAYER_QUERY_KEYS } from '../../data-access/hooks/useLayers';
 import { MAP_QUERY_KEYS } from '../../data-access/hooks/useMaps';
 
-// Interface para estado das operações
-interface OperationState {
-  isLoading: boolean;
-  progress: number;
-  error: string | null;
-  result: ExportResult | ImportResult | null;
-}
-
-// Hook principal para operações de import/export
+// Hook principal para operações de import/export integrado com stores
 export function useImportExport() {
   const queryClient = useQueryClient();
-  
-  // Estado das operações
-  const [exportState, setExportState] = useState<OperationState>({
-    isLoading: false,
-    progress: 0,
-    error: null,
-    result: null,
-  });
 
-  const [importState, setImportState] = useState<OperationState>({
-    isLoading: false,
-    progress: 0,
-    error: null,
-    result: null,
-  });
+  // Stores e ações
+  const ioActions = useIOActions();
+  const ioSelectors = useIOSelectors();
+  const ioStore = useIOStore();
 
-  // Função para simular progresso
-  const simulateProgress = useCallback((
-    setState: React.Dispatch<React.SetStateAction<OperationState>>,
-    duration: number = 3000
-  ) => {
-    const startTime = Date.now();
-    const interval = setInterval(() => {
-      const elapsed = Date.now() - startTime;
-      const progress = Math.min((elapsed / duration) * 90, 90); // Máximo 90% simulado
-      
-      setState(prev => ({ ...prev, progress }));
-      
-      if (elapsed >= duration) {
-        clearInterval(interval);
-      }
-    }, 100);
-    
-    return interval;
-  }, []);
+  // Estados dos outros stores
+  const activeMapId = useMapsStore(state => state.activeMapId);
+  const activeLayerId = useLayersStore(state => state.activeLayerId);
+  const drawingState = useDrawingStore(state => ({
+    activeTool: state.activeTool,
+    isDrawing: state.isDrawing,
+  }));
 
   // Invalidar todas as queries relacionadas após import
   const invalidateAllQueries = useCallback(() => {
@@ -63,208 +37,212 @@ export function useImportExport() {
   }, [queryClient]);
 
   // Exportar todos os dados
-  const exportAll = useCallback(async (options: ExportOptions = {}) => {
-    setExportState({
-      isLoading: true,
-      progress: 0,
-      error: null,
-      result: null,
-    });
+  const exportAll = useCallback(
+    async (options: ExportOptions = {}) => {
+      try {
+        // Atualizar opções no store
+        ioActions.updateExportOptions({
+          includeAssets: options.includeAssets ?? true,
+          compression: options.compression ?? true,
+          includeAllMaps: options.includeAllMaps ?? true,
+        });
 
-    const progressInterval = simulateProgress(setExportState);
+        // Iniciar operação no store
+        ioActions.startExport('Coletando dados...');
 
-    try {
-      const result = await exportService.exportAll(options);
-      
-      clearInterval(progressInterval);
-      setExportState({
-        isLoading: false,
-        progress: 100,
-        error: null,
-        result,
-      });
+        // Criar callback de progresso
+        const progressCallback = (progress: number, phase?: string) => {
+          ioActions.updateExportProgress(progress, phase);
+        };
 
-      return result;
+        // Executar exportação com fases
+        progressCallback(10, 'Validando dados...');
 
-    } catch (error) {
-      clearInterval(progressInterval);
-      const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido na exportação';
-      
-      setExportState({
-        isLoading: false,
-        progress: 0,
-        error: errorMessage,
-        result: {
-          success: false,
-          filename: '',
-          size: 0,
-          stats: { features: 0, layers: 0, maps: 0, assets: 0 },
-          error: errorMessage,
-        },
-      });
+        // Validação prévia
+        const validation = await exportService.validateBeforeExport();
+        if (!validation.valid) {
+          throw new Error(`Validação falhou: ${validation.issues.join(', ')}`);
+        }
 
-      throw error;
-    }
-  }, [simulateProgress]);
+        progressCallback(20, 'Preparando export...');
+
+        // Preparar opções finais
+        const finalOptions = {
+          includeAssets: true,
+          compression: true,
+          ...options,
+        };
+
+        progressCallback(30, 'Coletando features...');
+
+        // Executar exportação
+        const result = await exportService.exportAll(finalOptions);
+
+        progressCallback(100, 'Concluído!');
+
+        // Completar no store
+        ioActions.completeExport(result);
+
+        return result;
+      } catch (error) {
+        const errorMessage =
+          error instanceof Error ? error.message : 'Erro desconhecido na exportação';
+        ioActions.failExport(errorMessage);
+        throw error;
+      }
+    },
+    [ioActions]
+  );
 
   // Exportar mapa específico
-  const exportMap = useCallback(async (mapId: string, options: ExportOptions = {}) => {
-    setExportState({
-      isLoading: true,
-      progress: 0,
-      error: null,
-      result: null,
-    });
+  const exportMap = useCallback(
+    async (mapId: string, options: ExportOptions = {}) => {
+      try {
+        ioActions.updateExportOptions({
+          selectedMapIds: [mapId],
+          includeAllMaps: false,
+        });
 
-    const progressInterval = simulateProgress(setExportState);
+        ioActions.startExport(`Exportando mapa...`);
 
-    try {
-      const result = await exportService.exportMap(mapId, options);
-      
-      clearInterval(progressInterval);
-      setExportState({
-        isLoading: false,
-        progress: 100,
-        error: null,
-        result,
-      });
+        const progressCallback = (progress: number, phase?: string) => {
+          ioActions.updateExportProgress(progress, phase);
+        };
 
-      return result;
+        progressCallback(20, 'Carregando mapa...');
 
-    } catch (error) {
-      clearInterval(progressInterval);
-      const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido na exportação';
-      
-      setExportState({
-        isLoading: false,
-        progress: 0,
-        error: errorMessage,
-        result: {
-          success: false,
-          filename: '',
-          size: 0,
-          stats: { features: 0, layers: 0, maps: 0, assets: 0 },
-          error: errorMessage,
-        },
-      });
+        const result = await exportService.exportMap(mapId, options);
 
-      throw error;
-    }
-  }, [simulateProgress]);
+        progressCallback(100, 'Concluído!');
+        ioActions.completeExport(result);
+
+        return result;
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Erro na exportação do mapa';
+        ioActions.failExport(errorMessage);
+        throw error;
+      }
+    },
+    [ioActions]
+  );
 
   // Exportar camadas específicas
-  const exportLayers = useCallback(async (layerIds: string[], options: ExportOptions = {}) => {
-    setExportState({
-      isLoading: true,
-      progress: 0,
-      error: null,
-      result: null,
-    });
+  const exportLayers = useCallback(
+    async (layerIds: string[], options: ExportOptions = {}) => {
+      try {
+        ioActions.updateExportOptions({
+          selectedLayerIds: layerIds,
+          includeAllMaps: false,
+        });
 
-    const progressInterval = simulateProgress(setExportState);
+        ioActions.startExport(`Exportando ${layerIds.length} camada(s)...`);
 
-    try {
-      const result = await exportService.exportLayers(layerIds, options);
-      
-      clearInterval(progressInterval);
-      setExportState({
-        isLoading: false,
-        progress: 100,
-        error: null,
-        result,
-      });
+        const progressCallback = (progress: number, phase?: string) => {
+          ioActions.updateExportProgress(progress, phase);
+        };
 
-      return result;
+        progressCallback(20, 'Carregando camadas...');
 
-    } catch (error) {
-      clearInterval(progressInterval);
-      const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido na exportação';
-      
-      setExportState({
-        isLoading: false,
-        progress: 0,
-        error: errorMessage,
-        result: {
-          success: false,
-          filename: '',
-          size: 0,
-          stats: { features: 0, layers: 0, maps: 0, assets: 0 },
-          error: errorMessage,
-        },
-      });
+        const result = await exportService.exportLayers(layerIds, options);
 
-      throw error;
-    }
-  }, [simulateProgress]);
+        progressCallback(100, 'Concluído!');
+        ioActions.completeExport(result);
+
+        return result;
+      } catch (error) {
+        const errorMessage =
+          error instanceof Error ? error.message : 'Erro na exportação das camadas';
+        ioActions.failExport(errorMessage);
+        throw error;
+      }
+    },
+    [ioActions]
+  );
 
   // Importar arquivo
-  const importFile = useCallback(async (file: File, options: ImportOptions) => {
-    setImportState({
-      isLoading: true,
-      progress: 0,
-      error: null,
-      result: null,
-    });
+  const importFile = useCallback(
+    async (file: File, options: ImportOptions) => {
+      try {
+        // Atualizar opções no store
+        ioActions.updateImportOptions(options);
 
-    const progressInterval = simulateProgress(setImportState, 5000); // Importação pode ser mais demorada
+        // Iniciar operação no store
+        ioActions.startImport(file, 'Validando arquivo...');
 
-    try {
-      const result = await importService.importFile(file, options);
-      
-      clearInterval(progressInterval);
-      setImportState({
-        isLoading: false,
-        progress: 100,
-        error: null,
-        result,
-      });
+        // Criar callback de progresso
+        const progressCallback = (progress: number, phase?: string) => {
+          ioActions.updateImportProgress(progress, phase);
+        };
 
-      // Invalidar queries se a importação foi bem-sucedida
-      if (result.success) {
-        invalidateAllQueries();
+        // Fases da importação
+        progressCallback(10, 'Validando arquivo...');
+
+        // Validação do arquivo
+        if (!file.name.toLowerCase().endsWith('.ebgeo')) {
+          throw new Error('Arquivo deve ter extensão .ebgeo');
+        }
+
+        progressCallback(20, 'Extraindo dados...');
+
+        // Executar importação
+        const result = await importService.importFile(file, options);
+
+        progressCallback(100, 'Importação concluída!');
+
+        // Completar no store
+        ioActions.completeImport(result);
+
+        // Invalidar queries se a importação foi bem-sucedida
+        if (result.success) {
+          invalidateAllQueries();
+
+          // Se há layers ou mapas importados, pode precisar atualizar o estado ativo
+          if (result.stats.layersImported > 0 || result.stats.mapsImported > 0) {
+            // Isso será tratado pelos componentes que consomem as queries
+          }
+        }
+
+        return result;
+      } catch (error) {
+        const errorMessage =
+          error instanceof Error ? error.message : 'Erro desconhecido na importação';
+        ioActions.failImport(errorMessage);
+        throw error;
       }
+    },
+    [ioActions, invalidateAllQueries]
+  );
 
-      return result;
+  // Exportar mapa ativo (se houver)
+  const exportActiveMap = useCallback(
+    async (options: ExportOptions = {}) => {
+      if (!activeMapId) {
+        throw new Error('Nenhum mapa ativo selecionado');
+      }
+      return exportMap(activeMapId, options);
+    },
+    [activeMapId, exportMap]
+  );
 
-    } catch (error) {
-      clearInterval(progressInterval);
-      const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido na importação';
-      
-      setImportState({
-        isLoading: false,
-        progress: 0,
-        error: errorMessage,
-        result: {
-          success: false,
-          stats: { featuresImported: 0, layersImported: 0, mapsImported: 0, assetsImported: 0, conflicts: 0, errors: 1 },
-          conflicts: [],
-          errors: [errorMessage],
-        },
-      });
+  // Exportar camada ativa (se houver)
+  const exportActiveLayer = useCallback(
+    async (options: ExportOptions = {}) => {
+      if (!activeLayerId) {
+        throw new Error('Nenhuma camada ativa selecionada');
+      }
+      return exportLayers([activeLayerId], options);
+    },
+    [activeLayerId, exportLayers]
+  );
 
-      throw error;
-    }
-  }, [simulateProgress, invalidateAllQueries]);
-
-  // Limpar estado de export
+  // Limpar estados
   const clearExportState = useCallback(() => {
-    setExportState({
-      isLoading: false,
-      progress: 0,
-      error: null,
-      result: null,
-    });
-  }, []);
+    ioActions.resetExport();
+  }, [ioActions]);
 
-  // Limpar estado de import
   const clearImportState = useCallback(() => {
-    setImportState({
-      isLoading: false,
-      progress: 0,
-      error: null,
-      result: null,
-    });
-  }, []);
+    ioActions.resetImport();
+  }, [ioActions]);
 
   // Validar antes da exportação
   const validateExport = useCallback(async () => {
@@ -290,25 +268,57 @@ export function useImportExport() {
     }
   }, []);
 
+  // Estados derivados do store
+  const exportState = {
+    isLoading: ioSelectors.isExporting,
+    progress: ioSelectors.exportProgress,
+    error: ioSelectors.exportError,
+    result: ioSelectors.lastExportResult,
+  };
+
+  const importState = {
+    isLoading: ioSelectors.isImporting,
+    progress: ioSelectors.importProgress,
+    error: ioSelectors.importError,
+    result: ioSelectors.lastImportResult,
+  };
+
+  // Verificar se pode exportar baseado no estado da aplicação
+  const canExport = !ioSelectors.isAnyOperationActive && !drawingState.isDrawing;
+  const canImport = !ioSelectors.isAnyOperationActive && !drawingState.isDrawing;
+
   return {
-    // Estados
+    // Estados integrados com store
     exportState,
     importState,
-    
+
     // Ações de export
     exportAll,
     exportMap,
     exportLayers,
+    exportActiveMap,
+    exportActiveLayer,
     clearExportState,
-    
+
     // Ações de import
     importFile,
     clearImportState,
-    
+
     // Validações
     validateExport,
     validateImport,
-    
+
+    // Estados derivados
+    canExport,
+    canImport,
+    isAnyOperationActive: ioSelectors.isAnyOperationActive,
+    currentOperation: ioSelectors.currentOperation,
+
+    // Contexto da aplicação
+    activeMapId,
+    activeLayerId,
+    drawingState,
+
     // Utilitários
     invalidateAllQueries,
   };
@@ -317,7 +327,7 @@ export function useImportExport() {
 // Hook específico para validação de operações
 export function useOperationValidation() {
   const [isValidating, setIsValidating] = useState(false);
-  
+
   const validateExportOperation = useCallback(async () => {
     setIsValidating(true);
     try {
@@ -333,15 +343,16 @@ export function useOperationValidation() {
     try {
       // Validações básicas do arquivo
       const issues: string[] = [];
-      
+
       if (!file.name.toLowerCase().endsWith('.ebgeo')) {
         issues.push('Arquivo deve ter extensão .ebgeo');
       }
-      
-      if (file.size > 50 * 1024 * 1024) { // 50MB
+
+      if (file.size > 50 * 1024 * 1024) {
+        // 50MB
         issues.push('Arquivo muito grande (máximo 50MB)');
       }
-      
+
       if (file.size === 0) {
         issues.push('Arquivo está vazio');
       }
@@ -412,26 +423,32 @@ export function useImportExportStats() {
   }, []);
 
   // Registrar export
-  const recordExport = useCallback((size: number) => {
-    const newStats = {
-      ...stats,
-      totalExports: stats.totalExports + 1,
-      lastExportDate: new Date().toISOString(),
-      avgExportSize: (stats.avgExportSize * stats.totalExports + size) / (stats.totalExports + 1),
-    };
-    saveStats(newStats);
-  }, [stats, saveStats]);
+  const recordExport = useCallback(
+    (size: number) => {
+      const newStats = {
+        ...stats,
+        totalExports: stats.totalExports + 1,
+        lastExportDate: new Date().toISOString(),
+        avgExportSize: (stats.avgExportSize * stats.totalExports + size) / (stats.totalExports + 1),
+      };
+      saveStats(newStats);
+    },
+    [stats, saveStats]
+  );
 
   // Registrar import
-  const recordImport = useCallback((size: number) => {
-    const newStats = {
-      ...stats,
-      totalImports: stats.totalImports + 1,
-      lastImportDate: new Date().toISOString(),
-      avgImportSize: (stats.avgImportSize * stats.totalImports + size) / (stats.totalImports + 1),
-    };
-    saveStats(newStats);
-  }, [stats, saveStats]);
+  const recordImport = useCallback(
+    (size: number) => {
+      const newStats = {
+        ...stats,
+        totalImports: stats.totalImports + 1,
+        lastImportDate: new Date().toISOString(),
+        avgImportSize: (stats.avgImportSize * stats.totalImports + size) / (stats.totalImports + 1),
+      };
+      saveStats(newStats);
+    },
+    [stats, saveStats]
+  );
 
   // Limpar estatísticas
   const clearStats = useCallback(() => {
@@ -456,34 +473,38 @@ export function useImportExportStats() {
 // Hook para gerenciar backups automáticos
 export function useBackupManager() {
   const [isCreatingBackup, setIsCreatingBackup] = useState(false);
-  const [backups, setBackups] = useState<Array<{
-    id: string;
-    date: string;
-    size: number;
-    description: string;
-  }>>([]);
+  const [backups, setBackups] = useState<
+    Array<{
+      id: string;
+      date: string;
+      size: number;
+      description: string;
+    }>
+  >([]);
 
   // Carregar lista de backups
   const loadBackups = useCallback(() => {
     try {
       const keys = Object.keys(localStorage).filter(key => key.startsWith('backup-'));
-      const backupList = keys.map(key => {
-        const data = localStorage.getItem(key);
-        if (data) {
-          const parsed = JSON.parse(data);
-          return {
-            id: key,
-            date: new Date(parseInt(key.split('-')[1])).toISOString(),
-            size: JSON.stringify(parsed).length,
-            description: `Backup automático`,
-          };
-        }
-        return null;
-      }).filter(Boolean) as typeof backups;
+      const backupList = keys
+        .map(key => {
+          const data = localStorage.getItem(key);
+          if (data) {
+            const parsed = JSON.parse(data);
+            return {
+              id: key,
+              date: new Date(parseInt(key.split('-')[1])).toISOString(),
+              size: JSON.stringify(parsed).length,
+              description: `Backup automático`,
+            };
+          }
+          return null;
+        })
+        .filter(Boolean) as typeof backups;
 
       // Ordenar por data (mais recente primeiro)
       backupList.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-      
+
       setBackups(backupList);
     } catch (error) {
       console.warn('Erro ao carregar backups:', error);
@@ -495,7 +516,7 @@ export function useBackupManager() {
     setIsCreatingBackup(true);
     try {
       const backupId = `backup-${Date.now()}`;
-      
+
       // Usar o service de import para criar backup
       const backupData = {
         features: await db.features.toArray(),
@@ -505,7 +526,7 @@ export function useBackupManager() {
       };
 
       localStorage.setItem(backupId, JSON.stringify(backupData));
-      
+
       const newBackup = {
         id: backupId,
         date: new Date().toISOString(),
@@ -514,7 +535,7 @@ export function useBackupManager() {
       };
 
       setBackups(prev => [newBackup, ...prev]);
-      
+
       return backupId;
     } finally {
       setIsCreatingBackup(false);

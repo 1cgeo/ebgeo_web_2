@@ -10,20 +10,20 @@ import { DrawingTool, EditMode } from '../../../types/feature.types';
 interface DrawingState {
   // Ferramenta ativa
   activeTool: DrawingTool;
-  
+
   // Estado de edição
   editMode: EditMode;
   isDrawing: boolean;
-  
+
   // Feature sendo criada/editada
   currentFeature: ExtendedFeature | null;
-  
+
   // Camada ativa para novos desenhos
   activeLayerId: string | null;
-  
+
   // Posição do mouse
   mousePosition: Position | null;
-  
+
   // Configurações de estilo temporário
   temporaryStyle: {
     strokeColor: string;
@@ -33,14 +33,14 @@ interface DrawingState {
     markerColor: string;
     markerSize: number;
   };
-  
+
   // Estado de edição de vértices
   editingVertex: {
     featureId: string | null;
     vertexIndex: number | null;
     isDragging: boolean;
   };
-  
+
   // Snappping
   snapSettings: {
     enabled: boolean;
@@ -57,37 +57,37 @@ interface DrawingActions {
   // Gerenciamento de ferramentas
   setActiveTool: (tool: DrawingTool) => void;
   resetTool: () => void;
-  
+
   // Gerenciamento de modo de edição
   setEditMode: (mode: EditMode) => void;
   startDrawing: () => void;
   stopDrawing: () => void;
-  
+
   // Gerenciamento de feature atual
   setCurrentFeature: (feature: ExtendedFeature | null) => void;
   updateCurrentFeature: (updates: Partial<ExtendedFeature>) => void;
   clearCurrentFeature: () => void;
-  
+
   // Gerenciamento de camada ativa
   setActiveLayerId: (layerId: string | null) => void;
-  
+
   // Posição do mouse
   setMousePosition: (position: Position | null) => void;
-  
+
   // Estilo temporário
   updateTemporaryStyle: (style: Partial<DrawingState['temporaryStyle']>) => void;
   resetTemporaryStyle: () => void;
-  
+
   // Edição de vértices
   startVertexEdit: (featureId: string, vertexIndex: number) => void;
   updateVertexEdit: (vertexIndex: number) => void;
   stopVertexEdit: () => void;
   setVertexDragging: (isDragging: boolean) => void;
-  
+
   // Configurações de snap
   updateSnapSettings: (settings: Partial<DrawingState['snapSettings']>) => void;
   toggleSnap: () => void;
-  
+
   // Reset completo
   reset: () => void;
 }
@@ -130,9 +130,9 @@ export const useDrawingStore = create<DrawingState & DrawingActions>()(
       ...initialState,
 
       // Gerenciamento de ferramentas
-      setActiveTool: (tool) => {
+      setActiveTool: tool => {
         set(
-          (state) => ({
+          state => ({
             activeTool: tool,
             editMode: tool === 'select' ? 'selecting' : 'drawing',
             // Limpar estado atual se mudando de ferramenta
@@ -158,7 +158,7 @@ export const useDrawingStore = create<DrawingState & DrawingActions>()(
       },
 
       // Gerenciamento de modo de edição
-      setEditMode: (mode) => {
+      setEditMode: mode => {
         set({ editMode: mode }, false, 'setEditMode');
       },
 
@@ -185,16 +185,14 @@ export const useDrawingStore = create<DrawingState & DrawingActions>()(
       },
 
       // Gerenciamento de feature atual
-      setCurrentFeature: (feature) => {
+      setCurrentFeature: feature => {
         set({ currentFeature: feature }, false, 'setCurrentFeature');
       },
 
-      updateCurrentFeature: (updates) => {
+      updateCurrentFeature: updates => {
         set(
-          (state) => ({
-            currentFeature: state.currentFeature
-              ? { ...state.currentFeature, ...updates }
-              : null,
+          state => ({
+            currentFeature: state.currentFeature ? { ...state.currentFeature, ...updates } : null,
           }),
           false,
           'updateCurrentFeature'
@@ -206,19 +204,19 @@ export const useDrawingStore = create<DrawingState & DrawingActions>()(
       },
 
       // Gerenciamento de camada ativa
-      setActiveLayerId: (layerId) => {
+      setActiveLayerId: layerId => {
         set({ activeLayerId: layerId }, false, 'setActiveLayerId');
       },
 
       // Posição do mouse
-      setMousePosition: (position) => {
+      setMousePosition: position => {
         set({ mousePosition: position }, false, 'setMousePosition');
       },
 
       // Estilo temporário
-      updateTemporaryStyle: (style) => {
+      updateTemporaryStyle: style => {
         set(
-          (state) => ({
+          state => ({
             temporaryStyle: { ...state.temporaryStyle, ...style },
           }),
           false,
@@ -227,11 +225,7 @@ export const useDrawingStore = create<DrawingState & DrawingActions>()(
       },
 
       resetTemporaryStyle: () => {
-        set(
-          { temporaryStyle: initialState.temporaryStyle },
-          false,
-          'resetTemporaryStyle'
-        );
+        set({ temporaryStyle: initialState.temporaryStyle }, false, 'resetTemporaryStyle');
       },
 
       // Edição de vértices
@@ -250,9 +244,9 @@ export const useDrawingStore = create<DrawingState & DrawingActions>()(
         );
       },
 
-      updateVertexEdit: (vertexIndex) => {
+      updateVertexEdit: vertexIndex => {
         set(
-          (state) => ({
+          state => ({
             editingVertex: {
               ...state.editingVertex,
               vertexIndex,
@@ -278,9 +272,9 @@ export const useDrawingStore = create<DrawingState & DrawingActions>()(
         );
       },
 
-      setVertexDragging: (isDragging) => {
+      setVertexDragging: isDragging => {
         set(
-          (state) => ({
+          state => ({
             editingVertex: {
               ...state.editingVertex,
               isDragging,
@@ -292,9 +286,9 @@ export const useDrawingStore = create<DrawingState & DrawingActions>()(
       },
 
       // Configurações de snap
-      updateSnapSettings: (settings) => {
+      updateSnapSettings: settings => {
         set(
-          (state) => ({
+          state => ({
             snapSettings: { ...state.snapSettings, ...settings },
           }),
           false,
@@ -304,7 +298,7 @@ export const useDrawingStore = create<DrawingState & DrawingActions>()(
 
       toggleSnap: () => {
         set(
-          (state) => ({
+          state => ({
             snapSettings: {
               ...state.snapSettings,
               enabled: !state.snapSettings.enabled,
@@ -329,7 +323,7 @@ export const useDrawingStore = create<DrawingState & DrawingActions>()(
 // Seletores úteis
 export const useDrawingSelectors = () => {
   const store = useDrawingStore();
-  
+
   return {
     // Estados derivados
     isEditing: store.editMode === 'editing',
@@ -337,7 +331,7 @@ export const useDrawingSelectors = () => {
     canDraw: store.activeTool !== 'select' && !store.isDrawing,
     hasCurrentFeature: store.currentFeature !== null,
     isEditingVertex: store.editingVertex.featureId !== null,
-    
+
     // Configurações ativas
     snapEnabled: store.snapSettings.enabled,
     strokeStyle: {
@@ -357,7 +351,7 @@ export const useDrawingSelectors = () => {
 
 // Hook para ações específicas de ferramentas
 export const useDrawingActions = () => {
-  const actions = useDrawingStore((state) => ({
+  const actions = useDrawingStore(state => ({
     setActiveTool: state.setActiveTool,
     startDrawing: state.startDrawing,
     stopDrawing: state.stopDrawing,

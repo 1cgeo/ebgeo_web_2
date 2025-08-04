@@ -1,4 +1,4 @@
-// Path: features/drawing/components/DrawingToolbar.tsx
+// Path: features\drawing\components\DrawingToolbar.tsx
 
 import React, { useState } from 'react';
 import {
@@ -49,22 +49,11 @@ export const DrawingToolbar: React.FC<DrawingToolbarProps> = ({
   const [settingsAnchor, setSettingsAnchor] = useState<null | HTMLElement>(null);
 
   // Store state
-  const {
-    activeTool,
-    isDrawing,
-    snapSettings,
-    temporaryStyle,
-    activeLayerId,
-  } = useDrawingStore();
+  const { activeTool, isDrawing, snapSettings, temporaryStyle, activeLayerId } = useDrawingStore();
 
   // Store actions
-  const {
-    setActiveTool,
-    updateSnapSettings,
-    toggleSnap,
-    updateTemporaryStyle,
-    reset,
-  } = useDrawingActions();
+  const { setActiveTool, updateSnapSettings, toggleSnap, updateTemporaryStyle, reset } =
+    useDrawingActions();
 
   // Selection
   const {
@@ -140,10 +129,7 @@ export const DrawingToolbar: React.FC<DrawingToolbarProps> = ({
   ];
 
   // Handler para mudança de ferramenta
-  const handleToolChange = (
-    event: React.MouseEvent<HTMLElement>,
-    newTool: DrawingTool | null,
-  ) => {
+  const handleToolChange = (event: React.MouseEvent<HTMLElement>, newTool: DrawingTool | null) => {
     if (newTool !== null) {
       setActiveTool(newTool);
     }
@@ -233,7 +219,7 @@ export const DrawingToolbar: React.FC<DrawingToolbarProps> = ({
         size="small"
         sx={{ '& .MuiToggleButton-root': { minWidth: 48, minHeight: 48 } }}
       >
-        {tools.map((tool) => (
+        {tools.map(tool => (
           <ToggleButton
             key={tool.id}
             value={tool.id}
@@ -275,7 +261,9 @@ export const DrawingToolbar: React.FC<DrawingToolbarProps> = ({
 
       {/* Ações de Undo/Redo */}
       <Box sx={{ display: 'flex', gap: 0.5, justifyContent: 'center' }}>
-        <Tooltip title={nextUndoDescription ? `Desfazer: ${nextUndoDescription}` : 'Desfazer (Ctrl+Z)'}>
+        <Tooltip
+          title={nextUndoDescription ? `Desfazer: ${nextUndoDescription}` : 'Desfazer (Ctrl+Z)'}
+        >
           <span>
             <IconButton
               size="small"
@@ -287,7 +275,9 @@ export const DrawingToolbar: React.FC<DrawingToolbarProps> = ({
           </span>
         </Tooltip>
 
-        <Tooltip title={nextRedoDescription ? `Refazer: ${nextRedoDescription}` : 'Refazer (Ctrl+Y)'}>
+        <Tooltip
+          title={nextRedoDescription ? `Refazer: ${nextRedoDescription}` : 'Refazer (Ctrl+Y)'}
+        >
           <span>
             <IconButton
               size="small"
@@ -369,7 +359,7 @@ export const DrawingToolbar: React.FC<DrawingToolbarProps> = ({
             control={
               <Switch
                 checked={snapSettings.enabled}
-                onChange={(e) => updateSnapSettings({ enabled: e.target.checked })}
+                onChange={e => updateSnapSettings({ enabled: e.target.checked })}
                 size="small"
               />
             }
@@ -383,7 +373,7 @@ export const DrawingToolbar: React.FC<DrawingToolbarProps> = ({
             control={
               <Switch
                 checked={snapSettings.snapToVertices}
-                onChange={(e) => updateSnapSettings({ snapToVertices: e.target.checked })}
+                onChange={e => updateSnapSettings({ snapToVertices: e.target.checked })}
                 disabled={!snapSettings.enabled}
                 size="small"
               />
@@ -398,7 +388,7 @@ export const DrawingToolbar: React.FC<DrawingToolbarProps> = ({
             control={
               <Switch
                 checked={snapSettings.snapToEdges}
-                onChange={(e) => updateSnapSettings({ snapToEdges: e.target.checked })}
+                onChange={e => updateSnapSettings({ snapToEdges: e.target.checked })}
                 disabled={!snapSettings.enabled}
                 size="small"
               />
@@ -422,7 +412,7 @@ export const DrawingToolbar: React.FC<DrawingToolbarProps> = ({
             <input
               type="color"
               value={temporaryStyle.strokeColor}
-              onChange={(e) => updateTemporaryStyle({ strokeColor: e.target.value })}
+              onChange={e => updateTemporaryStyle({ strokeColor: e.target.value })}
               style={{ width: '100%', height: 30, border: 'none', borderRadius: 4 }}
             />
           </Box>
@@ -434,7 +424,7 @@ export const DrawingToolbar: React.FC<DrawingToolbarProps> = ({
             <input
               type="color"
               value={temporaryStyle.fillColor}
-              onChange={(e) => updateTemporaryStyle({ fillColor: e.target.value })}
+              onChange={e => updateTemporaryStyle({ fillColor: e.target.value })}
               style={{ width: '100%', height: 30, border: 'none', borderRadius: 4 }}
             />
           </Box>

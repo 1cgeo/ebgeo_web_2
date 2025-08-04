@@ -73,9 +73,12 @@ export const useInvalidateLayers = () => {
   return {
     invalidateAll: () => queryClient.invalidateQueries({ queryKey: LAYER_QUERY_KEYS.all }),
     invalidateList: () => queryClient.invalidateQueries({ queryKey: LAYER_QUERY_KEYS.lists() }),
-    invalidateDetail: (id: string) => queryClient.invalidateQueries({ queryKey: LAYER_QUERY_KEYS.detail(id) }),
-    invalidateVisible: () => queryClient.invalidateQueries({ queryKey: LAYER_QUERY_KEYS.visible() }),
-    invalidateStats: (id: string) => queryClient.invalidateQueries({ queryKey: LAYER_QUERY_KEYS.stats(id) }),
+    invalidateDetail: (id: string) =>
+      queryClient.invalidateQueries({ queryKey: LAYER_QUERY_KEYS.detail(id) }),
+    invalidateVisible: () =>
+      queryClient.invalidateQueries({ queryKey: LAYER_QUERY_KEYS.visible() }),
+    invalidateStats: (id: string) =>
+      queryClient.invalidateQueries({ queryKey: LAYER_QUERY_KEYS.stats(id) }),
   };
 };
 
@@ -86,17 +89,14 @@ export const useCreateLayer = () => {
 
   return useMutation({
     mutationFn: (layer: LayerConfig) => layerRepository.create(layer),
-    onSuccess: (newLayer) => {
+    onSuccess: newLayer => {
       // Atualizar cache otimisticamente
-      queryClient.setQueryData(
-        LAYER_QUERY_KEYS.detail(newLayer.id),
-        newLayer
-      );
+      queryClient.setQueryData(LAYER_QUERY_KEYS.detail(newLayer.id), newLayer);
 
       // Invalidar queries relacionadas
       invalidateAll();
     },
-    onError: (error) => {
+    onError: error => {
       console.error('Erro ao criar camada:', error);
     },
   });
@@ -112,17 +112,14 @@ export const useUpdateLayer = () => {
       layerRepository.update(id, updates),
     onSuccess: (updatedLayer, { id }) => {
       // Atualizar cache
-      queryClient.setQueryData(
-        LAYER_QUERY_KEYS.detail(id),
-        updatedLayer
-      );
+      queryClient.setQueryData(LAYER_QUERY_KEYS.detail(id), updatedLayer);
 
       // Invalidar queries relacionadas
       invalidateDetail(id);
       invalidateList();
       invalidateVisible();
     },
-    onError: (error) => {
+    onError: error => {
       console.error('Erro ao atualizar camada:', error);
     },
   });
@@ -135,14 +132,12 @@ export const useDeleteLayer = () => {
 
   return useMutation({
     mutationFn: (id: string) => layerRepository.delete(id),
-    onMutate: async (id) => {
+    onMutate: async id => {
       // Cancelar queries em andamento
       await queryClient.cancelQueries({ queryKey: LAYER_QUERY_KEYS.detail(id) });
 
       // Snapshot do estado anterior
-      const previousLayer = queryClient.getQueryData<LayerConfig>(
-        LAYER_QUERY_KEYS.detail(id)
-      );
+      const previousLayer = queryClient.getQueryData<LayerConfig>(LAYER_QUERY_KEYS.detail(id));
 
       // Atualizar cache otimisticamente
       queryClient.removeQueries({ queryKey: LAYER_QUERY_KEYS.detail(id) });
@@ -152,10 +147,7 @@ export const useDeleteLayer = () => {
     onError: (error, id, context) => {
       // Reverter em caso de erro
       if (context?.previousLayer) {
-        queryClient.setQueryData(
-          LAYER_QUERY_KEYS.detail(id),
-          context.previousLayer
-        );
+        queryClient.setQueryData(LAYER_QUERY_KEYS.detail(id), context.previousLayer);
       }
       console.error('Erro ao deletar camada:', error);
     },
@@ -178,7 +170,7 @@ export const useDeleteLayerWithFeatures = () => {
       invalidateAll();
       queryClient.invalidateQueries({ queryKey: ['features'] });
     },
-    onError: (error) => {
+    onError: error => {
       console.error('Erro ao deletar camada com features:', error);
     },
   });
@@ -191,18 +183,15 @@ export const useToggleLayerVisibility = () => {
 
   return useMutation({
     mutationFn: (id: string) => layerRepository.toggleVisibility(id),
-    onSuccess: (updatedLayer) => {
+    onSuccess: updatedLayer => {
       // Atualizar cache
-      queryClient.setQueryData(
-        LAYER_QUERY_KEYS.detail(updatedLayer.id),
-        updatedLayer
-      );
+      queryClient.setQueryData(LAYER_QUERY_KEYS.detail(updatedLayer.id), updatedLayer);
 
       // Invalidar queries relacionadas
       invalidateDetail(updatedLayer.id);
       invalidateVisible();
     },
-    onError: (error) => {
+    onError: error => {
       console.error('Erro ao alternar visibilidade da camada:', error);
     },
   });
@@ -216,17 +205,14 @@ export const useUpdateLayerOpacity = () => {
   return useMutation({
     mutationFn: ({ id, opacity }: { id: string; opacity: number }) =>
       layerRepository.updateOpacity(id, opacity),
-    onSuccess: (updatedLayer) => {
+    onSuccess: updatedLayer => {
       // Atualizar cache
-      queryClient.setQueryData(
-        LAYER_QUERY_KEYS.detail(updatedLayer.id),
-        updatedLayer
-      );
+      queryClient.setQueryData(LAYER_QUERY_KEYS.detail(updatedLayer.id), updatedLayer);
 
       // Invalidar query específica
       invalidateDetail(updatedLayer.id);
     },
-    onError: (error) => {
+    onError: error => {
       console.error('Erro ao atualizar opacidade da camada:', error);
     },
   });
@@ -242,7 +228,7 @@ export const useReorderLayers = () => {
       // Invalidar todas as queries de camadas
       invalidateAll();
     },
-    onError: (error) => {
+    onError: error => {
       console.error('Erro ao reordenar camadas:', error);
     },
   });
@@ -259,7 +245,7 @@ export const useDuplicateLayer = () => {
       // Invalidar todas as queries
       invalidateAll();
     },
-    onError: (error) => {
+    onError: error => {
       console.error('Erro ao duplicar camada:', error);
     },
   });

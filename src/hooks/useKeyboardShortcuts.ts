@@ -1,3 +1,4 @@
+// Path: hooks\useKeyboardShortcuts.ts
 import { useEffect } from 'react';
 import { useAppDispatch } from '@/store';
 import { drawingActions } from '@/store/slices/drawingSlice';
@@ -90,7 +91,7 @@ export const useKeyboardShortcuts = () => {
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      const shortcut = shortcuts.find((s) => s.key === event.key.toLowerCase());
+      const shortcut = shortcuts.find(s => s.key === event.key.toLowerCase());
       if (shortcut) {
         shortcut.action();
       }

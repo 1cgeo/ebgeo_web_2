@@ -1,13 +1,13 @@
-// Path: features/io/services/import.service.ts
+// Path: features\io\services\import.service.ts
 
 import JSZip from 'jszip';
 import { z } from 'zod';
 import { db, AssetData } from '../../data-access/db';
-import { 
-  ExtendedFeature, 
-  FeatureCollection, 
-  validateFeature, 
-  validateFeatureCollection 
+import {
+  ExtendedFeature,
+  FeatureCollection,
+  validateFeature,
+  validateFeatureCollection,
 } from '../../data-access/schemas/feature.schema';
 import { LayerConfig, validateLayerConfig } from '../../data-access/schemas/layer.schema';
 import { MapConfig, validateMapConfig } from '../../data-access/schemas/map.schema';
@@ -80,7 +80,6 @@ interface ExtractedData {
  * Service para importação de arquivos .ebgeo
  */
 export class ImportService {
-  
   /**
    * Importar arquivo .ebgeo
    */
@@ -119,7 +118,7 @@ export class ImportService {
 
       // 5. Processar importação
       const importResults = await this.processImport(filteredData, options);
-      
+
       // 6. Consolidar resultados
       result.success = true;
       result.stats = importResults.stats;
@@ -127,7 +126,6 @@ export class ImportService {
       result.errors = importResults.errors;
 
       console.log('Importação concluída com sucesso:', result.stats);
-
     } catch (error) {
       console.error('Erro na importação:', error);
       result.success = false;
@@ -160,7 +158,9 @@ export class ImportService {
 
     // Validar tamanho
     if (file.size > IO_CONFIG.maxFileSize) {
-      throw new Error(`Arquivo muito grande. Máximo: ${this.formatFileSize(IO_CONFIG.maxFileSize)}`);
+      throw new Error(
+        `Arquivo muito grande. Máximo: ${this.formatFileSize(IO_CONFIG.maxFileSize)}`
+      );
     }
 
     // Validar se é um ZIP válido
@@ -192,14 +192,14 @@ export class ImportService {
     // Extrair manifest.json
     const manifestContent = await zip.files['manifest.json'].async('string');
     const manifestData = JSON.parse(manifestContent);
-    
+
     // Validar manifest
     const manifest = ManifestSchema.parse(manifestData);
 
     // Extrair features.json
     const featuresContent = await zip.files['features.json'].async('string');
     const featuresData = JSON.parse(featuresContent);
-    
+
     // Validar features
     let featureCollection: FeatureCollection;
     if (options.validateData) {
@@ -257,7 +257,7 @@ export class ImportService {
     const assets = new Map<string, Blob>();
     if (options.includeAssets && zip.files['assets/']) {
       console.log('Extraindo assets...');
-      
+
       for (const fileName of Object.keys(zip.files)) {
         if (fileName.startsWith('assets/') && !fileName.endsWith('/')) {
           const assetFile = zip.files[fileName];
@@ -268,7 +268,9 @@ export class ImportService {
       }
     }
 
-    console.log(`Dados extraídos: ${features.length} features, ${layers.length} layers, ${maps.length} maps, ${assets.size} assets`);
+    console.log(
+      `Dados extraídos: ${features.length} features, ${layers.length} layers, ${maps.length} maps, ${assets.size} assets`
+    );
 
     return {
       manifest: manifest as EBGeoManifest,
@@ -288,7 +290,7 @@ export class ImportService {
     // Filtrar layers selecionadas
     if (options.selectedLayerIds && options.selectedLayerIds.length > 0) {
       layers = layers.filter(layer => options.selectedLayerIds!.includes(layer.id));
-      
+
       // Filtrar features das layers selecionadas
       const selectedLayerIds = new Set(layers.map(l => l.id));
       features = features.filter(feature => selectedLayerIds.has(feature.properties.layerId));
@@ -311,7 +313,10 @@ export class ImportService {
   /**
    * Processar importação dos dados
    */
-  private async processImport(data: ExtractedData, options: ImportOptions): Promise<{
+  private async processImport(
+    data: ExtractedData,
+    options: ImportOptions
+  ): Promise<{
     stats: ImportResult['stats'];
     conflicts: ImportConflict[];
     errors: string[];
@@ -329,7 +334,6 @@ export class ImportService {
 
     try {
       await db.transaction('rw', [db.features, db.layers, db.maps, db.assets], async () => {
-        
         // 1. Importar assets primeiro
         if (options.includeAssets) {
           const assetResults = await this.importAssets(data.assets, options);
@@ -358,12 +362,12 @@ export class ImportService {
 
         stats.conflicts = conflicts.length;
         stats.errors = errors.length;
-
       });
-
     } catch (error) {
       console.error('Erro na transação de importação:', error);
-      errors.push(`Erro na transação: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+      errors.push(
+        `Erro na transação: ${error instanceof Error ? error.message : 'Erro desconhecido'}`
+      );
       stats.errors++;
     }
 
@@ -373,7 +377,10 @@ export class ImportService {
   /**
    * Importar assets
    */
-  private async importAssets(assets: Map<string, Blob>, options: ImportOptions): Promise<{
+  private async importAssets(
+    assets: Map<string, Blob>,
+    options: ImportOptions
+  ): Promise<{
     imported: number;
     conflicts: ImportConflict[];
     errors: string[];
@@ -385,9 +392,14 @@ export class ImportService {
     for (const [assetId, blob] of assets) {
       try {
         const existing = await db.assets.get(assetId);
-        
+
         if (existing) {
-          const conflict = await this.handleAssetConflict(assetId, blob, existing, options.strategy);
+          const conflict = await this.handleAssetConflict(
+            assetId,
+            blob,
+            existing,
+            options.strategy
+          );
           if (conflict) {
             conflicts.push(conflict);
             if (conflict.action === 'skipped') {
@@ -408,10 +420,11 @@ export class ImportService {
 
         await db.assets.put(assetData);
         imported++;
-
       } catch (error) {
         console.error(`Erro ao importar asset ${assetId}:`, error);
-        errors.push(`Asset ${assetId}: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+        errors.push(
+          `Asset ${assetId}: ${error instanceof Error ? error.message : 'Erro desconhecido'}`
+        );
       }
     }
 
@@ -421,7 +434,10 @@ export class ImportService {
   /**
    * Importar layers
    */
-  private async importLayers(layers: LayerConfig[], options: ImportOptions): Promise<{
+  private async importLayers(
+    layers: LayerConfig[],
+    options: ImportOptions
+  ): Promise<{
     imported: number;
     conflicts: ImportConflict[];
     errors: string[];
@@ -433,7 +449,7 @@ export class ImportService {
     for (const layer of layers) {
       try {
         const existing = await db.layers.get(layer.id);
-        
+
         if (existing) {
           const conflict = await this.handleLayerConflict(layer, existing, options.strategy);
           if (conflict) {
@@ -452,10 +468,11 @@ export class ImportService {
 
         await db.layers.put(layerToImport);
         imported++;
-
       } catch (error) {
         console.error(`Erro ao importar layer ${layer.id}:`, error);
-        errors.push(`Layer ${layer.name}: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+        errors.push(
+          `Layer ${layer.name}: ${error instanceof Error ? error.message : 'Erro desconhecido'}`
+        );
       }
     }
 
@@ -465,7 +482,10 @@ export class ImportService {
   /**
    * Importar features
    */
-  private async importFeatures(features: ExtendedFeature[], options: ImportOptions): Promise<{
+  private async importFeatures(
+    features: ExtendedFeature[],
+    options: ImportOptions
+  ): Promise<{
     imported: number;
     conflicts: ImportConflict[];
     errors: string[];
@@ -477,7 +497,7 @@ export class ImportService {
     for (const feature of features) {
       try {
         const existing = await db.features.get(feature.id);
-        
+
         if (existing) {
           const conflict = await this.handleFeatureConflict(feature, existing, options.strategy);
           if (conflict) {
@@ -499,10 +519,11 @@ export class ImportService {
 
         await db.features.put(featureToImport);
         imported++;
-
       } catch (error) {
         console.error(`Erro ao importar feature ${feature.id}:`, error);
-        errors.push(`Feature ${feature.properties.name || feature.id}: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+        errors.push(
+          `Feature ${feature.properties.name || feature.id}: ${error instanceof Error ? error.message : 'Erro desconhecido'}`
+        );
       }
     }
 
@@ -512,7 +533,10 @@ export class ImportService {
   /**
    * Importar maps
    */
-  private async importMaps(maps: MapConfig[], options: ImportOptions): Promise<{
+  private async importMaps(
+    maps: MapConfig[],
+    options: ImportOptions
+  ): Promise<{
     imported: number;
     conflicts: ImportConflict[];
     errors: string[];
@@ -524,7 +548,7 @@ export class ImportService {
     for (const map of maps) {
       try {
         const existing = await db.maps.get(map.id);
-        
+
         if (existing) {
           const conflict = await this.handleMapConflict(map, existing, options.strategy);
           if (conflict) {
@@ -543,10 +567,11 @@ export class ImportService {
 
         await db.maps.put(mapToImport);
         imported++;
-
       } catch (error) {
         console.error(`Erro ao importar map ${map.id}:`, error);
-        errors.push(`Map ${map.name}: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+        errors.push(
+          `Map ${map.name}: ${error instanceof Error ? error.message : 'Erro desconhecido'}`
+        );
       }
     }
 
@@ -803,7 +828,7 @@ export class ImportService {
 
     // Salvar backup no localStorage (temporário)
     localStorage.setItem(backupId, JSON.stringify(backupData));
-    
+
     return backupId;
   }
 
@@ -875,11 +900,12 @@ export class ImportService {
         valid: issues.length === 0,
         issues,
       };
-
     } catch (error) {
       return {
         valid: false,
-        issues: [`Erro na validação: ${error instanceof Error ? error.message : 'Erro desconhecido'}`],
+        issues: [
+          `Erro na validação: ${error instanceof Error ? error.message : 'Erro desconhecido'}`,
+        ],
       };
     }
   }

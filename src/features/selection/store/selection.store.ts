@@ -8,26 +8,26 @@ import { Position } from 'geojson';
 interface SelectionState {
   // Features selecionadas
   selectedFeatureIds: string[];
-  
+
   // Feature sendo destacada (hover)
   hoveredFeatureId: string | null;
-  
+
   // Feature sendo editada ativamente
   editingFeatureId: string | null;
-  
+
   // Seleção múltipla
   isMultiSelectMode: boolean;
-  
+
   // Seleção por região (box select)
   boxSelection: {
     isActive: boolean;
     startPoint: Position | null;
     endPoint: Position | null;
   };
-  
+
   // Modo de seleção
   selectionMode: 'single' | 'multi' | 'box' | 'none';
-  
+
   // Última ação de seleção (para undo/redo)
   lastSelectionAction: {
     type: 'select' | 'deselect' | 'toggle' | 'clear' | 'box';
@@ -44,47 +44,47 @@ interface SelectionActions {
   deselectFeature: (featureId: string) => void;
   deselectFeatures: (featureIds: string[]) => void;
   clearSelection: () => void;
-  
+
   // Seleção condicional
   selectAll: () => void;
   selectByLayerId: (layerId: string) => void;
   selectByGeometryType: (geometryType: string) => void;
-  
+
   // Toggle de seleção
   toggleFeature: (featureId: string) => void;
   toggleFeatures: (featureIds: string[]) => void;
-  
+
   // Hover
   setHoveredFeature: (featureId: string | null) => void;
-  
+
   // Edição
   setEditingFeature: (featureId: string | null) => void;
-  
+
   // Modo de seleção múltipla
   setMultiSelectMode: (enabled: boolean) => void;
   toggleMultiSelectMode: () => void;
-  
+
   // Seleção por caixa
   startBoxSelection: (startPoint: Position) => void;
   updateBoxSelection: (endPoint: Position) => void;
   endBoxSelection: (featureIds: string[]) => void;
   cancelBoxSelection: () => void;
-  
+
   // Modo de seleção
   setSelectionMode: (mode: SelectionState['selectionMode']) => void;
-  
+
   // Navegação entre seleções
   selectNext: () => void;
   selectPrevious: () => void;
-  
+
   // Inverter seleção
   invertSelection: (allFeatureIds: string[]) => void;
-  
+
   // Utilitários
   isSelected: (featureId: string) => boolean;
   getSelectionCount: () => number;
   hasSelection: () => boolean;
-  
+
   // Reset
   reset: () => void;
 }
@@ -148,9 +148,8 @@ export const useSelectionStore = create<SelectionState & SelectionActions>()(
 
       selectFeatures: (featureIds, mode = 'replace') => {
         const state = get();
-        const newSelectedIds = mode === 'add'
-          ? [...new Set([...state.selectedFeatureIds, ...featureIds])]
-          : featureIds;
+        const newSelectedIds =
+          mode === 'add' ? [...new Set([...state.selectedFeatureIds, ...featureIds])] : featureIds;
 
         set(
           {
@@ -166,7 +165,7 @@ export const useSelectionStore = create<SelectionState & SelectionActions>()(
         );
       },
 
-      deselectFeature: (featureId) => {
+      deselectFeature: featureId => {
         const state = get();
         const newSelectedIds = state.selectedFeatureIds.filter(id => id !== featureId);
 
@@ -184,11 +183,9 @@ export const useSelectionStore = create<SelectionState & SelectionActions>()(
         );
       },
 
-      deselectFeatures: (featureIds) => {
+      deselectFeatures: featureIds => {
         const state = get();
-        const newSelectedIds = state.selectedFeatureIds.filter(
-          id => !featureIds.includes(id)
-        );
+        const newSelectedIds = state.selectedFeatureIds.filter(id => !featureIds.includes(id));
 
         set(
           {
@@ -228,22 +225,24 @@ export const useSelectionStore = create<SelectionState & SelectionActions>()(
         console.warn('selectAll deve ser implementado no componente que conhece todas as features');
       },
 
-      selectByLayerId: (layerId) => {
+      selectByLayerId: layerId => {
         // Implementação será feita no hook que usa este store
         console.warn('selectByLayerId deve ser implementado no componente que conhece as features');
       },
 
-      selectByGeometryType: (geometryType) => {
+      selectByGeometryType: geometryType => {
         // Implementação será feita no hook que usa este store
-        console.warn('selectByGeometryType deve ser implementado no componente que conhece as features');
+        console.warn(
+          'selectByGeometryType deve ser implementado no componente que conhece as features'
+        );
       },
 
       // Toggle de seleção
-      toggleFeature: (featureId) => {
+      toggleFeature: featureId => {
         get().selectFeature(featureId, 'toggle');
       },
 
-      toggleFeatures: (featureIds) => {
+      toggleFeatures: featureIds => {
         const state = get();
         const selected: string[] = [];
         const deselected: string[] = [];
@@ -276,31 +275,27 @@ export const useSelectionStore = create<SelectionState & SelectionActions>()(
       },
 
       // Hover
-      setHoveredFeature: (featureId) => {
+      setHoveredFeature: featureId => {
         set({ hoveredFeatureId: featureId }, false, 'setHoveredFeature');
       },
 
       // Edição
-      setEditingFeature: (featureId) => {
+      setEditingFeature: featureId => {
         set({ editingFeatureId: featureId }, false, 'setEditingFeature');
       },
 
       // Modo de seleção múltipla
-      setMultiSelectMode: (enabled) => {
+      setMultiSelectMode: enabled => {
         set({ isMultiSelectMode: enabled }, false, 'setMultiSelectMode');
       },
 
       toggleMultiSelectMode: () => {
         const state = get();
-        set(
-          { isMultiSelectMode: !state.isMultiSelectMode },
-          false,
-          'toggleMultiSelectMode'
-        );
+        set({ isMultiSelectMode: !state.isMultiSelectMode }, false, 'toggleMultiSelectMode');
       },
 
       // Seleção por caixa
-      startBoxSelection: (startPoint) => {
+      startBoxSelection: startPoint => {
         set(
           {
             boxSelection: {
@@ -315,7 +310,7 @@ export const useSelectionStore = create<SelectionState & SelectionActions>()(
         );
       },
 
-      updateBoxSelection: (endPoint) => {
+      updateBoxSelection: endPoint => {
         const state = get();
         set(
           {
@@ -329,10 +324,10 @@ export const useSelectionStore = create<SelectionState & SelectionActions>()(
         );
       },
 
-      endBoxSelection: (featureIds) => {
+      endBoxSelection: featureIds => {
         const state = get();
         get().selectFeatures(featureIds, state.isMultiSelectMode ? 'add' : 'replace');
-        
+
         set(
           {
             boxSelection: {
@@ -368,27 +363,29 @@ export const useSelectionStore = create<SelectionState & SelectionActions>()(
       },
 
       // Modo de seleção
-      setSelectionMode: (mode) => {
+      setSelectionMode: mode => {
         set({ selectionMode: mode }, false, 'setSelectionMode');
       },
 
       // Navegação entre seleções
       selectNext: () => {
         // Implementação será feita no hook que usa este store
-        console.warn('selectNext deve ser implementado no componente que conhece a ordem das features');
+        console.warn(
+          'selectNext deve ser implementado no componente que conhece a ordem das features'
+        );
       },
 
       selectPrevious: () => {
         // Implementação será feita no hook que usa este store
-        console.warn('selectPrevious deve ser implementado no componente que conhece a ordem das features');
+        console.warn(
+          'selectPrevious deve ser implementado no componente que conhece a ordem das features'
+        );
       },
 
       // Inverter seleção
-      invertSelection: (allFeatureIds) => {
+      invertSelection: allFeatureIds => {
         const state = get();
-        const newSelectedIds = allFeatureIds.filter(
-          id => !state.selectedFeatureIds.includes(id)
-        );
+        const newSelectedIds = allFeatureIds.filter(id => !state.selectedFeatureIds.includes(id));
 
         set(
           {
@@ -405,7 +402,7 @@ export const useSelectionStore = create<SelectionState & SelectionActions>()(
       },
 
       // Utilitários
-      isSelected: (featureId) => {
+      isSelected: featureId => {
         return get().selectedFeatureIds.includes(featureId);
       },
 
@@ -431,7 +428,7 @@ export const useSelectionStore = create<SelectionState & SelectionActions>()(
 // Seletores úteis
 export const useSelectionSelectors = () => {
   const store = useSelectionStore();
-  
+
   return {
     // Estados derivados
     hasSelection: store.selectedFeatureIds.length > 0,
@@ -440,10 +437,10 @@ export const useSelectionSelectors = () => {
     isBoxSelecting: store.boxSelection.isActive,
     isEditing: store.editingFeatureId !== null,
     hasHover: store.hoveredFeatureId !== null,
-    
+
     // Contadores
     selectionCount: store.selectedFeatureIds.length,
-    
+
     // IDs
     firstSelectedId: store.selectedFeatureIds[0] || null,
     lastSelectedId: store.selectedFeatureIds[store.selectedFeatureIds.length - 1] || null,
@@ -452,7 +449,7 @@ export const useSelectionSelectors = () => {
 
 // Hook para ações específicas de seleção
 export const useSelectionActions = () => {
-  const actions = useSelectionStore((state) => ({
+  const actions = useSelectionStore(state => ({
     selectFeature: state.selectFeature,
     selectFeatures: state.selectFeatures,
     deselectFeature: state.deselectFeature,

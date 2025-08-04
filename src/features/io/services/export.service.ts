@@ -1,4 +1,4 @@
-// Path: features/io/services/export.service.ts
+// Path: features\io\services\export.service.ts
 
 import JSZip from 'jszip';
 import { db } from '../../data-access/db';
@@ -60,7 +60,7 @@ export class ExportService {
   async exportAll(options: ExportOptions = {}): Promise<ExportResult> {
     try {
       console.log('Iniciando exportação completa...');
-      
+
       // Configurações padrão
       const config = {
         includeAssets: true,
@@ -107,7 +107,6 @@ export class ExportService {
           assets: data.assets.length,
         },
       };
-
     } catch (error) {
       console.error('Erro na exportação:', error);
       return {
@@ -139,7 +138,6 @@ export class ExportService {
         selectedLayerIds: map.layerIds,
         filename: options.filename || `${this.sanitizeFilename(map.name)}.ebgeo`,
       });
-
     } catch (error) {
       console.error('Erro ao exportar mapa:', error);
       throw error;
@@ -159,14 +157,13 @@ export class ExportService {
       }
 
       const layerNames = layers.map(l => l.name).join('-');
-      
+
       return await this.exportAll({
         ...options,
         includeAllMaps: false,
         selectedLayerIds: layerIds,
         filename: options.filename || `camadas-${this.sanitizeFilename(layerNames)}.ebgeo`,
       });
-
     } catch (error) {
       console.error('Erro ao exportar camadas:', error);
       throw error;
@@ -216,7 +213,9 @@ export class ExportService {
       }
     }
 
-    console.log(`Coletados: ${features.length} features, ${layers.length} layers, ${maps.length} maps, ${assets.length} assets`);
+    console.log(
+      `Coletados: ${features.length} features, ${layers.length} layers, ${maps.length} maps, ${assets.length} assets`
+    );
 
     return { features, layers, maps, assets };
   }
@@ -291,10 +290,10 @@ export class ExportService {
     for (const feature of features) {
       // Procurar por referências de assets nas propriedades
       const props = feature.properties;
-      
+
       // Verificar propriedades comuns que podem referenciar assets
       const potentialAssetProps = ['image', 'icon', 'symbol', 'attachment', 'media'];
-      
+
       for (const prop of potentialAssetProps) {
         const value = props[prop];
         if (typeof value === 'string' && value.startsWith('assets/')) {
@@ -344,11 +343,11 @@ export class ExportService {
     link.href = url;
     link.download = filename;
     link.style.display = 'none';
-    
+
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    
+
     URL.revokeObjectURL(url);
   }
 
@@ -418,7 +417,9 @@ export class ExportService {
     } catch (error) {
       return {
         valid: false,
-        issues: [`Erro na validação: ${error instanceof Error ? error.message : 'Erro desconhecido'}`],
+        issues: [
+          `Erro na validação: ${error instanceof Error ? error.message : 'Erro desconhecido'}`,
+        ],
       };
     }
   }
