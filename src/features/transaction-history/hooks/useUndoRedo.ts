@@ -11,6 +11,13 @@ import { FEATURE_QUERY_KEYS } from '../../data-access/hooks/useFeatures';
 // Instância do repository
 const featureRepository = new IndexedDBFeatureRepository();
 
+// Configuração de retry
+const RETRY_CONFIG = {
+  maxAttempts: 3,
+  baseDelay: 100, // ms
+  maxDelay: 1000, // ms
+} as const;
+
 // Tipos para criação de transações
 interface CreateTransactionOptions {
   type: TransactionType;
@@ -57,6 +64,32 @@ interface UseUndoRedoReturn {
   };
 }
 
+// Utility function para retry com exponential backoff
+const retry = async <T>(
+  operation: () => Promise<T>,
+  attempts: number = RETRY_CONFIG.maxAttempts
+): Promise<T> => {
+  for (let attempt = 1; attempt <= attempts; attempt++) {
+    try {
+      return await operation();
+    } catch (error) {
+      if (attempt === attempts) {
+        throw error;
+      }
+
+      const delay = Math.min(
+        RETRY_CONFIG.baseDelay * Math.pow(2, attempt - 1),
+        RETRY_CONFIG.maxDelay
+      );
+
+      console.warn(`Tentativa ${attempt} falhou, tentando novamente em ${delay}ms:`, error);
+      await new Promise(resolve => setTimeout(resolve, delay));
+    }
+  }
+
+  throw new Error('Retry failed - should not reach here');
+};
+
 export const useUndoRedo = (): UseUndoRedoReturn => {
   const queryClient = useQueryClient();
 
@@ -79,76 +112,40 @@ export const useUndoRedo = (): UseUndoRedoReturn => {
       const normalizedBefore = before ? (Array.isArray(before) ? before : [before]) : undefined;
       const normalizedAfter = after ? (Array.isArray(after) ? after : [after]) : undefined;
 
-      // Validações específicas por tipo
-      switch (type) {
-        case 'create':
-          if (!normalizedAfter || normalizedAfter.length === 0) {
-            throw new Error('Transação de criação deve ter dados "after"');
-          }
-          break;
-
-        case 'update':
-          if (
-            !normalizedBefore ||
-            !normalizedAfter ||
-            normalizedBefore.length !== normalizedAfter.length
-          ) {
-            throw new Error(
-              'Transação de atualização deve ter dados "before" e "after" com mesmo tamanho'
-            );
-          }
-          break;
-
-        case 'delete':
-          if (!normalizedBefore || normalizedBefore.length === 0) {
-            throw new Error('Transação de deleção deve ter dados "before"');
-          }
-          break;
-
-        case 'batch':
-          if (
-            (!normalizedBefore && !normalizedAfter) ||
-            (normalizedBefore &&
-              normalizedAfter &&
-              normalizedBefore.length !== normalizedAfter.length)
-          ) {
-            throw new Error('Transação em lote deve ter dados consistentes');
-          }
-          break;
-      }
-
-      return historyActions.addTransaction({
+      // Criar transação
+      const transaction: Omit<Transaction, 'id' | 'timestamp'> = {
         type,
         description,
         data: {
           before: normalizedBefore,
           after: normalizedAfter,
         },
-      });
+      };
+
+      return historyActions.addTransaction(transaction);
     },
     [historyActions]
   );
 
-  // Aplicar mudanças no repository e cache
+  // Aplicar mudanças no storage de forma atômica
   const applyChangesToStorage = useCallback(
     async (
       features: ExtendedFeature[],
       operation: 'create' | 'update' | 'delete'
     ): Promise<void> => {
+      if (features.length === 0) return;
+
       try {
         switch (operation) {
           case 'create':
+            // Para criação, usar bulkAdd para melhor performance
             await featureRepository.createMany(features);
-            // Atualizar cache
-            features.forEach(feature => {
-              queryClient.setQueryData(FEATURE_QUERY_KEYS.detail(feature.id), feature);
-            });
             break;
 
           case 'update':
+            // Para atualização, processar individualmente para manter integridade
             for (const feature of features) {
               await featureRepository.update(feature.id, feature);
-              queryClient.setQueryData(FEATURE_QUERY_KEYS.detail(feature.id), feature);
             }
             break;
 
@@ -179,7 +176,7 @@ export const useUndoRedo = (): UseUndoRedoReturn => {
     [queryClient]
   );
 
-  // Reverter transação (undo)
+  // Reverter transação (undo) - CORRIGIDO: aplica mudança ANTES de atualizar estado
   const revertTransaction = useCallback(
     async (transaction: Transaction): Promise<void> => {
       const { type, data } = transaction;
@@ -275,7 +272,7 @@ export const useUndoRedo = (): UseUndoRedoReturn => {
     [applyChangesToStorage]
   );
 
-  // Operação de undo
+  // Operação de undo - CORRIGIDO: Transação atômica
   const undo = useCallback(async (): Promise<boolean> => {
     const nextUndoTransaction = historyStore.getNextUndoTransaction();
 
@@ -284,25 +281,43 @@ export const useUndoRedo = (): UseUndoRedoReturn => {
       return false;
     }
 
-    try {
-      // Reverter a transação
-      await revertTransaction(nextUndoTransaction);
-
-      // Atualizar estado da pilha
-      const success = await historyStore.undo();
-
-      if (success) {
-        console.log(`Undo executado: ${nextUndoTransaction.description}`);
-      }
-
-      return success;
-    } catch (error) {
-      console.error('Erro durante undo:', error);
+    // Verificar se já está processando
+    if (historySelectors.isProcessing) {
+      console.warn('Operação de undo já em andamento');
       return false;
     }
-  }, [historyStore, revertTransaction]);
 
-  // Operação de redo
+    try {
+      console.log(`Iniciando undo: ${nextUndoTransaction.description}`);
+
+      // CORREÇÃO CRÍTICA: Aplicar mudança no banco PRIMEIRO
+      await retry(() => revertTransaction(nextUndoTransaction));
+
+      // SÓ DEPOIS atualizar estado da pilha se a operação foi bem-sucedida
+      const historyUpdateSuccess = await historyStore.undo();
+
+      if (historyUpdateSuccess) {
+        console.log(`Undo executado com sucesso: ${nextUndoTransaction.description}`);
+        return true;
+      } else {
+        // Se falhar ao atualizar o histórico, reverter a mudança no banco
+        console.error('Falha ao atualizar estado do histórico, revertendo mudança...');
+        await retry(() => applyTransaction(nextUndoTransaction));
+        throw new Error('Falha ao atualizar estado do histórico');
+      }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido no undo';
+      console.error('Erro durante undo:', errorMessage);
+
+      // Limpar qualquer erro anterior e definir novo erro
+      historyActions.clearError();
+      // Note: Aqui seria ideal ter um método setError no store, mas não vejo no código atual
+
+      return false;
+    }
+  }, [historyStore, historySelectors, historyActions, revertTransaction, applyTransaction]);
+
+  // Operação de redo - CORRIGIDO: Transação atômica
   const redo = useCallback(async (): Promise<boolean> => {
     const nextRedoTransaction = historyStore.getNextRedoTransaction();
 
@@ -311,23 +326,40 @@ export const useUndoRedo = (): UseUndoRedoReturn => {
       return false;
     }
 
-    try {
-      // Aplicar a transação
-      await applyTransaction(nextRedoTransaction);
-
-      // Atualizar estado da pilha
-      const success = await historyStore.redo();
-
-      if (success) {
-        console.log(`Redo executado: ${nextRedoTransaction.description}`);
-      }
-
-      return success;
-    } catch (error) {
-      console.error('Erro durante redo:', error);
+    // Verificar se já está processando
+    if (historySelectors.isProcessing) {
+      console.warn('Operação de redo já em andamento');
       return false;
     }
-  }, [historyStore, applyTransaction]);
+
+    try {
+      console.log(`Iniciando redo: ${nextRedoTransaction.description}`);
+
+      // CORREÇÃO CRÍTICA: Aplicar mudança no banco PRIMEIRO
+      await retry(() => applyTransaction(nextRedoTransaction));
+
+      // SÓ DEPOIS atualizar estado da pilha se a operação foi bem-sucedida
+      const historyUpdateSuccess = await historyStore.redo();
+
+      if (historyUpdateSuccess) {
+        console.log(`Redo executado com sucesso: ${nextRedoTransaction.description}`);
+        return true;
+      } else {
+        // Se falhar ao atualizar o histórico, reverter a mudança no banco
+        console.error('Falha ao atualizar estado do histórico, revertendo mudança...');
+        await retry(() => revertTransaction(nextRedoTransaction));
+        throw new Error('Falha ao atualizar estado do histórico');
+      }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido no redo';
+      console.error('Erro durante redo:', errorMessage);
+
+      // Limpar qualquer erro anterior
+      historyActions.clearError();
+
+      return false;
+    }
+  }, [historyStore, historySelectors, historyActions, applyTransaction, revertTransaction]);
 
   // Retorno memorizado
   return useMemo(

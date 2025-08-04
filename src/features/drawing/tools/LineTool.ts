@@ -1,9 +1,36 @@
 // Path: features\drawing\tools\LineTool.ts
 
 import { Position } from 'geojson';
-import { ExtendedFeature, createDefaultFeature } from '../../data-access/schemas/feature.schema';
+import { ExtendedFeature } from '../../data-access/schemas/feature.schema';
 import { DrawingTool } from '../../../types/feature.types';
 import { AbstractTool, MapMouseEvent, ToolConfig, ToolCallbacks } from './AbstractTool';
+
+// Interface para evento de teclado
+interface MapKeyboardEvent {
+  originalEvent: KeyboardEvent;
+}
+
+// Função para criar feature padrão
+function createDefaultFeature(
+  geometry: GeoJSON.Geometry,
+  layerId: string,
+  properties?: Record<string, any>
+): ExtendedFeature {
+  const now = new Date().toISOString();
+  return {
+    type: 'Feature',
+    id: `feature-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+    geometry,
+    properties: {
+      id: `feature-${Date.now()}`,
+      layerId,
+      createdAt: now,
+      updatedAt: now,
+      name: 'Nova Feature',
+      ...properties,
+    },
+  };
+}
 
 export class LineTool extends AbstractTool {
   private activeLayerId: string | null = null;
@@ -18,20 +45,80 @@ export class LineTool extends AbstractTool {
   }
 
   // Implementação dos métodos abstratos
-  getToolType(): DrawingTool {
+  override getToolType(): DrawingTool {
     return 'line';
   }
 
-  getName(): string {
+  override getName(): string {
     return 'Linha';
   }
 
-  getDescription(): string {
+  override getDescription(): string {
     return 'Clique para adicionar pontos à linha. Duplo clique ou Enter para finalizar';
   }
 
-  getCursor(): string {
+  override getCursor(): string {
     return this.isDrawing ? 'crosshair' : 'crosshair';
+  }
+
+  // Implementação dos métodos abstratos obrigatórios
+  protected override createFeatureFromCoordinates(): ExtendedFeature {
+    if (!this.activeLayerId || this.coordinates.length < this.minPoints) {
+      throw new Error('Dados insuficientes para criar linha');
+    }
+
+    const geometry: GeoJSON.LineString = {
+      type: 'LineString',
+      coordinates: this.coordinates as [number, number][],
+    };
+
+    const feature = createDefaultFeature(geometry, this.activeLayerId, {
+      name: 'Nova Linha',
+      style: {
+        strokeColor: '#1976d2',
+        strokeWidth: 3,
+        strokeOpacity: 1,
+      },
+    });
+
+    return feature;
+  }
+
+  protected override updateTempFeature(): void {
+    if (!this.isDrawing || this.coordinates.length === 0) {
+      this.clearTempFeatures();
+      return;
+    }
+
+    try {
+      let tempCoords = [...this.coordinates];
+
+      // Adicionar posição do mouse se houver pelo menos um ponto
+      if (this.lastMousePosition && this.coordinates.length >= 1) {
+        tempCoords.push([this.lastMousePosition.lng, this.lastMousePosition.lat]);
+      }
+
+      if (tempCoords.length >= 2) {
+        const tempFeature = this.createTempFeature(tempCoords, 'LineString');
+        this.showTempFeature(tempFeature);
+      }
+    } catch (error) {
+      console.warn('Erro ao atualizar feature temporária:', error);
+    }
+  }
+
+  protected override clearTempFeatures(): void {
+    try {
+      const source = this.map.getSource('hot-features') as maplibregl.GeoJSONSource;
+      if (source) {
+        source.setData({
+          type: 'FeatureCollection',
+          features: [],
+        });
+      }
+    } catch (error) {
+      console.warn('Erro ao limpar features temporárias:', error);
+    }
   }
 
   // Definir camada ativa para novas linhas
@@ -46,7 +133,7 @@ export class LineTool extends AbstractTool {
   }
 
   // Eventos de mouse específicos da linha
-  protected onClick(e: MapMouseEvent): void {
+  protected override onClick(e: MapMouseEvent): void {
     if (!this.isActive || !this.activeLayerId) {
       this.callbacks.onError('Nenhuma camada ativa selecionada');
       return;
@@ -98,7 +185,7 @@ export class LineTool extends AbstractTool {
     }
   }
 
-  protected onMouseMove(e: MapMouseEvent): void {
+  protected override onMouseMove(e: MapMouseEvent): void {
     super.onMouseMove(e);
 
     if (!this.isActive) return;
@@ -118,14 +205,14 @@ export class LineTool extends AbstractTool {
     }
   }
 
-  protected onDoubleClick(e: MapMouseEvent): void {
+  protected override onDoubleClick(e: MapMouseEvent): void {
     e.originalEvent.preventDefault();
     if (this.isDrawing) {
       this.finishDrawing();
     }
   }
 
-  protected onKeyDown(e: MapKeyboardEvent): void {
+  protected override onKeyDown(e: MapKeyboardEvent): void {
     super.onKeyDown(e);
 
     const key = e.originalEvent.key;
@@ -144,67 +231,9 @@ export class LineTool extends AbstractTool {
           }
           e.originalEvent.preventDefault();
           break;
+        default:
+          break;
       }
-    }
-  }
-
-  // Implementação dos métodos abstratos
-  protected createFeatureFromCoordinates(): ExtendedFeature | null {
-    if (!this.activeLayerId || this.coordinates.length < this.minPoints) {
-      return null;
-    }
-
-    const geometry = {
-      type: 'LineString' as const,
-      coordinates: this.coordinates,
-    };
-
-    const feature = createDefaultFeature(geometry, this.activeLayerId, {
-      name: 'Nova Linha',
-      style: {
-        strokeColor: '#1976d2',
-        strokeWidth: 3,
-        strokeOpacity: 1,
-      },
-    });
-
-    return feature;
-  }
-
-  protected updateTempFeature(): void {
-    if (!this.isDrawing || this.coordinates.length === 0) {
-      this.clearTempFeatures();
-      return;
-    }
-
-    try {
-      let tempCoords = [...this.coordinates];
-
-      // Adicionar posição do mouse se houver pelo menos um ponto
-      if (this.lastMousePosition && this.coordinates.length >= 1) {
-        tempCoords.push([this.lastMousePosition.lng, this.lastMousePosition.lat]);
-      }
-
-      if (tempCoords.length >= 2) {
-        const tempFeature = this.createTempFeature(tempCoords, 'LineString');
-        this.showTempFeature(tempFeature);
-      }
-    } catch (error) {
-      console.warn('Erro ao atualizar feature temporária:', error);
-    }
-  }
-
-  protected clearTempFeatures(): void {
-    try {
-      const source = this.map.getSource('hot-features') as maplibregl.GeoJSONSource;
-      if (source) {
-        source.setData({
-          type: 'FeatureCollection',
-          features: [],
-        });
-      }
-    } catch (error) {
-      console.warn('Erro ao limpar features temporárias:', error);
     }
   }
 
@@ -234,7 +263,7 @@ export class LineTool extends AbstractTool {
         this.cancel();
       } else {
         this.callbacks.onStatusChange(
-          `${this.coordinateCount} pontos. Backspace para remover ponto`
+          `${this.coordinateCount} pontos. Pressione Backspace para remover último ponto`
         );
       }
     }
@@ -245,18 +274,77 @@ export class LineTool extends AbstractTool {
 
     try {
       const previewCoords = [...this.coordinates, mousePosition];
-      const previewFeature = this.createTempFeature(previewCoords, 'LineString');
-      previewFeature.properties.style = {
-        ...previewFeature.properties.style,
-        strokeOpacity: 0.6,
-      };
-
-      this.showTempFeature(previewFeature);
+      if (previewCoords.length >= 2) {
+        const previewFeature = this.createTempFeature(previewCoords, 'LineString');
+        this.showTempFeature(previewFeature);
+      }
     } catch (error) {
       console.warn('Erro ao mostrar preview da linha:', error);
     }
   }
 
+  // Calcular distância entre dois pontos usando fórmula de Haversine
+  private calculateDistance(point1: Position, point2: Position): number {
+    if (!this.isValidPosition(point1) || !this.isValidPosition(point2)) {
+      return 0;
+    }
+
+    const R = 6371000; // Raio da Terra em metros
+    const lat1 = this.toRadians(point1[1]);
+    const lat2 = this.toRadians(point2[1]);
+    const deltaLat = this.toRadians(point2[1] - point1[1]);
+    const deltaLng = this.toRadians(point2[0] - point1[0]);
+
+    const a = 
+      Math.sin(deltaLat / 2) * Math.sin(deltaLat / 2) +
+      Math.cos(lat1) * Math.cos(lat2) *
+      Math.sin(deltaLng / 2) * Math.sin(deltaLng / 2);
+    
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    
+    return R * c;
+  }
+
+  private toRadians(degrees: number): number {
+    return degrees * (Math.PI / 180);
+  }
+
+  private isValidPosition(position: any): position is Position {
+    return Array.isArray(position) && position.length >= 2 && 
+           typeof position[0] === 'number' && typeof position[1] === 'number';
+  }
+
+  // Método para criar feature temporária para preview
+  private createTempFeature(coordinates: Position[], geometryType: string): ExtendedFeature {
+    const now = new Date().toISOString();
+
+    let geometry: GeoJSON.Geometry;
+    switch (geometryType) {
+      case 'LineString':
+        geometry = {
+          type: 'LineString',
+          coordinates: coordinates.length >= 2 ? coordinates : [coordinates[0] || [0, 0], coordinates[0] || [0, 0]],
+        };
+        break;
+      default:
+        throw new Error(`Tipo de geometria não suportado: ${geometryType}`);
+    }
+
+    return {
+      type: 'Feature',
+      id: `temp-${Date.now()}`,
+      geometry,
+      properties: {
+        id: `temp-${Date.now()}`,
+        layerId: this.activeLayerId || 'temp',
+        createdAt: now,
+        updatedAt: now,
+        isTemp: true,
+      },
+    };
+  }
+
+  // Método para mostrar feature temporária
   private showTempFeature(feature: ExtendedFeature): void {
     try {
       const source = this.map.getSource('hot-features') as maplibregl.GeoJSONSource;
@@ -271,80 +359,8 @@ export class LineTool extends AbstractTool {
     }
   }
 
-  private calculateDistance(point1: Position, point2: Position): number {
-    // Cálculo simples de distância em metros (aproximado)
-    const [lng1, lat1] = point1;
-    const [lng2, lat2] = point2;
-
-    const R = 6371000; // Raio da Terra em metros
-    const dLat = ((lat2 - lat1) * Math.PI) / 180;
-    const dLng = ((lng2 - lng1) * Math.PI) / 180;
-
-    const a =
-      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-      Math.cos((lat1 * Math.PI) / 180) *
-        Math.cos((lat2 * Math.PI) / 180) *
-        Math.sin(dLng / 2) *
-        Math.sin(dLng / 2);
-
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    return R * c;
-  }
-
-  // Finalizar desenho com validação
-  protected finishDrawing(): void {
-    if (!this.isDrawing) return;
-
-    if (this.coordinates.length < this.minPoints) {
-      this.callbacks.onError(`Linha deve ter pelo menos ${this.minPoints} pontos`);
-      return;
-    }
-
-    super.finishDrawing();
-  }
-
-  // Método para criar linha programaticamente
-  createLineFromPoints(positions: Position[], properties?: any): ExtendedFeature | null {
-    if (!this.activeLayerId) {
-      this.callbacks.onError('Nenhuma camada ativa selecionada');
-      return null;
-    }
-
-    if (positions.length < this.minPoints) {
-      this.callbacks.onError(`Linha deve ter pelo menos ${this.minPoints} pontos`);
-      return null;
-    }
-
-    try {
-      const geometry = {
-        type: 'LineString' as const,
-        coordinates: positions,
-      };
-
-      const feature = createDefaultFeature(geometry, this.activeLayerId, {
-        name: 'Nova Linha',
-        style: {
-          strokeColor: '#1976d2',
-          strokeWidth: 3,
-          strokeOpacity: 1,
-        },
-        ...properties,
-      });
-
-      this.callbacks.onFeatureComplete(feature);
-      this.callbacks.onStatusChange('Linha criada programaticamente');
-
-      return feature;
-    } catch (error) {
-      this.callbacks.onError(
-        `Erro ao criar linha: ${error instanceof Error ? error.message : 'Erro desconhecido'}`
-      );
-      return null;
-    }
-  }
-
   // Override da ativação para mostrar instruções
-  activate(): void {
+  override activate(): void {
     super.activate();
     if (!this.activeLayerId) {
       this.callbacks.onStatusChange('Selecione uma camada antes de desenhar linhas');
@@ -354,9 +370,14 @@ export class LineTool extends AbstractTool {
   }
 
   // Override do reset
-  protected reset(): void {
+  protected override reset(): void {
     super.reset();
     this.clearTempFeatures();
+  }
+
+  // Getter para número de coordenadas
+  get coordinateCount(): number {
+    return this.coordinates.length;
   }
 
   // Getter para número de pontos mínimo/máximo
@@ -367,5 +388,34 @@ export class LineTool extends AbstractTool {
   // Verificar se pode finalizar
   get canFinish(): boolean {
     return this.isDrawing && this.coordinates.length >= this.minPoints;
+  }
+
+  // Métodos de ciclo de vida do desenho
+  protected startDrawing(): void {
+    this.isDrawing = true;
+    this.coordinates = [];
+  }
+
+  protected finishDrawing(): void {
+    if (!this.canFinish) {
+      this.callbacks.onError(`Linha deve ter pelo menos ${this.minPoints} pontos`);
+      return;
+    }
+
+    try {
+      const feature = this.createFeatureFromCoordinates();
+      this.callbacks.onFeatureComplete(feature);
+      this.callbacks.onStatusChange('Linha criada com sucesso');
+      this.reset();
+    } catch (error) {
+      this.callbacks.onError(
+        `Erro ao criar linha: ${error instanceof Error ? error.message : 'Erro desconhecido'}`
+      );
+    }
+  }
+
+  protected cancel(): void {
+    this.reset();
+    this.callbacks.onStatusChange('Desenho cancelado');
   }
 }

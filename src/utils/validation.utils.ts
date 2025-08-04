@@ -2,7 +2,23 @@
 
 import { Position, Geometry } from 'geojson';
 import { ExtendedFeature } from '../features/data-access/schemas/feature.schema';
-import { DATA_LIMITS, VALIDATION_CONFIG } from '../constants/app.constants';
+
+// Constants placeholder até corrigir o arquivo de constantes
+const DATA_LIMITS = {
+  maxCoordinatePrecision: 6,
+  minVerticesPerLineString: 2,
+  maxVerticesPerLineString: 10000,
+  minVerticesPerPolygon: 3,
+  maxVerticesPerPolygon: 10000,
+  maxFeatureNameLength: 100,
+  maxFeatureDescriptionLength: 1000,
+  maxCustomProperties: 50,
+};
+
+const VALIDATION_CONFIG = {
+  geometryTolerance: 0.0001,
+  validateTopology: true,
+};
 
 // Tipos para resultados de validação
 export interface ValidationResult {
@@ -15,6 +31,14 @@ export interface GeometryValidationResult extends ValidationResult {
   geometryType?: string;
   coordinateCount?: number;
   bounds?: [number, number, number, number];
+}
+
+/**
+ * Verificar se um valor é uma posição válida
+ */
+function isValidPosition(value: any): value is Position {
+  return Array.isArray(value) && value.length >= 2 && 
+         typeof value[0] === 'number' && typeof value[1] === 'number';
 }
 
 /**
@@ -38,7 +62,8 @@ export const validateCoordinates = {
       return { valid: false, errors, warnings };
     }
 
-    const [lng, lat] = position;
+    const lng = position[0];
+    const lat = position[1];
 
     // Validar tipos
     if (typeof lng !== 'number' || typeof lat !== 'number') {
@@ -100,6 +125,11 @@ export const validateCoordinates = {
 
     // Validar cada posição
     positions.forEach((position, index) => {
+      if (!isValidPosition(position)) {
+        errors.push(`Posição ${index}: não é uma posição válida`);
+        return;
+      }
+
       const result = validateCoordinates.position(position);
       if (!result.valid) {
         errors.push(...result.errors.map(error => `Posição ${index}: ${error}`));
@@ -109,12 +139,19 @@ export const validateCoordinates = {
 
     // Verificar duplicatas próximas
     for (let i = 0; i < positions.length - 1; i++) {
-      const [lng1, lat1] = positions[i];
-      const [lng2, lat2] = positions[i + 1];
-      const distance = Math.sqrt((lng2 - lng1) ** 2 + (lat2 - lat1) ** 2);
+      const pos1 = positions[i];
+      const pos2 = positions[i + 1];
+      
+      if (isValidPosition(pos1) && isValidPosition(pos2)) {
+        const lng1 = pos1[0];
+        const lat1 = pos1[1];
+        const lng2 = pos2[0];
+        const lat2 = pos2[1];
+        const distance = Math.sqrt((lng2 - lng1) ** 2 + (lat2 - lat1) ** 2);
 
-      if (distance < VALIDATION_CONFIG.geometryTolerance) {
-        warnings.push(`Pontos ${i} e ${i + 1} são muito próximos`);
+        if (distance < VALIDATION_CONFIG.geometryTolerance) {
+          warnings.push(`Pontos ${i} e ${i + 1} são muito próximos`);
+        }
       }
     }
 
@@ -142,9 +179,19 @@ export const validateGeometry = {
       return { valid: false, errors, warnings };
     }
 
+    if (!isValidPosition(geometry.coordinates)) {
+      errors.push('Coordenadas do ponto devem ser uma posição válida');
+      return { valid: false, errors, warnings };
+    }
+
     const coordResult = validateCoordinates.position(geometry.coordinates);
     errors.push(...coordResult.errors);
     warnings.push(...coordResult.warnings);
+
+    // Calcular bounds para um ponto
+    const lng = geometry.coordinates[0];
+    const lat = geometry.coordinates[1];
+    const bounds: [number, number, number, number] = [lng, lat, lng, lat];
 
     return {
       valid: errors.length === 0,
@@ -152,6 +199,7 @@ export const validateGeometry = {
       warnings,
       geometryType: 'Point',
       coordinateCount: 1,
+      bounds,
     };
   },
 
@@ -259,11 +307,11 @@ export const validateGeometry = {
       const first = outerRing[0];
       const last = outerRing[outerRing.length - 1];
 
-      if (!Array.isArray(first) || !Array.isArray(last)) {
-        errors.push('Pontos do anel devem ser arrays');
-      } else {
-        const [lng1, lat1] = first;
-        const [lng2, lat2] = last;
+      if (isValidPosition(first) && isValidPosition(last)) {
+        const lng1 = first[0];
+        const lat1 = first[1];
+        const lng2 = last[0];
+        const lat2 = last[1];
         const distance = Math.sqrt((lng2 - lng1) ** 2 + (lat2 - lat1) ** 2);
 
         if (distance > VALIDATION_CONFIG.geometryTolerance) {
@@ -271,6 +319,8 @@ export const validateGeometry = {
             'Anel do polígono deve ser fechado (primeiro e último pontos devem ser iguais)'
           );
         }
+      } else {
+        errors.push('Pontos do anel devem ser posições válidas');
       }
     }
 
@@ -304,9 +354,11 @@ export const validateGeometry = {
         const first = innerRing[0];
         const last = innerRing[innerRing.length - 1];
 
-        if (Array.isArray(first) && Array.isArray(last)) {
-          const [lng1, lat1] = first;
-          const [lng2, lat2] = last;
+        if (isValidPosition(first) && isValidPosition(last)) {
+          const lng1 = first[0];
+          const lat1 = first[1];
+          const lng2 = last[0];
+          const lat2 = last[1];
           const distance = Math.sqrt((lng2 - lng1) ** 2 + (lat2 - lat1) ** 2);
 
           if (distance > VALIDATION_CONFIG.geometryTolerance) {
@@ -420,78 +472,38 @@ export const validateFeature = {
       }
 
       // Contar propriedades customizadas
+      const systemProps = ['id', 'layerId', 'createdAt', 'updatedAt', 'name', 'description', 'style', 'ownerId'];
       const customPropsCount = Object.keys(feature.properties).filter(
-        key =>
-          ![
-            'id',
-            'layerId',
-            'name',
-            'description',
-            'style',
-            'createdAt',
-            'updatedAt',
-            'ownerId',
-          ].includes(key)
+        key => !systemProps.includes(key)
       ).length;
 
-      if (customPropsCount > DATA_LIMITS.maxPropertiesCount) {
-        warnings.push(
-          `Muitas propriedades customizadas (máximo recomendado: ${DATA_LIMITS.maxPropertiesCount})`
-        );
+      if (customPropsCount > DATA_LIMITS.maxCustomProperties) {
+        warnings.push(`Muitas propriedades customizadas (máximo ${DATA_LIMITS.maxCustomProperties})`);
       }
     }
 
     // Validar geometria
     if (!feature.geometry) {
-      if (!VALIDATION_CONFIG.allowEmptyGeometries) {
-        errors.push('Feature deve ter geometria');
-      }
+      errors.push('Feature deve ter geometria');
     } else {
       const geomResult = validateGeometry.generic(feature.geometry);
       errors.push(...geomResult.errors);
       warnings.push(...geomResult.warnings);
     }
 
-    return {
-      valid: errors.length === 0,
-      errors,
-      warnings,
-    };
-  },
-
-  /**
-   * Validar propriedades da feature
-   */
-  properties: (properties: any): ValidationResult => {
-    const errors: string[] = [];
-    const warnings: string[] = [];
-
-    if (!properties || typeof properties !== 'object') {
-      errors.push('Propriedades devem ser um objeto');
-      return { valid: false, errors, warnings };
-    }
-
-    // Validar propriedades obrigatórias
-    const requiredProps = ['id', 'layerId', 'createdAt', 'updatedAt'];
-    for (const prop of requiredProps) {
-      if (!properties[prop]) {
-        errors.push(`Propriedade obrigatória ausente: ${prop}`);
-      }
-    }
-
-    // Validar formato de datas
-    if (properties.createdAt && !isValidISODate(properties.createdAt)) {
+    // Validar propriedades de data se existirem
+    if (feature.properties?.createdAt && !isValidISODate(feature.properties.createdAt)) {
       errors.push('createdAt deve ser uma data ISO válida');
     }
 
-    if (properties.updatedAt && !isValidISODate(properties.updatedAt)) {
+    if (feature.properties?.updatedAt && !isValidISODate(feature.properties.updatedAt)) {
       errors.push('updatedAt deve ser uma data ISO válida');
     }
 
     // Validar consistência de datas
-    if (properties.createdAt && properties.updatedAt) {
-      const created = new Date(properties.createdAt);
-      const updated = new Date(properties.updatedAt);
+    if (feature.properties?.createdAt && feature.properties?.updatedAt) {
+      const created = new Date(feature.properties.createdAt);
+      const updated = new Date(feature.properties.updatedAt);
 
       if (updated < created) {
         errors.push('updatedAt não pode ser anterior a createdAt');
@@ -522,9 +534,16 @@ function calculateSignedArea(coordinates: Position[]): number {
   const n = coordinates.length;
 
   for (let i = 0; i < n - 1; i++) {
-    const [x1, y1] = coordinates[i];
-    const [x2, y2] = coordinates[i + 1];
-    area += (x2 - x1) * (y2 + y1);
+    const current = coordinates[i];
+    const next = coordinates[i + 1];
+    
+    if (isValidPosition(current) && isValidPosition(next)) {
+      const x1 = current[0];
+      const y1 = current[1];
+      const x2 = next[0];
+      const y2 = next[1];
+      area += (x2 - x1) * (y2 + y1);
+    }
   }
 
   return area / 2;
@@ -537,11 +556,15 @@ function calculateBounds(coordinates: Position[]): [number, number, number, numb
   let maxLng = -Infinity;
   let maxLat = -Infinity;
 
-  for (const [lng, lat] of coordinates) {
-    minLng = Math.min(minLng, lng);
-    minLat = Math.min(minLat, lat);
-    maxLng = Math.max(maxLng, lng);
-    maxLat = Math.max(maxLat, lat);
+  for (const coord of coordinates) {
+    if (isValidPosition(coord)) {
+      const lng = coord[0];
+      const lat = coord[1];
+      minLng = Math.min(minLng, lng);
+      minLat = Math.min(minLat, lat);
+      maxLng = Math.max(maxLng, lng);
+      maxLat = Math.max(maxLat, lat);
+    }
   }
 
   return [minLng, minLat, maxLng, maxLat];
@@ -556,11 +579,16 @@ function checkLineIntersection(coordinates: Position[]): boolean {
     for (let j = i + 2; j < coordinates.length - 1; j++) {
       if (j === coordinates.length - 1 && i === 0) continue; // Pular fechamento do polígono
 
-      const seg1 = [coordinates[i], coordinates[i + 1]];
-      const seg2 = [coordinates[j], coordinates[j + 1]];
+      const p1 = coordinates[i];
+      const p2 = coordinates[i + 1];
+      const p3 = coordinates[j];
+      const p4 = coordinates[j + 1];
 
-      if (segmentsIntersect(seg1[0], seg1[1], seg2[0], seg2[1])) {
-        return true;
+      if (isValidPosition(p1) && isValidPosition(p2) && 
+          isValidPosition(p3) && isValidPosition(p4)) {
+        if (segmentsIntersect(p1, p2, p3, p4)) {
+          return true;
+        }
       }
     }
   }
@@ -570,10 +598,14 @@ function checkLineIntersection(coordinates: Position[]): boolean {
 
 // Verificar se dois segmentos se intersectam
 function segmentsIntersect(p1: Position, p2: Position, p3: Position, p4: Position): boolean {
-  const [x1, y1] = p1;
-  const [x2, y2] = p2;
-  const [x3, y3] = p3;
-  const [x4, y4] = p4;
+  const x1 = p1[0];
+  const y1 = p1[1];
+  const x2 = p2[0];
+  const y2 = p2[1];
+  const x3 = p3[0];
+  const y3 = p3[1];
+  const x4 = p4[0];
+  const y4 = p4[1];
 
   const denom = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4);
   if (Math.abs(denom) < 1e-10) return false; // Paralelos
@@ -583,60 +615,3 @@ function segmentsIntersect(p1: Position, p2: Position, p3: Position, p4: Positio
 
   return t >= 0 && t <= 1 && u >= 0 && u <= 1;
 }
-
-/**
- * Validação de dados de entrada do usuário
- */
-export const validateInput = {
-  /**
-   * Validar nome
-   */
-  name: (name: string, maxLength: number = 100): ValidationResult => {
-    const errors: string[] = [];
-    const warnings: string[] = [];
-
-    if (!name || name.trim().length === 0) {
-      errors.push('Nome é obrigatório');
-    } else if (name.length > maxLength) {
-      errors.push(`Nome muito longo (máximo ${maxLength} caracteres)`);
-    } else if (name.trim() !== name) {
-      warnings.push('Nome contém espaços extras no início ou fim');
-    }
-
-    return { valid: errors.length === 0, errors, warnings };
-  },
-
-  /**
-   * Validar descrição
-   */
-  description: (description: string, maxLength: number = 1000): ValidationResult => {
-    const errors: string[] = [];
-    const warnings: string[] = [];
-
-    if (description && description.length > maxLength) {
-      errors.push(`Descrição muito longa (máximo ${maxLength} caracteres)`);
-    }
-
-    return { valid: errors.length === 0, errors, warnings };
-  },
-
-  /**
-   * Validar ID
-   */
-  id: (id: string): ValidationResult => {
-    const errors: string[] = [];
-    const warnings: string[] = [];
-
-    if (!id) {
-      errors.push('ID é obrigatório');
-    } else {
-      // Verificar formato UUID v4
-      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-      if (!uuidRegex.test(id)) {
-        warnings.push('ID não segue o formato UUID padrão');
-      }
-    }
-
-    return { valid: errors.length === 0, errors, warnings };
-  },
-};

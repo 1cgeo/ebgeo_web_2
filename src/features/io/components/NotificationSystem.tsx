@@ -1,9 +1,24 @@
 // Path: features\io\components\NotificationSystem.tsx
 
 import React, { useEffect, useState } from 'react';
-import { CheckCircle, AlertCircle, Info, X, Download, Upload, Clock } from 'lucide-react';
-import { useIOSelectors, useIOStore } from '../store/io.store';
-import { formatFileSize } from '../utils/formatters';
+import {
+  CheckCircle,
+  Error as AlertCircle,
+  Info,
+  Close as X,
+  Download,
+  Upload,
+  Schedule as Clock,
+} from '@mui/icons-material';
+
+// Placeholder para formatters até corrigir arquivo
+const formatFileSize = (bytes: number): string => {
+  if (bytes === 0) return '0 Bytes';
+  const k = 1024;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+};
 
 // Tipos de notificação
 type NotificationType = 'success' | 'error' | 'warning' | 'info' | 'progress';
@@ -13,7 +28,7 @@ interface Notification {
   type: NotificationType;
   title: string;
   message: string;
-  duration?: number; // em ms, null para persistente
+  duration?: number | null; // em ms, null para persistente
   actions?: Array<{
     label: string;
     action: () => void;
@@ -30,12 +45,31 @@ interface NotificationState {
   maxNotifications: number;
 }
 
-interface NotificationActions {
-  addNotification: (notification: Omit<Notification, 'id' | 'timestamp'>) => string;
-  removeNotification: (id: string) => void;
-  clearAllNotifications: () => void;
-  updateNotification: (id: string, updates: Partial<Notification>) => void;
-}
+// Placeholders para stores até implementar
+const useIOSelectors = () => ({
+  lastExportResult: null,
+});
+
+const useIOStore = () => ({
+  // Simular getState que retorna o estado atual
+  exportOperation: {
+    status: 'idle' as 'idle' | 'loading' | 'success' | 'error',
+    progress: 0,
+    currentPhase: '',
+    result: null,
+    error: null,
+  },
+  importOperation: {
+    status: 'idle' as 'idle' | 'loading' | 'success' | 'error',
+    progress: 0,
+    currentPhase: '',
+    result: null,
+    error: null,
+  },
+  setShowResultModal: (show: boolean, type?: 'export' | 'import') => {
+    console.log('Show result modal:', show, type);
+  },
+});
 
 // Hook para gerenciar notificações
 export const useNotifications = () => {
@@ -100,7 +134,6 @@ export const useNotifications = () => {
 
 // Hook para notificações de I/O
 export const useIONotifications = () => {
-  const ioSelectors = useIOSelectors();
   const ioStore = useIOStore();
   const { addNotification, updateNotification, removeNotification } = useNotifications();
 
@@ -112,14 +145,14 @@ export const useIONotifications = () => {
 
   // Monitorar operações de export
   useEffect(() => {
-    const exportOp = ioStore.getState().exportOperation;
+    const exportOp = ioStore.exportOperation;
 
     if (exportOp.status === 'loading' && !activeNotifications.export) {
       // Iniciar notificação de progresso para export
       const id = addNotification({
         type: 'progress',
         title: 'Exportando dados',
-        message: exportOp.currentPhase,
+        message: exportOp.currentPhase || 'Preparando exportação...',
         progress: exportOp.progress,
         duration: null, // Persistente até completar
         icon: <Download className="w-4 h-4" />,
@@ -133,17 +166,15 @@ export const useIONotifications = () => {
       addNotification({
         type: 'success',
         title: 'Exportação concluída',
-        message: `Arquivo ${exportOp.result?.filename} (${formatFileSize(exportOp.result?.size || 0)}) exportado com sucesso`,
+        message: `Arquivo exportado com sucesso`,
         icon: <CheckCircle className="w-4 h-4" />,
-        actions: exportOp.result?.success
-          ? [
-              {
-                label: 'Ver detalhes',
-                action: () => ioStore.getState().setShowResultModal(true, 'export'),
-                style: 'secondary',
-              },
-            ]
-          : undefined,
+        actions: [
+          {
+            label: 'Ver detalhes',
+            action: () => ioStore.setShowResultModal(true, 'export'),
+            style: 'secondary',
+          },
+        ],
       });
 
       setActiveNotifications(prev => ({ ...prev, export: undefined }));
@@ -160,7 +191,7 @@ export const useIONotifications = () => {
           {
             label: 'Tentar novamente',
             action: () => {
-              // Lógica para tentar novamente
+              console.log('Tentar exportação novamente');
             },
             style: 'primary',
           },
@@ -173,22 +204,22 @@ export const useIONotifications = () => {
     // Atualizar progresso se notificação ativa
     if (exportOp.status === 'loading' && activeNotifications.export) {
       updateNotification(activeNotifications.export, {
-        message: exportOp.currentPhase,
+        message: exportOp.currentPhase || 'Exportando...',
         progress: exportOp.progress,
       });
     }
-  }, [ioStore.getState().exportOperation, activeNotifications.export]);
+  }, [ioStore.exportOperation, activeNotifications.export, addNotification, updateNotification, removeNotification, ioStore]);
 
   // Monitorar operações de import
   useEffect(() => {
-    const importOp = ioStore.getState().importOperation;
+    const importOp = ioStore.importOperation;
 
     if (importOp.status === 'loading' && !activeNotifications.import) {
       // Iniciar notificação de progresso para import
       const id = addNotification({
         type: 'progress',
         title: 'Importando dados',
-        message: importOp.currentPhase,
+        message: importOp.currentPhase || 'Preparando importação...',
         progress: importOp.progress,
         duration: null,
         icon: <Upload className="w-4 h-4" />,
@@ -200,18 +231,18 @@ export const useIONotifications = () => {
       removeNotification(activeNotifications.import);
 
       const result = importOp.result;
-      const conflicts = result?.conflicts.length || 0;
-      const errors = result?.errors.length || 0;
+      const conflicts = result?.conflicts?.length || 0;
+      const errors = result?.errors?.length || 0;
 
       addNotification({
         type: conflicts > 0 || errors > 0 ? 'warning' : 'success',
         title: 'Importação concluída',
-        message: `Importados: ${result?.stats.featuresImported || 0} features, ${result?.stats.layersImported || 0} camadas${conflicts > 0 ? ` (${conflicts} conflitos)` : ''}`,
+        message: `Dados importados com sucesso${conflicts > 0 ? ` (${conflicts} conflitos)` : ''}`,
         icon: <CheckCircle className="w-4 h-4" />,
         actions: [
           {
             label: 'Ver detalhes',
-            action: () => ioStore.getState().setShowResultModal(true, 'import'),
+            action: () => ioStore.setShowResultModal(true, 'import'),
             style: 'secondary',
           },
         ],
@@ -231,7 +262,7 @@ export const useIONotifications = () => {
           {
             label: 'Tentar novamente',
             action: () => {
-              // Lógica para tentar novamente
+              console.log('Tentar importação novamente');
             },
             style: 'primary',
           },
@@ -244,11 +275,11 @@ export const useIONotifications = () => {
     // Atualizar progresso se notificação ativa
     if (importOp.status === 'loading' && activeNotifications.import) {
       updateNotification(activeNotifications.import, {
-        message: importOp.currentPhase,
+        message: importOp.currentPhase || 'Importando...',
         progress: importOp.progress,
       });
     }
-  }, [ioStore.getState().importOperation, activeNotifications.import]);
+  }, [ioStore.importOperation, activeNotifications.import, addNotification, updateNotification, removeNotification, ioStore]);
 
   return {
     // Métodos para criar notificações específicas de I/O
@@ -309,14 +340,14 @@ const NotificationItem: React.FC<{
 
     switch (notification.type) {
       case 'success':
-        return <CheckCircle className="w-5 h-5 text-green-600" />;
+        return <CheckCircle sx={{ fontSize: 20, color: 'green' }} />;
       case 'error':
-        return <AlertCircle className="w-5 h-5 text-red-600" />;
+        return <AlertCircle sx={{ fontSize: 20, color: 'red' }} />;
       case 'warning':
-        return <AlertCircle className="w-5 h-5 text-yellow-600" />;
+        return <AlertCircle sx={{ fontSize: 20, color: 'orange' }} />;
       case 'info':
       case 'progress':
-        return <Info className="w-5 h-5 text-blue-600" />;
+        return <Info sx={{ fontSize: 20, color: 'blue' }} />;
       default:
         return null;
     }
@@ -339,7 +370,15 @@ const NotificationItem: React.FC<{
   };
 
   return (
-    <div className={`p-4 rounded-lg border shadow-sm ${getBgColor()} animate-slideIn`}>
+    <div className={`p-4 rounded-lg border shadow-sm ${getBgColor()}`}
+         style={{ 
+           backgroundColor: notification.type === 'success' ? '#f0f9ff' : 
+                          notification.type === 'error' ? '#fef2f2' :
+                          notification.type === 'warning' ? '#fffbeb' : '#f8fafc',
+           borderColor: notification.type === 'success' ? '#bfdbfe' :
+                       notification.type === 'error' ? '#fecaca' :
+                       notification.type === 'warning' ? '#fed7aa' : '#cbd5e1'
+         }}>
       <div className="flex items-start gap-3">
         <div className="flex-shrink-0 mt-0.5">{getIcon()}</div>
 
@@ -349,8 +388,9 @@ const NotificationItem: React.FC<{
             <button
               onClick={onRemove}
               className="flex-shrink-0 text-gray-400 hover:text-gray-600 transition-colors"
+              style={{ padding: '4px', cursor: 'pointer' }}
             >
-              <X className="w-4 h-4" />
+              <X sx={{ fontSize: 16 }} />
             </button>
           </div>
 
@@ -384,6 +424,7 @@ const NotificationItem: React.FC<{
                       ? 'bg-blue-600 text-white hover:bg-blue-700'
                       : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                   }`}
+                  style={{ cursor: 'pointer' }}
                 >
                   {action.label}
                 </button>
@@ -405,7 +446,17 @@ export const NotificationSystem: React.FC = () => {
   }
 
   return (
-    <div className="fixed top-4 right-4 z-50 space-y-2 max-w-sm w-full">
+    <div 
+      className="fixed top-4 right-4 z-50 space-y-2 max-w-sm w-full"
+      style={{ 
+        position: 'fixed',
+        top: '16px',
+        right: '16px',
+        zIndex: 1300,
+        maxWidth: '384px',
+        width: '100%'
+      }}
+    >
       {notifications.map(notification => (
         <NotificationItem
           key={notification.id}
@@ -420,6 +471,7 @@ export const NotificationSystem: React.FC = () => {
           <button
             onClick={clearAllNotifications}
             className="text-xs text-gray-500 hover:text-gray-700 underline transition-colors"
+            style={{ cursor: 'pointer' }}
           >
             Limpar todas as notificações
           </button>

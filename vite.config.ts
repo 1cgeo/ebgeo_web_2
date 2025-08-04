@@ -1,4 +1,6 @@
-import { defineConfig } from 'vite';
+// vite.config.ts
+
+import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
 import { resolve } from 'path';
 import { ViteImageOptimizer } from 'vite-plugin-image-optimizer';
@@ -13,8 +15,8 @@ export default defineConfig({
       webp: { quality: 80 },
     }),
   ],
-
-  // Path aliases for cleaner imports
+  
+  // Resolver aliases para imports mais limpos
   resolve: {
     alias: {
       '@': resolve(__dirname, './src'),
@@ -29,75 +31,71 @@ export default defineConfig({
     },
   },
 
-  // Development server configuration
+  // Configurações de desenvolvimento
   server: {
     host: true,
     port: 3000,
     open: true,
     cors: true,
-    // HMR configuration for better development experience
-    hmr: {
-      overlay: true,
-    },
   },
 
-  // Preview server configuration
+  // Configurações de preview
   preview: {
     host: true,
     port: 4173,
     open: true,
   },
 
-  // Build configuration
+  // Configurações de build
   build: {
     target: 'esnext',
     outDir: 'dist',
     sourcemap: true,
     minify: 'esbuild',
-
-    // Rollup options for optimized bundles
+    
+    // Otimizações para redes lentas (requisito do projeto)
     rollupOptions: {
       output: {
-        // Manual chunk splitting for better caching
+        // Separar bibliotecas em chunks separados
         manualChunks: {
-          // React ecosystem
+          // React e bibliotecas principais
           'react-vendor': ['react', 'react-dom'],
-
-          // UI library
+          
+          // Material-UI
           'mui-vendor': [
             '@mui/material',
             '@mui/icons-material',
             '@emotion/react',
             '@emotion/styled',
           ],
-
-          // Map and geospatial libraries
-          'map-vendor': ['maplibre-gl', 'react-map-gl', '@turf/turf'],
-
-          // State management and data fetching
-          'state-vendor': ['@tanstack/react-query', 'zustand'],
-
-          // Utilities and data handling
+          
+          // MapLibre e bibliotecas de mapa
+          'map-vendor': [
+            'maplibre-gl',
+            'react-map-gl',
+            '@turf/turf',
+          ],
+          
+          // React Query e estado
+          'state-vendor': [
+            '@tanstack/react-query',
+            'zustand',
+          ],
+          
+          // Utilitários
           'utils-vendor': [
             'zod',
             'dexie',
-            'jszip',
-            'file-saver',
-            'papaparse',
-            'browser-image-compression',
           ],
-
-          // Military symbols (potentially large)
-          'military-vendor': ['milsymbol'],
         },
       },
     },
-
-    // Bundle size warning limit
+    
+    // Limite de warnings de tamanho de chunk
     chunkSizeWarningLimit: 1000,
   },
 
-  // Dependency optimization
+  // Otimizações de dependências
   optimizeDeps: {
     include: [
       'react',
@@ -112,34 +110,33 @@ export default defineConfig({
       'dexie',
       '@turf/turf',
     ],
-    // Exclude libraries that might have issues with pre-bundling
-    exclude: ['milsymbol'],
+    exclude: ['milsymbol'], // Biblioteca que pode ter problemas com pre-bundling
   },
 
-  // Global constants for client-side code
+  // Configurações específicas para trabalhar com MapLibre
   define: {
-    // Required for some geospatial libraries
+    // Necessário para algumas bibliotecas geoespaciais
     global: 'globalThis',
   },
 
-  // Web Workers configuration
+  // Configurações para suporte a Web Workers (caso necessário no futuro)
   worker: {
     format: 'es',
   },
 
-  // CSS configuration
-  css: {
-    devSourcemap: true,
-    modules: {
-      localsConvention: 'camelCase',
-    },
-  },
-
-  // Testing configuration (if using Vitest)
+  // Configurações de teste
   test: {
     globals: true,
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.ts'],
     css: true,
+  },
+
+  // Configurações CSS
+  css: {
+    devSourcemap: true,
+    modules: {
+      localsConvention: 'camelCase',
+    },
   },
 });
