@@ -77,7 +77,7 @@ export const useFeatureSelection = () => {
       byLayer: {},
     };
 
-    selectedFeatures.forEach((feature) => {
+    selectedFeatures.forEach(feature => {
       // Por tipo de geometria
       const type = feature.geometry.type;
       stats.byType[type] = (stats.byType[type] || 0) + 1;
@@ -96,64 +96,88 @@ export const useFeatureSelection = () => {
   const hasMultipleSelection = selectedFeatures.length > 1;
 
   // Funções de seleção
-  const selectFeature = useCallback((featureId: string, mode: 'single' | 'add' | 'toggle' = 'single') => {
-    selectFeatureAction(featureId);
-    // TODO: Implementar lógica real de seleção quando store estiver pronto
-  }, [selectFeatureAction]);
+  const selectFeature = useCallback(
+    (featureId: string, mode: 'single' | 'add' | 'toggle' = 'single') => {
+      selectFeatureAction(featureId);
+      // TODO: Implementar lógica real de seleção quando store estiver pronto
+    },
+    [selectFeatureAction]
+  );
 
-  const deselectFeature = useCallback((featureId: string) => {
-    deselectFeatureAction(featureId);
-    // TODO: Implementar lógica real de deseleção
-  }, [deselectFeatureAction]);
+  const deselectFeature = useCallback(
+    (featureId: string) => {
+      deselectFeatureAction(featureId);
+      // TODO: Implementar lógica real de deseleção
+    },
+    [deselectFeatureAction]
+  );
 
   const clearSelection = useCallback(() => {
     clearSelectionAction();
     setSelectedFeatures([]);
   }, [clearSelectionAction]);
 
-  const selectFeatures = useCallback((featureIds: string[], mode: 'replace' | 'add' | 'toggle' = 'replace') => {
-    if (mode === 'replace') {
-      clearSelection();
-    }
-    
-    featureIds.forEach(id => selectFeature(id, mode === 'replace' ? 'single' : 'add'));
-  }, [selectFeature, clearSelection]);
+  const selectFeatures = useCallback(
+    (featureIds: string[], mode: 'replace' | 'add' | 'toggle' = 'replace') => {
+      if (mode === 'replace') {
+        clearSelection();
+      }
 
-  const toggleFeature = useCallback((featureId: string) => {
-    if (selectedFeatureIds.includes(featureId)) {
-      deselectFeature(featureId);
-    } else {
-      selectFeature(featureId, 'add');
-    }
-  }, [selectedFeatureIds, selectFeature, deselectFeature]);
+      featureIds.forEach(id => selectFeature(id, mode === 'replace' ? 'single' : 'add'));
+    },
+    [selectFeature, clearSelection]
+  );
 
-  const selectAtPoint = useCallback((point: Position) => {
-    if (!map) return;
+  const toggleFeature = useCallback(
+    (featureId: string) => {
+      if (selectedFeatureIds.includes(featureId)) {
+        deselectFeature(featureId);
+      } else {
+        selectFeature(featureId, 'add');
+      }
+    },
+    [selectedFeatureIds, selectFeature, deselectFeature]
+  );
 
-    // TODO: Implementar query de features no ponto quando mapa estiver pronto
-    console.log('Seleção no ponto:', point);
-  }, [map]);
+  const selectAtPoint = useCallback(
+    (point: Position) => {
+      if (!map) return;
 
-  const selectById = useCallback((featureId: string) => {
-    selectFeature(featureId, 'single');
-  }, [selectFeature]);
+      // TODO: Implementar query de features no ponto quando mapa estiver pronto
+      console.log('Seleção no ponto:', point);
+    },
+    [map]
+  );
+
+  const selectById = useCallback(
+    (featureId: string) => {
+      selectFeature(featureId, 'single');
+    },
+    [selectFeature]
+  );
 
   // Funções de edição
-  const startEditing = useCallback((featureId?: string) => {
-    const targetId = featureId || selectedFeatureIds[0];
-    if (targetId) {
-      startEditingAction(targetId);
-    }
-  }, [selectedFeatureIds, startEditingAction]);
+  const startEditing = useCallback(
+    (featureId?: string) => {
+      const targetId = featureId || selectedFeatureIds[0];
+      if (targetId) {
+        startEditingAction(targetId);
+      }
+    },
+    [selectedFeatureIds, startEditingAction]
+  );
 
   const stopEditing = useCallback(() => {
     stopEditingAction();
   }, [stopEditingAction]);
 
   // Funções de hover
-  const handleMouseEnter = useCallback((featureId: string) => {
-    setHovered(featureId);
-  }, [setHovered]);
+  const handleMouseEnter = useCallback(
+    (featureId: string) => {
+      setHovered(featureId);
+    },
+    [setHovered]
+  );
 
   const handleMouseLeave = useCallback(() => {
     setHovered(null);
@@ -172,35 +196,41 @@ export const useFeatureSelection = () => {
     }
   }, [selectedFeatureIds, deleteManyFeatures, clearSelection]);
 
-  const duplicateSelected = useCallback(async (targetLayerId?: string) => {
-    if (selectedFeatureIds.length === 0) return;
+  const duplicateSelected = useCallback(
+    async (targetLayerId?: string) => {
+      if (selectedFeatureIds.length === 0) return;
 
-    try {
-      const result = await duplicateFeatures.mutateAsync({
-        featureIds: selectedFeatureIds,
-        targetLayerId,
-      });
-      return result;
-    } catch (error) {
-      console.error('Erro ao duplicar features selecionadas:', error);
-      throw error;
-    }
-  }, [selectedFeatureIds, duplicateFeatures]);
+      try {
+        const result = await duplicateFeatures.mutateAsync({
+          featureIds: selectedFeatureIds,
+          targetLayerId,
+        });
+        return result;
+      } catch (error) {
+        console.error('Erro ao duplicar features selecionadas:', error);
+        throw error;
+      }
+    },
+    [selectedFeatureIds, duplicateFeatures]
+  );
 
-  const moveSelectedToLayer = useCallback(async (targetLayerId: string) => {
-    if (selectedFeatureIds.length === 0) return;
+  const moveSelectedToLayer = useCallback(
+    async (targetLayerId: string) => {
+      if (selectedFeatureIds.length === 0) return;
 
-    try {
-      const result = await moveFeaturesToLayer.mutateAsync({
-        featureIds: selectedFeatureIds,
-        targetLayerId,
-      });
-      return result;
-    } catch (error) {
-      console.error('Erro ao mover features selecionadas:', error);
-      throw error;
-    }
-  }, [selectedFeatureIds, moveFeaturesToLayer]);
+      try {
+        const result = await moveFeaturesToLayer.mutateAsync({
+          featureIds: selectedFeatureIds,
+          targetLayerId,
+        });
+        return result;
+      } catch (error) {
+        console.error('Erro ao mover features selecionadas:', error);
+        throw error;
+      }
+    },
+    [selectedFeatureIds, moveFeaturesToLayer]
+  );
 
   // Estados de loading
   const isDeleting = deleteManyFeatures.isPending;
@@ -262,7 +292,7 @@ export const useFeatureSelectionWithDrag = () => {
 
       try {
         // Obter feature original
-        const originalFeature = baseSelection.selectedFeatures.find((f) => f.id === featureId);
+        const originalFeature = baseSelection.selectedFeatures.find(f => f.id === featureId);
 
         if (!originalFeature) {
           throw new Error('Feature não encontrada na seleção');

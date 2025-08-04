@@ -208,7 +208,14 @@ export const useIONotifications = () => {
         progress: exportOp.progress,
       });
     }
-  }, [ioStore.exportOperation, activeNotifications.export, addNotification, updateNotification, removeNotification, ioStore]);
+  }, [
+    ioStore.exportOperation,
+    activeNotifications.export,
+    addNotification,
+    updateNotification,
+    removeNotification,
+    ioStore,
+  ]);
 
   // Monitorar operações de import
   useEffect(() => {
@@ -279,7 +286,14 @@ export const useIONotifications = () => {
         progress: importOp.progress,
       });
     }
-  }, [ioStore.importOperation, activeNotifications.import, addNotification, updateNotification, removeNotification, ioStore]);
+  }, [
+    ioStore.importOperation,
+    activeNotifications.import,
+    addNotification,
+    updateNotification,
+    removeNotification,
+    ioStore,
+  ]);
 
   return {
     // Métodos para criar notificações específicas de I/O
@@ -370,15 +384,27 @@ const NotificationItem: React.FC<{
   };
 
   return (
-    <div className={`p-4 rounded-lg border shadow-sm ${getBgColor()}`}
-         style={{ 
-           backgroundColor: notification.type === 'success' ? '#f0f9ff' : 
-                          notification.type === 'error' ? '#fef2f2' :
-                          notification.type === 'warning' ? '#fffbeb' : '#f8fafc',
-           borderColor: notification.type === 'success' ? '#bfdbfe' :
-                       notification.type === 'error' ? '#fecaca' :
-                       notification.type === 'warning' ? '#fed7aa' : '#cbd5e1'
-         }}>
+    <div
+      className={`p-4 rounded-lg border shadow-sm ${getBgColor()}`}
+      style={{
+        backgroundColor:
+          notification.type === 'success'
+            ? '#f0f9ff'
+            : notification.type === 'error'
+              ? '#fef2f2'
+              : notification.type === 'warning'
+                ? '#fffbeb'
+                : '#f8fafc',
+        borderColor:
+          notification.type === 'success'
+            ? '#bfdbfe'
+            : notification.type === 'error'
+              ? '#fecaca'
+              : notification.type === 'warning'
+                ? '#fed7aa'
+                : '#cbd5e1',
+      }}
+    >
       <div className="flex items-start gap-3">
         <div className="flex-shrink-0 mt-0.5">{getIcon()}</div>
 
@@ -446,15 +472,15 @@ export const NotificationSystem: React.FC = () => {
   }
 
   return (
-    <div 
+    <div
       className="fixed top-4 right-4 z-50 space-y-2 max-w-sm w-full"
-      style={{ 
+      style={{
         position: 'fixed',
         top: '16px',
         right: '16px',
         zIndex: 1300,
         maxWidth: '384px',
-        width: '100%'
+        width: '100%',
       }}
     >
       {notifications.map(notification => (

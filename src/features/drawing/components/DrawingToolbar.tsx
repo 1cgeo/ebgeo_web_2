@@ -1,6 +1,5 @@
 // Path: features\drawing\components\DrawingToolbar.tsx
-
-import React, { useState } from 'react';
+import React from 'react';
 import {
   Paper,
   ToggleButtonGroup,
@@ -9,11 +8,7 @@ import {
   IconButton,
   Divider,
   Box,
-  Menu,
-  MenuItem,
   Typography,
-  Switch,
-  FormControlLabel,
   Chip,
 } from '@mui/material';
 import {
@@ -23,7 +18,6 @@ import {
   Polygon as PolygonIcon,
   TextFields as TextIcon,
   Shield as MilitaryIcon,
-  Settings as SettingsIcon,
   Delete as DeleteIcon,
   ContentCopy as CopyIcon,
   Undo as UndoIcon,
@@ -46,14 +40,11 @@ export const DrawingToolbar: React.FC<DrawingToolbarProps> = ({
   onLayerSelect,
   activeLayerName,
 }) => {
-  const [settingsAnchor, setSettingsAnchor] = useState<null | HTMLElement>(null);
-
   // Store state
-  const { activeTool, isDrawing, snapSettings, temporaryStyle, activeLayerId } = useDrawingStore();
+  const { activeTool, isDrawing, activeLayerId } = useDrawingStore();
 
   // Store actions
-  const { setActiveTool, updateSnapSettings, toggleSnap, updateTemporaryStyle, reset } =
-    useDrawingActions();
+  const { setActiveTool } = useDrawingActions();
 
   // Selection
   const {
@@ -66,401 +57,220 @@ export const DrawingToolbar: React.FC<DrawingToolbarProps> = ({
   } = useFeatureSelection();
 
   // Undo/Redo
-  const {
-    canUndo,
-    canRedo,
-    undo,
-    redo,
-    isProcessing: isUndoRedoProcessing,
-    nextUndoDescription,
-    nextRedoDescription,
-  } = useUndoRedo();
+  const { canUndo, canRedo, undo, redo, isProcessing: isUndoRedoProcessing } = useUndoRedo();
 
-  // Definir ferramentas disponíveis
+  // Definir ferramentas básicas
   const tools: Array<{
     id: DrawingTool;
     icon: React.ReactElement;
     label: string;
-    description: string;
-    shortcut?: string;
+    disabled?: boolean;
   }> = [
     {
       id: 'select',
       icon: <SelectIcon />,
       label: 'Selecionar',
-      description: 'Selecionar e editar features',
-      shortcut: 'S',
     },
     {
       id: 'point',
       icon: <PointIcon />,
       label: 'Ponto',
-      description: 'Criar pontos no mapa',
-      shortcut: 'P',
+      disabled: !activeLayerId,
     },
     {
       id: 'line',
       icon: <LineIcon />,
       label: 'Linha',
-      description: 'Desenhar linhas e polilinhas',
-      shortcut: 'L',
+      disabled: !activeLayerId,
     },
     {
       id: 'polygon',
       icon: <PolygonIcon />,
       label: 'Polígono',
-      description: 'Desenhar polígonos e áreas',
-      shortcut: 'O',
+      disabled: !activeLayerId,
     },
     {
       id: 'text',
       icon: <TextIcon />,
       label: 'Texto',
-      description: 'Adicionar texto e anotações',
-      shortcut: 'T',
+      disabled: !activeLayerId,
     },
     {
       id: 'military-symbol',
       icon: <MilitaryIcon />,
       label: 'Símbolo Militar',
-      description: 'Inserir simbologia militar SIDC',
-      shortcut: 'M',
+      disabled: !activeLayerId,
     },
   ];
 
-  // Handler para mudança de ferramenta
+  // Handlers
   const handleToolChange = (event: React.MouseEvent<HTMLElement>, newTool: DrawingTool | null) => {
-    if (newTool !== null) {
+    if (newTool !== null && !isDrawing) {
       setActiveTool(newTool);
     }
   };
 
-  // Handler para configurações
-  const handleSettingsClick = (event: React.MouseEvent<HTMLElement>) => {
-    setSettingsAnchor(event.currentTarget);
-  };
-
-  const handleSettingsClose = () => {
-    setSettingsAnchor(null);
-  };
-
-  // Handler para deletar selecionadas
-  const handleDeleteSelected = async () => {
-    if (selectedFeatureIds.length > 0) {
-      const confirmed = window.confirm(
-        `Deletar ${selectedFeatureIds.length} feature(s) selecionada(s)?`
-      );
-      if (confirmed) {
-        await deleteSelected();
-      }
+  const handleUndo = async () => {
+    if (canUndo && !isUndoRedoProcessing) {
+      await undo();
     }
   };
 
-  // Handler para duplicar selecionadas
-  const handleDuplicateSelected = async () => {
-    if (selectedFeatureIds.length > 0) {
+  const handleRedo = async () => {
+    if (canRedo && !isUndoRedoProcessing) {
+      await redo();
+    }
+  };
+
+  const handleDelete = async () => {
+    if (selectedFeatureIds.length > 0 && !isDeleting) {
+      await deleteSelected();
+    }
+  };
+
+  const handleCopy = async () => {
+    if (selectedFeatureIds.length > 0 && !isDuplicating) {
       await duplicateSelected();
     }
   };
 
-  // Handler para limpar seleção
   const handleClearSelection = () => {
     clearSelection();
   };
 
-  // Handlers para undo/redo
-  const handleUndo = async () => {
-    await undo();
-  };
-
-  const handleRedo = async () => {
-    await redo();
-  };
-
   return (
     <Paper
-      className={`drawing-toolbar ${className || ''}`}
-      elevation={3}
+      className={className}
       sx={{
-        position: 'absolute',
-        top: 16,
-        left: 16,
-        zIndex: 1000,
         display: 'flex',
-        flexDirection: 'column',
+        alignItems: 'center',
         gap: 1,
         p: 1,
-        minWidth: 60,
-        maxWidth: 300,
+        flexWrap: 'wrap',
       }}
     >
-      {/* Informações da camada ativa */}
-      {activeLayerName && (
-        <Box sx={{ px: 1, py: 0.5 }}>
-          <Typography variant="caption" color="text.secondary">
-            Camada Ativa:
-          </Typography>
-          <Chip
-            label={activeLayerName}
-            size="small"
-            variant="outlined"
-            onClick={onLayerSelect}
-            sx={{ ml: 0.5, fontSize: '0.7rem' }}
-          />
-        </Box>
-      )}
+      {/* Indicador de camada ativa */}
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+        <Typography variant="body2" color="text.secondary" noWrap>
+          Camada:
+        </Typography>
+        {activeLayerName ? (
+          <Tooltip title="Clique para trocar de camada">
+            <Chip
+              label={activeLayerName}
+              size="small"
+              clickable
+              onClick={onLayerSelect}
+              sx={{ maxWidth: 120 }}
+            />
+          </Tooltip>
+        ) : (
+          <Tooltip title="Selecione uma camada para desenhar">
+            <Chip label="Nenhuma" size="small" color="warning" clickable onClick={onLayerSelect} />
+          </Tooltip>
+        )}
+      </Box>
 
-      {/* Ferramentas principais */}
+      <Divider orientation="vertical" flexItem />
+
+      {/* Ferramentas de desenho */}
       <ToggleButtonGroup
-        orientation="vertical"
         value={activeTool}
         exclusive
         onChange={handleToolChange}
         size="small"
-        sx={{ '& .MuiToggleButton-root': { minWidth: 48, minHeight: 48 } }}
+        disabled={isDrawing}
       >
         {tools.map(tool => (
-          <ToggleButton
-            key={tool.id}
-            value={tool.id}
-            disabled={tool.id !== 'select' && !activeLayerId}
-            sx={{
-              '&.Mui-selected': {
-                backgroundColor: 'primary.main',
-                color: 'primary.contrastText',
-                '&:hover': {
-                  backgroundColor: 'primary.dark',
-                },
-              },
-            }}
-          >
-            <Tooltip
-              title={
-                <Box>
-                  <Typography variant="body2" fontWeight="bold">
-                    {tool.label}
-                  </Typography>
-                  <Typography variant="caption">{tool.description}</Typography>
-                  {tool.shortcut && (
-                    <Typography variant="caption" sx={{ mt: 0.5, display: 'block' }}>
-                      Atalho: {tool.shortcut}
-                    </Typography>
-                  )}
-                </Box>
-              }
-              placement="right"
-              arrow
-            >
-              {tool.icon}
+          <ToggleButton key={tool.id} value={tool.id} disabled={tool.disabled} sx={{ px: 2 }}>
+            <Tooltip title={tool.label}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                {tool.icon}
+                <Typography variant="body2" sx={{ display: { xs: 'none', sm: 'block' } }}>
+                  {tool.label}
+                </Typography>
+              </Box>
             </Tooltip>
           </ToggleButton>
         ))}
       </ToggleButtonGroup>
 
-      <Divider />
+      <Divider orientation="vertical" flexItem />
 
-      {/* Ações de Undo/Redo */}
-      <Box sx={{ display: 'flex', gap: 0.5, justifyContent: 'center' }}>
-        <Tooltip
-          title={nextUndoDescription ? `Desfazer: ${nextUndoDescription}` : 'Desfazer (Ctrl+Z)'}
-        >
+      {/* Ações de seleção */}
+      <Box sx={{ display: 'flex', gap: 0.5 }}>
+        <Tooltip title="Desfazer">
           <span>
             <IconButton
               size="small"
               onClick={handleUndo}
               disabled={!canUndo || isUndoRedoProcessing}
             >
-              <UndoIcon fontSize="small" />
+              <UndoIcon />
             </IconButton>
           </span>
         </Tooltip>
 
-        <Tooltip
-          title={nextRedoDescription ? `Refazer: ${nextRedoDescription}` : 'Refazer (Ctrl+Y)'}
-        >
+        <Tooltip title="Refazer">
           <span>
             <IconButton
               size="small"
               onClick={handleRedo}
               disabled={!canRedo || isUndoRedoProcessing}
             >
-              <RedoIcon fontSize="small" />
+              <RedoIcon />
+            </IconButton>
+          </span>
+        </Tooltip>
+
+        <Divider orientation="vertical" flexItem sx={{ mx: 0.5 }} />
+
+        <Tooltip title="Deletar selecionados">
+          <span>
+            <IconButton
+              size="small"
+              onClick={handleDelete}
+              disabled={selectedFeatureIds.length === 0 || isDeleting}
+            >
+              <DeleteIcon />
+            </IconButton>
+          </span>
+        </Tooltip>
+
+        <Tooltip title="Duplicar selecionados">
+          <span>
+            <IconButton
+              size="small"
+              onClick={handleCopy}
+              disabled={selectedFeatureIds.length === 0 || isDuplicating}
+            >
+              <CopyIcon />
             </IconButton>
           </span>
         </Tooltip>
       </Box>
 
-      <Divider />
-
-      {/* Ações de seleção */}
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
-        {selectedFeatureIds.length > 0 && (
-          <Typography variant="caption" color="primary" sx={{ px: 1 }}>
-            {selectedFeatureIds.length} selecionada(s)
-          </Typography>
-        )}
-
-        <Box sx={{ display: 'flex', gap: 0.5 }}>
-          <Tooltip title="Duplicar selecionadas">
-            <span>
-              <IconButton
-                size="small"
-                onClick={handleDuplicateSelected}
-                disabled={selectedFeatureIds.length === 0 || isDuplicating}
-              >
-                <CopyIcon fontSize="small" />
-              </IconButton>
-            </span>
-          </Tooltip>
-
-          <Tooltip title="Deletar selecionadas">
-            <span>
-              <IconButton
-                size="small"
-                onClick={handleDeleteSelected}
-                disabled={selectedFeatureIds.length === 0 || isDeleting}
-                color="error"
-              >
-                <DeleteIcon fontSize="small" />
-              </IconButton>
-            </span>
-          </Tooltip>
-        </Box>
-      </Box>
-
-      <Divider />
-
-      {/* Configurações */}
-      <Box sx={{ display: 'flex', justifyContent: 'center' }}>
-        <Tooltip title="Configurações">
-          <IconButton size="small" onClick={handleSettingsClick}>
-            <SettingsIcon fontSize="small" />
-          </IconButton>
-        </Tooltip>
-      </Box>
-
-      {/* Menu de configurações */}
-      <Menu
-        anchorEl={settingsAnchor}
-        open={Boolean(settingsAnchor)}
-        onClose={handleSettingsClose}
-        PaperProps={{
-          sx: { minWidth: 250 },
-        }}
-      >
-        <MenuItem>
-          <Typography variant="subtitle2" sx={{ mb: 1 }}>
-            Configurações de Snap
-          </Typography>
-        </MenuItem>
-
-        <MenuItem sx={{ py: 0 }}>
-          <FormControlLabel
-            control={
-              <Switch
-                checked={snapSettings.enabled}
-                onChange={e => updateSnapSettings({ enabled: e.target.checked })}
-                size="small"
-              />
-            }
-            label="Ativar Snap"
-            sx={{ width: '100%' }}
-          />
-        </MenuItem>
-
-        <MenuItem sx={{ py: 0 }}>
-          <FormControlLabel
-            control={
-              <Switch
-                checked={snapSettings.snapToVertices}
-                onChange={e => updateSnapSettings({ snapToVertices: e.target.checked })}
-                disabled={!snapSettings.enabled}
-                size="small"
-              />
-            }
-            label="Snap em Vértices"
-            sx={{ width: '100%' }}
-          />
-        </MenuItem>
-
-        <MenuItem sx={{ py: 0 }}>
-          <FormControlLabel
-            control={
-              <Switch
-                checked={snapSettings.snapToEdges}
-                onChange={e => updateSnapSettings({ snapToEdges: e.target.checked })}
-                disabled={!snapSettings.enabled}
-                size="small"
-              />
-            }
-            label="Snap em Bordas"
-            sx={{ width: '100%' }}
-          />
-        </MenuItem>
-
-        <Divider />
-
-        <MenuItem>
-          <Typography variant="subtitle2" sx={{ mb: 1 }}>
-            Estilo Temporário
-          </Typography>
-        </MenuItem>
-
-        <MenuItem sx={{ py: 0 }}>
-          <Box sx={{ width: '100%' }}>
-            <Typography variant="caption">Cor do Traço</Typography>
-            <input
-              type="color"
-              value={temporaryStyle.strokeColor}
-              onChange={e => updateTemporaryStyle({ strokeColor: e.target.value })}
-              style={{ width: '100%', height: 30, border: 'none', borderRadius: 4 }}
+      {/* Indicador de seleção */}
+      {selectedFeatureIds.length > 0 && (
+        <>
+          <Divider orientation="vertical" flexItem />
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Chip
+              label={`${selectedFeatureIds.length} selecionado${selectedFeatureIds.length > 1 ? 's' : ''}`}
+              size="small"
+              color="primary"
+              onDelete={handleClearSelection}
             />
           </Box>
-        </MenuItem>
-
-        <MenuItem sx={{ py: 0 }}>
-          <Box sx={{ width: '100%' }}>
-            <Typography variant="caption">Cor de Preenchimento</Typography>
-            <input
-              type="color"
-              value={temporaryStyle.fillColor}
-              onChange={e => updateTemporaryStyle({ fillColor: e.target.value })}
-              style={{ width: '100%', height: 30, border: 'none', borderRadius: 4 }}
-            />
-          </Box>
-        </MenuItem>
-      </Menu>
-
-      {/* Indicador de estado */}
-      {isDrawing && (
-        <Box
-          sx={{
-            position: 'absolute',
-            top: -8,
-            right: -8,
-            width: 16,
-            height: 16,
-            borderRadius: '50%',
-            backgroundColor: 'success.main',
-            animation: 'pulse 1.5s ease-in-out infinite',
-          }}
-        />
+        </>
       )}
 
-      {/* Indicador de processamento undo/redo */}
-      {isUndoRedoProcessing && (
-        <Box
-          sx={{
-            position: 'absolute',
-            top: -8,
-            left: -8,
-            width: 16,
-            height: 16,
-            borderRadius: '50%',
-            backgroundColor: 'warning.main',
-            animation: 'pulse 1s ease-in-out infinite',
-          }}
-        />
+      {/* Indicador de modo de desenho */}
+      {isDrawing && (
+        <>
+          <Divider orientation="vertical" flexItem />
+          <Chip label="Desenhando..." size="small" color="success" variant="outlined" />
+        </>
       )}
     </Paper>
   );

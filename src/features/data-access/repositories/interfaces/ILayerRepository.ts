@@ -1,63 +1,32 @@
 // Path: features\data-access\repositories\interfaces\ILayerRepository.ts
-
 import { LayerConfig } from '../../schemas/layer.schema';
-import { IRepository } from './IRepository';
 
-// Interface específica para o repository de camadas
-export interface ILayerRepository extends IRepository<LayerConfig> {
-  // Busca por nome
-  getByName(name: string): Promise<LayerConfig | null>;
+/**
+ * Interface simplificada para repository de camadas
+ */
+export interface ILayerRepository {
+  // CRUD básico
+  create(layer: LayerConfig): Promise<LayerConfig>;
+  getById(id: string): Promise<LayerConfig | null>;
+  getAll(): Promise<LayerConfig[]>;
+  update(id: string, updates: Partial<LayerConfig>): Promise<LayerConfig>;
+  delete(id: string): Promise<void>;
 
-  // Verificar se nome existe
-  nameExists(name: string, excludeId?: string): Promise<boolean>;
-
-  // Reordenar camadas (zIndex)
-  reorder(layerIds: string[]): Promise<LayerConfig[]>;
-
-  // Alternar visibilidade
-  toggleVisibility(id: string): Promise<LayerConfig>;
-
-  // Atualizar opacidade
-  updateOpacity(id: string, opacity: number): Promise<LayerConfig>;
-
-  // Obter camadas visíveis ordenadas por zIndex
-  getVisibleLayers(): Promise<LayerConfig[]>;
-
-  // Obter próximo zIndex disponível
-  getNextZIndex(): Promise<number>;
-
-  // Duplicar camada (sem features)
-  duplicate(id: string, newName: string): Promise<LayerConfig>;
-
-  // Estatísticas da camada
-  getLayerStats(id: string): Promise<{
-    featureCount: number;
-    lastModified: string;
-    geometryTypes: Record<string, number>;
-  }>;
-
-  // Validar antes de deletar (verificar se há features)
+  // Operações específicas de camadas
+  reorder(layerOrders: Array<{ id: string; zIndex: number }>): Promise<LayerConfig[]>;
   canDelete(id: string): Promise<{
     canDelete: boolean;
     featureCount: number;
     reason?: string;
   }>;
-
-  // Deletar camada e suas features
   deleteWithFeatures(id: string): Promise<void>;
-}
 
-// Opções para criação de camada
-export interface CreateLayerOptions {
-  name: string;
-  visible?: boolean;
-  opacity?: number;
-  insertAtIndex?: number;
-}
+  // Utilitários básicos
+  count(): Promise<number>;
+  exists(id: string): Promise<boolean>;
+  getNextZIndex(): Promise<number>;
 
-// Resultado de reordenação
-export interface ReorderResult {
-  success: boolean;
-  layers: LayerConfig[];
-  error?: string;
+  // Visibilidade
+  getVisible(): Promise<LayerConfig[]>;
+  toggleVisibility(id: string): Promise<LayerConfig>;
 }

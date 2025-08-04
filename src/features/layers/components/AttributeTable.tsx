@@ -75,12 +75,12 @@ const formatDate = {
 };
 
 const formatCoordinates = {
-  decimal: (lng: number, lat: number, precision = 6) => 
+  decimal: (lng: number, lat: number, precision = 6) =>
     `${lng.toFixed(precision)}, ${lat.toFixed(precision)}`,
-  dms: (lng: number, lat: number) => 
+  dms: (lng: number, lat: number) =>
     `${Math.abs(lng)}°${lng >= 0 ? 'E' : 'W'}, ${Math.abs(lat)}°${lat >= 0 ? 'N' : 'S'}`,
   simple: (lng: number, lat: number) => `${lng}, ${lat}`,
-  labeled: (lng: number, lat: number, precision = 6) => 
+  labeled: (lng: number, lat: number, precision = 6) =>
     `Lng: ${lng.toFixed(precision)}, Lat: ${lat.toFixed(precision)}`,
 };
 
@@ -190,17 +190,18 @@ export const AttributeTable: React.FC<AttributeTableProps> = ({
 
     // Filtro de texto
     if (searchTerm) {
-      filtered = filtered.filter((feature: ExtendedFeature) =>
-        feature.properties.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        feature.properties.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        feature.id.toLowerCase().includes(searchTerm.toLowerCase())
+      filtered = filtered.filter(
+        (feature: ExtendedFeature) =>
+          feature.properties.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          feature.properties.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          feature.id.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
 
     // Filtro de geometria
     if (geometryFilter !== 'all') {
-      filtered = filtered.filter((feature: ExtendedFeature) => 
-        feature.geometry.type === geometryFilter
+      filtered = filtered.filter(
+        (feature: ExtendedFeature) => feature.geometry.type === geometryFilter
       );
     }
 
@@ -223,7 +224,7 @@ export const AttributeTable: React.FC<AttributeTableProps> = ({
       }
 
       if (aValue === bValue) return 0;
-      
+
       const comparison = aValue < bValue ? -1 : 1;
       return sortOrder === 'asc' ? comparison : -comparison;
     });
@@ -398,14 +399,12 @@ export const AttributeTable: React.FC<AttributeTableProps> = ({
       maxWidth="lg"
       fullWidth
       PaperProps={{
-        sx: { height: '80vh', display: 'flex', flexDirection: 'column' }
+        sx: { height: '80vh', display: 'flex', flexDirection: 'column' },
       }}
     >
       <DialogTitle>
         <Box display="flex" justifyContent="space-between" alignItems="center">
-          <Typography variant="h6">
-            Tabela de Atributos - {layer?.name || 'Camada'}
-          </Typography>
+          <Typography variant="h6">Tabela de Atributos - {layer?.name || 'Camada'}</Typography>
           <IconButton onClick={onClose}>
             <CloseIcon />
           </IconButton>
@@ -418,7 +417,7 @@ export const AttributeTable: React.FC<AttributeTableProps> = ({
           size="small"
           placeholder="Buscar features..."
           value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
+          onChange={e => setSearchTerm(e.target.value)}
           InputProps={{
             startAdornment: (
               <InputAdornment position="start">
@@ -440,13 +439,21 @@ export const AttributeTable: React.FC<AttributeTableProps> = ({
           <InputLabel>Geometria</InputLabel>
           <Select
             value={geometryFilter}
-            onChange={(e) => setGeometryFilter(e.target.value)}
+            onChange={e => setGeometryFilter(e.target.value)}
             label="Geometria"
           >
-            <Box component="div" value="all">Todos</Box>
-            <Box component="div" value="Point">Pontos</Box>
-            <Box component="div" value="LineString">Linhas</Box>
-            <Box component="div" value="Polygon">Polígonos</Box>
+            <Box component="div" value="all">
+              Todos
+            </Box>
+            <Box component="div" value="Point">
+              Pontos
+            </Box>
+            <Box component="div" value="LineString">
+              Linhas
+            </Box>
+            <Box component="div" value="Polygon">
+              Polígonos
+            </Box>
           </Select>
         </FormControl>
 
@@ -460,11 +467,7 @@ export const AttributeTable: React.FC<AttributeTableProps> = ({
               size="small"
               sx={{ mr: 1 }}
             />
-            <IconButton
-              size="small"
-              onClick={handleDeleteSelected}
-              title="Deletar selecionadas"
-            >
+            <IconButton size="small" onClick={handleDeleteSelected} title="Deletar selecionadas">
               <DeleteIcon />
             </IconButton>
             <IconButton
@@ -501,11 +504,13 @@ export const AttributeTable: React.FC<AttributeTableProps> = ({
                   <TableCell padding="checkbox">
                     <Checkbox
                       checked={selectedRows.size === paginatedFeatures.length}
-                      indeterminate={selectedRows.size > 0 && selectedRows.size < paginatedFeatures.length}
+                      indeterminate={
+                        selectedRows.size > 0 && selectedRows.size < paginatedFeatures.length
+                      }
                       onChange={handleSelectAll}
                     />
                   </TableCell>
-                  {columns.map((column) => (
+                  {columns.map(column => (
                     <TableCell
                       key={column.field}
                       sx={{ width: column.width }}
@@ -536,10 +541,11 @@ export const AttributeTable: React.FC<AttributeTableProps> = ({
                         onChange={() => handleSelectRow(feature.id)}
                       />
                     </TableCell>
-                    {columns.map((column) => {
+                    {columns.map(column => {
                       const value = formatCellValue(feature, column);
-                      const isEditing = editingCell?.featureId === feature.id && 
-                                       editingCell?.field === column.field;
+                      const isEditing =
+                        editingCell?.featureId === feature.id &&
+                        editingCell?.field === column.field;
 
                       return (
                         <TableCell key={column.field}>
@@ -548,8 +554,8 @@ export const AttributeTable: React.FC<AttributeTableProps> = ({
                               <TextField
                                 size="small"
                                 value={editValue}
-                                onChange={(e) => setEditValue(e.target.value)}
-                                onKeyDown={(e) => {
+                                onChange={e => setEditValue(e.target.value)}
+                                onKeyDown={e => {
                                   if (e.key === 'Enter') handleEditSave();
                                   if (e.key === 'Escape') handleEditCancel();
                                 }}
@@ -591,8 +597,8 @@ export const AttributeTable: React.FC<AttributeTableProps> = ({
                       );
                     })}
                     <TableCell>
-                      <IconButton 
-                        size="small" 
+                      <IconButton
+                        size="small"
                         onClick={() => handleFeatureSelect(feature.id)}
                         title="Selecionar no mapa"
                       >
@@ -614,7 +620,7 @@ export const AttributeTable: React.FC<AttributeTableProps> = ({
           page={page}
           onPageChange={(_, newPage) => setPage(newPage)}
           rowsPerPage={rowsPerPage}
-          onRowsPerPageChange={(e) => {
+          onRowsPerPageChange={e => {
             setRowsPerPage(parseInt(e.target.value, 10));
             setPage(0);
           }}

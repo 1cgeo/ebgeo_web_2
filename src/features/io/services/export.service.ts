@@ -1,5 +1,4 @@
 // Path: features\io\services\export.service.ts
-
 import JSZip from 'jszip';
 import { db } from '../../data-access/db';
 import { ExtendedFeature, FeatureCollection } from '../../data-access/schemas/feature.schema';
@@ -17,7 +16,6 @@ export interface EBGeoManifest {
   maps: MapConfig[];
   featureCount: number;
   assetCount: number;
-  checksum?: string;
 }
 
 // Interface para resultado da exportação
@@ -44,6 +42,14 @@ export interface ExportOptions {
   filename?: string;
 }
 
+// Interface para dados coletados
+interface CollectedData {
+  features: ExtendedFeature[];
+  layers: LayerConfig[];
+  maps: MapConfig[];
+  assets: AssetData[];
+}
+
 /**
  * Service para exportação de dados para formato .ebgeo
  */
@@ -59,8 +65,6 @@ export class ExportService {
    */
   async exportAll(options: ExportOptions = {}): Promise<ExportResult> {
     try {
-      console.log('Iniciando exportação completa...');
-
       // Configurações padrão
       const config = {
         includeAssets: true,
@@ -108,7 +112,6 @@ export class ExportService {
         },
       };
     } catch (error) {
-      console.error('Erro na exportação:', error);
       return {
         success: false,
         filename: '',
@@ -120,119 +123,110 @@ export class ExportService {
   }
 
   /**
-   * Exportar mapa específico
+   * Exportar mapas específicos
    */
-  async exportMap(mapId: string, options: ExportOptions = {}): Promise<ExportResult> {
-    try {
-      console.log('Exportando mapa:', mapId);
-
-      const map = await db.maps.get(mapId);
-      if (!map) {
-        throw new Error('Mapa não encontrado');
-      }
-
-      return await this.exportAll({
-        ...options,
-        includeAllMaps: false,
-        selectedMapIds: [mapId],
-        selectedLayerIds: map.layerIds,
-        filename: options.filename || `${this.sanitizeFilename(map.name)}.ebgeo`,
-      });
-    } catch (error) {
-      console.error('Erro ao exportar mapa:', error);
-      throw error;
-    }
+  async exportMaps(
+    mapIds: string[],
+    options: Omit<ExportOptions, 'selectedMapIds'> = {}
+  ): Promise<ExportResult> {
+    return this.exportAll({
+      ...options,
+      selectedMapIds: mapIds,
+      includeAllMaps: false,
+    });
   }
 
   /**
    * Exportar camadas específicas
    */
-  async exportLayers(layerIds: string[], options: ExportOptions = {}): Promise<ExportResult> {
-    try {
-      console.log('Exportando camadas:', layerIds);
-
-      const layers = await db.layers.where('id').anyOf(layerIds).toArray();
-      if (layers.length === 0) {
-        throw new Error('Nenhuma camada encontrada');
-      }
-
-      const layerNames = layers.map(l => l.name).join('-');
-
-      return await this.exportAll({
-        ...options,
-        includeAllMaps: false,
-        selectedLayerIds: layerIds,
-        filename: options.filename || `camadas-${this.sanitizeFilename(layerNames)}.ebgeo`,
-      });
-    } catch (error) {
-      console.error('Erro ao exportar camadas:', error);
-      throw error;
-    }
+  async exportLayers(
+    layerIds: string[],
+    options: Omit<ExportOptions, 'selectedLayerIds'> = {}
+  ): Promise<ExportResult> {
+    return this.exportAll({
+      ...options,
+      selectedLayerIds: layerIds,
+    });
   }
 
   /**
    * Coletar dados do IndexedDB baseado nas opções
    */
-  private async collectData(options: ExportOptions) {
-    console.log('Coletando dados do IndexedDB...');
-
-    // Coletar layers
+  private async collectData(options: Required<ExportOptions>): Promise<CollectedData> {
     let layers: LayerConfig[];
+    let maps: MapConfig[];
+    let features: ExtendedFeature[];
+    let assets: AssetData[] = [];
+
+    // Coletar camadas
     if (options.selectedLayerIds && options.selectedLayerIds.length > 0) {
-      layers = await db.layers.where('id').anyOf(options.selectedLayerIds).toArray();
+      layers = [];
+      for (const layerId of options.selectedLayerIds) {
+        const layer = await db.layers.get(layerId);
+        if (layer) layers.push(layer);
+      }
     } else {
       layers = await db.layers.toArray();
     }
 
-    // Coletar features das layers selecionadas
-    const layerIds = layers.map(l => l.id);
-    let features: ExtendedFeature[];
-    if (layerIds.length > 0) {
-      features = await db.features.where('properties.layerId').anyOf(layerIds).toArray();
-    } else {
-      features = [];
-    }
-
-    // Coletar maps
-    let maps: MapConfig[];
+    // Coletar mapas
     if (options.includeAllMaps) {
       maps = await db.maps.toArray();
     } else if (options.selectedMapIds && options.selectedMapIds.length > 0) {
-      maps = await db.maps.where('id').anyOf(options.selectedMapIds).toArray();
+      maps = [];
+      for (const mapId of options.selectedMapIds) {
+        const map = await db.maps.get(mapId);
+        if (map) maps.push(map);
+      }
     } else {
       maps = [];
     }
 
-    // Coletar assets (se necessário)
-    let assets: AssetData[] = [];
-    if (options.includeAssets) {
-      // Encontrar assets referenciados nas features
-      const assetIds = this.extractAssetReferences(features);
-      if (assetIds.length > 0) {
-        assets = await db.assets.where('id').anyOf(assetIds).toArray();
-      }
+    // Coletar features das camadas selecionadas
+    const layerIds = new Set(layers.map(l => l.id));
+    if (layerIds.size > 0) {
+      features = await db.features
+        .where('properties.layerId')
+        .anyOf([...layerIds])
+        .toArray();
+    } else {
+      features = await db.features.toArray();
     }
 
-    console.log(
-      `Coletados: ${features.length} features, ${layers.length} layers, ${maps.length} maps, ${assets.length} assets`
-    );
+    // Coletar assets se solicitado
+    if (options.includeAssets) {
+      // Coletar apenas assets referenciados pelas features
+      const assetPaths = new Set<string>();
+
+      features.forEach(feature => {
+        // Verificar propriedades que podem conter referências de assets
+        if (feature.properties.image) {
+          assetPaths.add(feature.properties.image);
+        }
+        if (feature.properties.icon) {
+          assetPaths.add(feature.properties.icon);
+        }
+        // Adicionar outras propriedades que podem referenciar assets
+      });
+
+      if (assetPaths.size > 0) {
+        assets = await db.assets.toArray();
+        // Filtrar apenas assets referenciados
+        assets = assets.filter(
+          asset => assetPaths.has(`assets/${asset.name}`) || assetPaths.has(asset.name)
+        );
+      }
+    }
 
     return { features, layers, maps, assets };
   }
 
   /**
-   * Gerar manifest.json com metadados
+   * Gerar manifest.json
    */
-  private generateManifest(data: {
-    features: ExtendedFeature[];
-    layers: LayerConfig[];
-    maps: MapConfig[];
-    assets: AssetData[];
-  }): EBGeoManifest {
-    console.log('Gerando manifest.json...');
-
+  private generateManifest(data: CollectedData): EBGeoManifest {
     return {
-      version: '1.0.0',
+      version: '1.0',
       appInfo: APP_INFO,
       exportDate: new Date().toISOString(),
       layers: data.layers,
@@ -246,86 +240,38 @@ export class ExportService {
    * Gerar FeatureCollection para features.json
    */
   private generateFeatureCollection(features: ExtendedFeature[]): FeatureCollection {
-    console.log('Gerando features.json...');
-
     return {
       type: 'FeatureCollection',
-      features: features,
+      features,
     };
   }
 
   /**
-   * Processar assets binários
+   * Processar e adicionar assets ao ZIP
    */
   private async processAssets(assets: AssetData[]): Promise<void> {
-    console.log(`Processando ${assets.length} assets...`);
-
     const assetsFolder = this.zip.folder('assets');
-    if (!assetsFolder) {
-      throw new Error('Erro ao criar pasta assets');
-    }
+    if (!assetsFolder) return;
 
     for (const asset of assets) {
       try {
-        // Gerar nome do arquivo baseado no ID e tipo
-        const extension = this.getFileExtension(asset.type) || 'bin';
-        const filename = `${asset.id}.${extension}`;
-
         // Adicionar asset ao ZIP
-        assetsFolder.file(filename, asset.data);
-
-        console.log(`Asset processado: ${filename} (${asset.data.size} bytes)`);
+        assetsFolder.file(asset.name, asset.data);
       } catch (error) {
-        console.warn(`Erro ao processar asset ${asset.id}:`, error);
+        console.warn(`Erro ao processar asset ${asset.name}:`, error);
       }
     }
   }
 
   /**
-   * Extrair referências de assets das features
+   * Gerar arquivo ZIP
    */
-  private extractAssetReferences(features: ExtendedFeature[]): string[] {
-    const assetIds: Set<string> = new Set();
-
-    for (const feature of features) {
-      // Procurar por referências de assets nas propriedades
-      const props = feature.properties;
-
-      // Verificar propriedades comuns que podem referenciar assets
-      const potentialAssetProps = ['image', 'icon', 'symbol', 'attachment', 'media'];
-
-      for (const prop of potentialAssetProps) {
-        const value = props[prop];
-        if (typeof value === 'string' && value.startsWith('assets/')) {
-          // Extrair ID do asset da referência
-          const assetId = value.replace('assets/', '').split('.')[0];
-          assetIds.add(assetId);
-        }
-      }
-
-      // Verificar propriedades customizadas
-      for (const [key, value] of Object.entries(props)) {
-        if (typeof value === 'string' && value.startsWith('assets/')) {
-          const assetId = value.replace('assets/', '').split('.')[0];
-          assetIds.add(assetId);
-        }
-      }
-    }
-
-    return Array.from(assetIds);
-  }
-
-  /**
-   * Gerar arquivo ZIP compactado
-   */
-  private async generateZipFile(compression: boolean): Promise<Blob> {
-    console.log('Gerando arquivo ZIP...');
-
+  private async generateZipFile(compression: boolean = true): Promise<Blob> {
     const options: JSZip.JSZipGeneratorOptions = {
       type: 'blob',
       compression: compression ? 'DEFLATE' : 'STORE',
       compressionOptions: {
-        level: IO_CONFIG.compressionLevel,
+        level: compression ? 6 : 0,
       },
     };
 
@@ -336,78 +282,63 @@ export class ExportService {
    * Fazer download do arquivo
    */
   private async downloadFile(blob: Blob, filename: string): Promise<void> {
-    console.log(`Fazendo download: ${filename} (${this.formatFileSize(blob.size)})`);
-
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
     link.download = filename;
-    link.style.display = 'none';
 
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
 
+    // Limpar URL object
     URL.revokeObjectURL(url);
   }
 
   /**
-   * Utilitários
+   * Validar operação de exportação antes de executar
    */
-  private sanitizeFilename(name: string): string {
-    return name
-      .replace(/[^a-zA-Z0-9\-_]/g, '-')
-      .replace(/-+/g, '-')
-      .toLowerCase();
-  }
+  async validateExportOperation(options: ExportOptions = {}): Promise<{
+    valid: boolean;
+    issues: string[];
+  }> {
+    const issues: string[] = [];
 
-  private getFileExtension(mimeType: string): string | null {
-    const mimeMap: Record<string, string> = {
-      'image/jpeg': 'jpg',
-      'image/png': 'png',
-      'image/gif': 'gif',
-      'image/svg+xml': 'svg',
-      'image/webp': 'webp',
-      'application/pdf': 'pdf',
-      'text/plain': 'txt',
-    };
-
-    return mimeMap[mimeType] || null;
-  }
-
-  private formatFileSize(bytes: number): string {
-    if (bytes === 0) return '0 Bytes';
-    const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-  }
-
-  /**
-   * Validar antes da exportação
-   */
-  async validateBeforeExport(): Promise<{ valid: boolean; issues: string[] }> {
     try {
-      const stats = await db.transaction('r', [db.features, db.layers, db.maps], async () => {
-        return {
-          features: await db.features.count(),
-          layers: await db.layers.count(),
-          maps: await db.maps.count(),
-        };
-      });
+      // Verificar se há dados para exportar
+      const layerCount = await db.layers.count();
+      const featureCount = await db.features.count();
 
-      const issues: string[] = [];
-
-      if (stats.features === 0) {
-        issues.push('Nenhuma feature encontrada para exportar');
-      }
-
-      if (stats.layers === 0) {
+      if (layerCount === 0) {
         issues.push('Nenhuma camada encontrada para exportar');
       }
 
-      if (stats.features > IO_CONFIG.maxFeaturesPerFile) {
-        issues.push(`Muitas features (${stats.features}). Máximo: ${IO_CONFIG.maxFeaturesPerFile}`);
+      if (featureCount === 0) {
+        issues.push('Nenhuma feature encontrada para exportar');
+      }
+
+      // Verificar limites
+      if (featureCount > IO_CONFIG.maxFeaturesPerFile) {
+        issues.push(`Muitas features (${featureCount}). Máximo: ${IO_CONFIG.maxFeaturesPerFile}`);
+      }
+
+      // Verificar seleções específicas
+      if (options.selectedLayerIds && options.selectedLayerIds.length > 0) {
+        for (const layerId of options.selectedLayerIds) {
+          const layer = await db.layers.get(layerId);
+          if (!layer) {
+            issues.push(`Camada selecionada não encontrada: ${layerId}`);
+          }
+        }
+      }
+
+      if (options.selectedMapIds && options.selectedMapIds.length > 0) {
+        for (const mapId of options.selectedMapIds) {
+          const map = await db.maps.get(mapId);
+          if (!map) {
+            issues.push(`Mapa selecionado não encontrado: ${mapId}`);
+          }
+        }
       }
 
       return {

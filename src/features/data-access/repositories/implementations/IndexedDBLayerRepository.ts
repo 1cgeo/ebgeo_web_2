@@ -1,14 +1,12 @@
 // Path: features\data-access\repositories\implementations\IndexedDBLayerRepository.ts
-
 import { db } from '../../db';
 import { LayerConfig, validateLayerConfig } from '../../schemas/layer.schema';
-import {
-  ILayerRepository,
-  CreateLayerOptions,
-  ReorderResult,
-} from '../interfaces/ILayerRepository';
+import { ILayerRepository } from '../interfaces/ILayerRepository';
 
 export class IndexedDBLayerRepository implements ILayerRepository {
+  /**
+   * Criar nova camada
+   */
   async create(layer: LayerConfig): Promise<LayerConfig> {
     try {
       const validatedLayer = validateLayerConfig(layer);
@@ -22,6 +20,9 @@ export class IndexedDBLayerRepository implements ILayerRepository {
     }
   }
 
+  /**
+   * Buscar camada por ID
+   */
   async getById(id: string): Promise<LayerConfig | null> {
     try {
       const layer = await db.layers.get(id);
@@ -34,6 +35,9 @@ export class IndexedDBLayerRepository implements ILayerRepository {
     }
   }
 
+  /**
+   * Buscar todas as camadas
+   */
   async getAll(): Promise<LayerConfig[]> {
     try {
       return await db.layers.orderBy('zIndex').toArray();
@@ -45,6 +49,9 @@ export class IndexedDBLayerRepository implements ILayerRepository {
     }
   }
 
+  /**
+   * Atualizar camada
+   */
   async update(id: string, updates: Partial<LayerConfig>): Promise<LayerConfig> {
     try {
       const existingLayer = await this.getById(id);
@@ -69,6 +76,9 @@ export class IndexedDBLayerRepository implements ILayerRepository {
     }
   }
 
+  /**
+   * Deletar camada
+   */
   async delete(id: string): Promise<void> {
     try {
       const deleted = await db.layers.delete(id);
@@ -83,92 +93,22 @@ export class IndexedDBLayerRepository implements ILayerRepository {
     }
   }
 
-  async createMany(layers: LayerConfig[]): Promise<LayerConfig[]> {
+  /**
+   * Reordenar camadas
+   */
+  async reorder(layerOrders: Array<{ id: string; zIndex: number }>): Promise<LayerConfig[]> {
     try {
-      const validatedLayers = layers.map(layer => validateLayerConfig(layer));
-      await db.layers.bulkAdd(validatedLayers);
-      return validatedLayers;
-    } catch (error) {
-      console.error('Erro ao criar múltiplas camadas:', error);
-      throw new Error(
-        `Falha ao criar camadas: ${error instanceof Error ? error.message : 'Erro desconhecido'}`
-      );
-    }
-  }
+      const results: LayerConfig[] = [];
 
-  async deleteMany(ids: string[]): Promise<void> {
-    try {
-      await db.layers.bulkDelete(ids);
-    } catch (error) {
-      console.error('Erro ao deletar múltiplas camadas:', error);
-      throw new Error(
-        `Falha ao deletar camadas: ${error instanceof Error ? error.message : 'Erro desconhecido'}`
-      );
-    }
-  }
-
-  async count(): Promise<number> {
-    try {
-      return await db.layers.count();
-    } catch (error) {
-      console.error('Erro ao contar camadas:', error);
-      throw new Error(
-        `Falha ao contar camadas: ${error instanceof Error ? error.message : 'Erro desconhecido'}`
-      );
-    }
-  }
-
-  async exists(id: string): Promise<boolean> {
-    try {
-      const layer = await db.layers.get(id);
-      return !!layer;
-    } catch (error) {
-      console.error('Erro ao verificar existência da camada:', error);
-      return false;
-    }
-  }
-
-  async getByName(name: string): Promise<LayerConfig | null> {
-    try {
-      const layer = await db.layers.where('name').equals(name).first();
-      return layer || null;
-    } catch (error) {
-      console.error('Erro ao buscar camada por nome:', error);
-      throw new Error(
-        `Falha ao buscar camada: ${error instanceof Error ? error.message : 'Erro desconhecido'}`
-      );
-    }
-  }
-
-  async nameExists(name: string, excludeId?: string): Promise<boolean> {
-    try {
-      const layer = await this.getByName(name);
-      return layer !== null && layer.id !== excludeId;
-    } catch (error) {
-      console.error('Erro ao verificar nome da camada:', error);
-      return false;
-    }
-  }
-
-  async reorder(layerIds: string[]): Promise<LayerConfig[]> {
-    try {
-      const layers = await db.layers.where('id').anyOf(layerIds).toArray();
-
-      if (layers.length !== layerIds.length) {
-        throw new Error('Algumas camadas não foram encontradas');
-      }
-
-      const updatedLayers = layerIds.map((id, index) => {
-        const layer = layers.find(l => l.id === id)!;
-        return {
-          ...layer,
-          zIndex: index,
-          updatedAt: new Date().toISOString(),
-        };
+      await db.transaction('rw', [db.layers], async () => {
+        for (const { id, zIndex } of layerOrders) {
+          const updatedLayer = await this.update(id, { zIndex });
+          results.push(updatedLayer);
+        }
       });
 
-      await db.layers.bulkPut(updatedLayers);
-      return updatedLayers;
+      // Retornar camadas ordenadas
+      return results.sort((a, b) => a.zIndex - b.zIndex);
     } catch (error) {
       console.error('Erro ao reordenar camadas:', error);
       throw new Error(
@@ -177,122 +117,9 @@ export class IndexedDBLayerRepository implements ILayerRepository {
     }
   }
 
-  async toggleVisibility(id: string): Promise<LayerConfig> {
-    try {
-      const layer = await this.getById(id);
-      if (!layer) {
-        throw new Error('Camada não encontrada');
-      }
-
-      return await this.update(id, { visible: !layer.visible });
-    } catch (error) {
-      console.error('Erro ao alternar visibilidade:', error);
-      throw new Error(
-        `Falha ao alternar visibilidade: ${error instanceof Error ? error.message : 'Erro desconhecido'}`
-      );
-    }
-  }
-
-  async updateOpacity(id: string, opacity: number): Promise<LayerConfig> {
-    try {
-      if (opacity < 0 || opacity > 1) {
-        throw new Error('Opacidade deve estar entre 0 e 1');
-      }
-
-      return await this.update(id, { opacity });
-    } catch (error) {
-      console.error('Erro ao atualizar opacidade:', error);
-      throw new Error(
-        `Falha ao atualizar opacidade: ${error instanceof Error ? error.message : 'Erro desconhecido'}`
-      );
-    }
-  }
-
-  async getVisibleLayers(): Promise<LayerConfig[]> {
-    try {
-      return await db.layers.where('visible').equals(true).sortBy('zIndex');
-    } catch (error) {
-      console.error('Erro ao buscar camadas visíveis:', error);
-      throw new Error(
-        `Falha ao buscar camadas visíveis: ${error instanceof Error ? error.message : 'Erro desconhecido'}`
-      );
-    }
-  }
-
-  async getNextZIndex(): Promise<number> {
-    try {
-      const layers = await db.layers.orderBy('zIndex').reverse().limit(1).toArray();
-      return layers.length > 0 ? layers[0].zIndex + 1 : 0;
-    } catch (error) {
-      console.error('Erro ao obter próximo zIndex:', error);
-      return 0;
-    }
-  }
-
-  async duplicate(id: string, newName: string): Promise<LayerConfig> {
-    try {
-      const layer = await this.getById(id);
-      if (!layer) {
-        throw new Error('Camada não encontrada');
-      }
-
-      if (await this.nameExists(newName)) {
-        throw new Error('Nome da camada já existe');
-      }
-
-      const now = new Date().toISOString();
-      const newLayer: LayerConfig = {
-        ...layer,
-        id: crypto.randomUUID(),
-        name: newName,
-        zIndex: await this.getNextZIndex(),
-        createdAt: now,
-        updatedAt: now,
-      };
-
-      return await this.create(newLayer);
-    } catch (error) {
-      console.error('Erro ao duplicar camada:', error);
-      throw new Error(
-        `Falha ao duplicar camada: ${error instanceof Error ? error.message : 'Erro desconhecido'}`
-      );
-    }
-  }
-
-  async getLayerStats(id: string): Promise<{
-    featureCount: number;
-    lastModified: string;
-    geometryTypes: Record<string, number>;
-  }> {
-    try {
-      const features = await db.features.where('properties.layerId').equals(id).toArray();
-      const featureCount = features.length;
-
-      const geometryTypes: Record<string, number> = {};
-      features.forEach(feature => {
-        const type = feature.geometry.type;
-        geometryTypes[type] = (geometryTypes[type] || 0) + 1;
-      });
-
-      // Encontrar a data da última modificação
-      let lastModified = '';
-      if (features.length > 0) {
-        const sortedFeatures = features.sort(
-          (a, b) =>
-            new Date(b.properties.updatedAt).getTime() - new Date(a.properties.updatedAt).getTime()
-        );
-        lastModified = sortedFeatures[0].properties.updatedAt;
-      }
-
-      return { featureCount, lastModified, geometryTypes };
-    } catch (error) {
-      console.error('Erro ao obter estatísticas da camada:', error);
-      throw new Error(
-        `Falha ao obter estatísticas: ${error instanceof Error ? error.message : 'Erro desconhecido'}`
-      );
-    }
-  }
-
+  /**
+   * Verificar se uma camada pode ser deletada (sem features)
+   */
   async canDelete(id: string): Promise<{
     canDelete: boolean;
     featureCount: number;
@@ -323,6 +150,9 @@ export class IndexedDBLayerRepository implements ILayerRepository {
     }
   }
 
+  /**
+   * Deletar camada junto com suas features
+   */
   async deleteWithFeatures(id: string): Promise<void> {
     try {
       await db.transaction('rw', [db.layers, db.features], async () => {
@@ -336,6 +166,79 @@ export class IndexedDBLayerRepository implements ILayerRepository {
       console.error('Erro ao deletar camada com features:', error);
       throw new Error(
         `Falha ao deletar camada: ${error instanceof Error ? error.message : 'Erro desconhecido'}`
+      );
+    }
+  }
+
+  /**
+   * Contar camadas
+   */
+  async count(): Promise<number> {
+    try {
+      return await db.layers.count();
+    } catch (error) {
+      console.error('Erro ao contar camadas:', error);
+      throw new Error(
+        `Falha ao contar camadas: ${error instanceof Error ? error.message : 'Erro desconhecido'}`
+      );
+    }
+  }
+
+  /**
+   * Verificar se camada existe
+   */
+  async exists(id: string): Promise<boolean> {
+    try {
+      const layer = await db.layers.get(id);
+      return !!layer;
+    } catch (error) {
+      console.error('Erro ao verificar existência da camada:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Obter próximo zIndex disponível
+   */
+  async getNextZIndex(): Promise<number> {
+    try {
+      const layers = await db.layers.orderBy('zIndex').reverse().limit(1).toArray();
+      return layers.length > 0 ? layers[0].zIndex + 1 : 0;
+    } catch (error) {
+      console.error('Erro ao obter próximo zIndex:', error);
+      return 0;
+    }
+  }
+
+  /**
+   * Buscar camadas visíveis
+   */
+  async getVisible(): Promise<LayerConfig[]> {
+    try {
+      return await db.layers.where('visible').equals(true).sortBy('zIndex');
+    } catch (error) {
+      console.error('Erro ao buscar camadas visíveis:', error);
+      throw new Error(
+        `Falha ao buscar camadas visíveis: ${error instanceof Error ? error.message : 'Erro desconhecido'}`
+      );
+    }
+  }
+
+  /**
+   * Alternar visibilidade da camada
+   */
+  async toggleVisibility(id: string): Promise<LayerConfig> {
+    try {
+      const layer = await this.getById(id);
+      if (!layer) {
+        throw new Error('Camada não encontrada');
+      }
+
+      return await this.update(id, { visible: !layer.visible });
+    } catch (error) {
+      console.error('Erro ao alternar visibilidade da camada:', error);
+      throw new Error(
+        `Falha ao alternar visibilidade: ${error instanceof Error ? error.message : 'Erro desconhecido'}`
       );
     }
   }

@@ -15,7 +15,7 @@ export default defineConfig({
       webp: { quality: 80 },
     }),
   ],
-  
+
   // Resolver aliases para imports mais limpos
   resolve: {
     alias: {
@@ -52,7 +52,7 @@ export default defineConfig({
     outDir: 'dist',
     sourcemap: true,
     minify: 'esbuild',
-    
+
     // Otimizações para redes lentas (requisito do projeto)
     rollupOptions: {
       output: {
@@ -60,7 +60,7 @@ export default defineConfig({
         manualChunks: {
           // React e bibliotecas principais
           'react-vendor': ['react', 'react-dom'],
-          
+
           // Material-UI
           'mui-vendor': [
             '@mui/material',
@@ -68,29 +68,19 @@ export default defineConfig({
             '@emotion/react',
             '@emotion/styled',
           ],
-          
+
           // MapLibre e bibliotecas de mapa
-          'map-vendor': [
-            'maplibre-gl',
-            'react-map-gl',
-            '@turf/turf',
-          ],
-          
+          'map-vendor': ['maplibre-gl', 'react-map-gl', '@turf/turf'],
+
           // React Query e estado
-          'state-vendor': [
-            '@tanstack/react-query',
-            'zustand',
-          ],
-          
+          'state-vendor': ['@tanstack/react-query', 'zustand'],
+
           // Utilitários
-          'utils-vendor': [
-            'zod',
-            'dexie',
-          ],
+          'utils-vendor': ['zod', 'dexie'],
         },
       },
     },
-    
+
     // Limite de warnings de tamanho de chunk
     chunkSizeWarningLimit: 1000,
   },

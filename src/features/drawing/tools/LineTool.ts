@@ -295,13 +295,12 @@ export class LineTool extends AbstractTool {
     const deltaLat = this.toRadians(point2[1] - point1[1]);
     const deltaLng = this.toRadians(point2[0] - point1[0]);
 
-    const a = 
+    const a =
       Math.sin(deltaLat / 2) * Math.sin(deltaLat / 2) +
-      Math.cos(lat1) * Math.cos(lat2) *
-      Math.sin(deltaLng / 2) * Math.sin(deltaLng / 2);
-    
+      Math.cos(lat1) * Math.cos(lat2) * Math.sin(deltaLng / 2) * Math.sin(deltaLng / 2);
+
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    
+
     return R * c;
   }
 
@@ -310,8 +309,12 @@ export class LineTool extends AbstractTool {
   }
 
   private isValidPosition(position: any): position is Position {
-    return Array.isArray(position) && position.length >= 2 && 
-           typeof position[0] === 'number' && typeof position[1] === 'number';
+    return (
+      Array.isArray(position) &&
+      position.length >= 2 &&
+      typeof position[0] === 'number' &&
+      typeof position[1] === 'number'
+    );
   }
 
   // Método para criar feature temporária para preview
@@ -323,7 +326,10 @@ export class LineTool extends AbstractTool {
       case 'LineString':
         geometry = {
           type: 'LineString',
-          coordinates: coordinates.length >= 2 ? coordinates : [coordinates[0] || [0, 0], coordinates[0] || [0, 0]],
+          coordinates:
+            coordinates.length >= 2
+              ? coordinates
+              : [coordinates[0] || [0, 0], coordinates[0] || [0, 0]],
         };
         break;
       default:

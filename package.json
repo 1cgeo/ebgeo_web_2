@@ -21,7 +21,8 @@
     "test:run": "vitest run",
     "clean": "rm -rf dist build node_modules/.vite",
     "clean:install": "npm run clean && npm install",
-    "validate": "npm run type-check:all && npm run lint && npm run format:check"
+    "validate": "npm run type-check:all && npm run lint && npm run format:check",
+    "knip": "knip"
   },
   "dependencies": {
     "@emotion/react": "^11.11.4",
@@ -48,6 +49,7 @@
   "devDependencies": {
     "@types/file-saver": "^2.0.7",
     "@types/jszip": "^3.4.1",
+    "@types/node": "^24.2.0",
     "@types/papaparse": "^5.3.16",
     "@types/react": "^18.2.66",
     "@types/react-dom": "^18.2.22",
@@ -64,8 +66,9 @@
     "eslint-plugin-react-hooks": "^4.6.0",
     "eslint-plugin-react-refresh": "^0.4.6",
     "jsdom": "^24.0.0",
+    "knip": "^5.62.0",
     "prettier": "^3.2.5",
-    "typescript": "^5.2.2",
+    "typescript": "^5.9.2",
     "vite": "^5.2.0",
     "vite-plugin-image-optimizer": "^2.0.2",
     "vitest": "^1.4.0"

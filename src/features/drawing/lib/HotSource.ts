@@ -127,16 +127,26 @@ export class HotSource {
     this.addTrackedEventListener(document, 'mouseup', onMouseUp, { passive: false });
 
     // Adicionar listener para visibilitychange para cleanup em caso de aba oculta
-    this.addTrackedEventListener(document, 'visibilitychange', () => {
-      if (document.hidden && this.dragState?.isDragging) {
-        this.stopDragVertex();
-      }
-    }, false);
+    this.addTrackedEventListener(
+      document,
+      'visibilitychange',
+      () => {
+        if (document.hidden && this.dragState?.isDragging) {
+          this.stopDragVertex();
+        }
+      },
+      false
+    );
 
     // Adicionar listener para beforeunload para cleanup garantido
-    this.addTrackedEventListener(window, 'beforeunload', () => {
-      this.destroy();
-    }, false);
+    this.addTrackedEventListener(
+      window,
+      'beforeunload',
+      () => {
+        this.destroy();
+      },
+      false
+    );
 
     console.log(`HotSource: ${this.eventListeners.size} event listeners configurados`);
   }
@@ -288,7 +298,7 @@ export class HotSource {
       for (let i = 0; i < vertices.length - 1; i++) {
         const v1 = vertices[i];
         const v2 = vertices[i + 1];
-        
+
         if (this.isValidPosition(v1) && this.isValidPosition(v2)) {
           const midpoint = this.calculateMidpoint(v1, v2);
           const midpointHandle = this.createMidpointHandle(i, midpoint);
@@ -304,12 +314,20 @@ export class HotSource {
 
   // Verificar se uma posição é válida
   private isValidPosition(position: any): position is Position {
-    return Array.isArray(position) && position.length >= 2 && 
-           typeof position[0] === 'number' && typeof position[1] === 'number';
+    return (
+      Array.isArray(position) &&
+      position.length >= 2 &&
+      typeof position[0] === 'number' &&
+      typeof position[1] === 'number'
+    );
   }
 
   // Criar handle de vértice
-  private createVertexHandle(index: number, position: Position, featureId: string): maplibregl.Marker {
+  private createVertexHandle(
+    index: number,
+    position: Position,
+    featureId: string
+  ): maplibregl.Marker {
     const el = document.createElement('div');
     el.className = 'vertex-handle';
     el.style.width = `${this.config.vertexRadius * 2}px`;
@@ -327,9 +345,9 @@ export class HotSource {
 
     el.addEventListener('mousedown', onMouseDown);
 
-    const marker = new maplibregl.Marker({ 
-      element: el, 
-      draggable: false 
+    const marker = new maplibregl.Marker({
+      element: el,
+      draggable: false,
     })
       .setLngLat([position[0], position[1]])
       .addTo(this.map);
@@ -356,9 +374,9 @@ export class HotSource {
 
     el.addEventListener('click', onClick);
 
-    const marker = new maplibregl.Marker({ 
-      element: el, 
-      draggable: false 
+    const marker = new maplibregl.Marker({
+      element: el,
+      draggable: false,
     })
       .setLngLat([position[0], position[1]])
       .addTo(this.map);
@@ -398,7 +416,12 @@ export class HotSource {
   }
 
   // Métodos para manipulação de vértices
-  private startDragVertex(index: number, featureId: string, position: Position, e: MouseEvent): void {
+  private startDragVertex(
+    index: number,
+    featureId: string,
+    position: Position,
+    e: MouseEvent
+  ): void {
     if (this.isDestroyed) return;
 
     this.dragState = {
@@ -422,22 +445,15 @@ export class HotSource {
     if (!this.dragState?.isDragging) return;
 
     const rect = this.map.getContainer().getBoundingClientRect();
-    const point = new maplibregl.Point(
-      e.clientX - rect.left,
-      e.clientY - rect.top
-    );
-    
+    const point = new maplibregl.Point(e.clientX - rect.left, e.clientY - rect.top);
+
     const lngLat = this.map.unproject(point);
     const newPosition: Position = [lngLat.lng, lngLat.lat];
 
     this.dragState.currentPosition = newPosition;
 
     // Notificar movimento
-    this.callbacks.onVertexMoved(
-      this.dragState.featureId,
-      this.dragState.vertexIndex,
-      newPosition
-    );
+    this.callbacks.onVertexMoved(this.dragState.featureId, this.dragState.vertexIndex, newPosition);
   }
 
   private stopDragVertex(): void {

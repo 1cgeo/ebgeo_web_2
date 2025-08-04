@@ -1,18 +1,17 @@
 // Path: features\data-access\hooks\useMutateFeature.ts
-
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { ExtendedFeature } from '../schemas/feature.schema';
-import { IndexedDBMapRepository } from '../repositories/implementations/IndexedDBMapRepository';
+import { IndexedDBFeatureRepository } from '../repositories/implementations/IndexedDBFeatureRepository';
 import { FEATURE_QUERY_KEYS } from './useFeatures';
+import { useUndoRedo } from '../../transaction-history/hooks/useUndoRedo';
 
-// Instância do repository (usando o correto que existe)
-const featureRepository = new IndexedDBMapRepository();
+// Instância do repository correto
+const featureRepository = new IndexedDBFeatureRepository();
 
 // Interface para invalidação de features
 interface FeatureInvalidation {
   invalidateAll: () => void;
   invalidateByLayer: (layerId: string) => void;
-  invalidateStats: (layerId: string) => void;
   invalidateDetail: (id: string) => void;
 }
 
@@ -27,72 +26,61 @@ export const useInvalidateFeatures = (): FeatureInvalidation => {
     invalidateByLayer: (layerId: string) => {
       queryClient.invalidateQueries({ queryKey: FEATURE_QUERY_KEYS.byLayer(layerId) });
     },
-    invalidateStats: (layerId: string) => {
-      queryClient.invalidateQueries({ queryKey: FEATURE_QUERY_KEYS.stats(layerId) });
-    },
     invalidateDetail: (id: string) => {
       queryClient.invalidateQueries({ queryKey: FEATURE_QUERY_KEYS.detail(id) });
     },
   };
 };
 
-// Interface para opções de transação (placeholder até corrigir transaction-history)
-interface CreateTransactionOptions {
-  type: 'create' | 'update' | 'delete' | 'batch';
-  description: string;
-  before?: ExtendedFeature | ExtendedFeature[];
-  after?: ExtendedFeature | ExtendedFeature[];
-}
-
-// Placeholder para useUndoRedo até corrigir o arquivo
-const useUndoRedo = () => ({
-  createTransaction: (options: CreateTransactionOptions) => {
-    console.log('Transaction placeholder:', options.description);
-  },
-});
-
 // Hook para criar feature
 export const useCreateFeature = () => {
   const queryClient = useQueryClient();
-  const { invalidateAll, invalidateByLayer, invalidateStats } = useInvalidateFeatures();
-  const { createTransaction } = useUndoRedo();
+  const { addTransaction } = useUndoRedo();
+  const invalidateFeatures = useInvalidateFeatures();
 
   return useMutation({
-    mutationFn: async (feature: ExtendedFeature): Promise<ExtendedFeature> => {
-      // Simular criação até ter o repository correto
-      const createdFeature: ExtendedFeature = {
-        ...feature,
-        id: feature.id || `feature-${Date.now()}`,
-        properties: {
-          ...feature.properties,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        },
-      };
+    mutationFn: async (feature: ExtendedFeature) => {
+      const createdFeature = await featureRepository.create(feature);
+
+      // Adicionar transação para undo/redo
+      addTransaction({
+        type: 'create',
+        description: `Criar feature`,
+        after: createdFeature,
+      });
+
       return createdFeature;
     },
-    onSuccess: (newFeature: ExtendedFeature) => {
-      // Criar transação para undo/redo
-      try {
-        createTransaction({
-          type: 'create',
-          description: `Criar ${newFeature.geometry.type.toLowerCase()}: ${newFeature.properties.name || newFeature.id}`,
-          after: newFeature,
-        });
-      } catch (error) {
-        console.warn('Erro ao criar transação para feature criada:', error);
-      }
-
-      // Atualizar cache otimisticamente
-      queryClient.setQueryData(FEATURE_QUERY_KEYS.detail(newFeature.id), newFeature);
-
-      // Invalidar queries relacionadas
-      invalidateAll();
-      invalidateByLayer(newFeature.properties.layerId);
-      invalidateStats(newFeature.properties.layerId);
+    onSuccess: feature => {
+      invalidateFeatures.invalidateAll();
+      invalidateFeatures.invalidateByLayer(feature.properties.layerId);
     },
-    onError: (error: Error) => {
-      console.error('Erro ao criar feature:', error);
+  });
+};
+
+// Hook para criar múltiplas features
+export const useCreateManyFeatures = () => {
+  const queryClient = useQueryClient();
+  const { addTransaction } = useUndoRedo();
+  const invalidateFeatures = useInvalidateFeatures();
+
+  return useMutation({
+    mutationFn: async (features: ExtendedFeature[]) => {
+      const createdFeatures = await featureRepository.createMany(features);
+
+      // Adicionar transação para undo/redo
+      addTransaction({
+        type: 'create',
+        description: `Criar ${features.length} features`,
+        after: createdFeatures,
+      });
+
+      return createdFeatures;
+    },
+    onSuccess: features => {
+      invalidateFeatures.invalidateAll();
+      const layerIds = new Set(features.map(f => f.properties.layerId));
+      layerIds.forEach(layerId => invalidateFeatures.invalidateByLayer(layerId));
     },
   });
 };
@@ -100,70 +88,70 @@ export const useCreateFeature = () => {
 // Hook para atualizar feature
 export const useUpdateFeature = () => {
   const queryClient = useQueryClient();
-  const { invalidateDetail, invalidateByLayer, invalidateStats } = useInvalidateFeatures();
-  const { createTransaction } = useUndoRedo();
+  const { addTransaction } = useUndoRedo();
+  const invalidateFeatures = useInvalidateFeatures();
 
   return useMutation({
-    mutationFn: async ({ 
-      id, 
-      updates 
-    }: { 
-      id: string; 
-      updates: Partial<ExtendedFeature> 
-    }): Promise<{ previous: ExtendedFeature; updated: ExtendedFeature }> => {
-      // Buscar estado anterior para a transação
-      const previousFeature = queryClient.getQueryData<ExtendedFeature>(
-        FEATURE_QUERY_KEYS.detail(id)
-      );
-      
-      if (!previousFeature) {
-        throw new Error(`Feature com ID ${id} não encontrada`);
-      }
+    mutationFn: async ({ id, updates }: { id: string; updates: Partial<ExtendedFeature> }) => {
+      // Buscar estado anterior para undo
+      const beforeFeature = await featureRepository.getById(id);
 
-      const updatedFeature: ExtendedFeature = {
-        ...previousFeature,
-        ...updates,
-        properties: {
-          ...previousFeature.properties,
-          ...updates.properties,
-          updatedAt: new Date().toISOString(),
-        },
-      };
+      const updatedFeature = await featureRepository.update(id, updates);
 
-      return {
-        previous: previousFeature,
-        updated: updatedFeature,
-      };
-    },
-    onSuccess: ({ previous, updated }, { id }) => {
-      // Criar transação para undo/redo
-      try {
-        createTransaction({
+      // Adicionar transação para undo/redo
+      if (beforeFeature) {
+        addTransaction({
           type: 'update',
-          description: `Editar ${updated.geometry.type.toLowerCase()}: ${updated.properties.name || updated.id}`,
-          before: previous,
-          after: updated,
+          description: `Atualizar feature`,
+          before: beforeFeature,
+          after: updatedFeature,
         });
-      } catch (error) {
-        console.warn('Erro ao criar transação para feature atualizada:', error);
       }
 
-      // Atualizar cache
-      queryClient.setQueryData(FEATURE_QUERY_KEYS.detail(id), updated);
-
-      // Invalidar queries relacionadas
-      invalidateDetail(id);
-      invalidateByLayer(updated.properties.layerId);
-      invalidateStats(updated.properties.layerId);
-
-      // Se a camada mudou, invalidar a camada anterior também
-      if (previous.properties.layerId !== updated.properties.layerId) {
-        invalidateByLayer(previous.properties.layerId);
-        invalidateStats(previous.properties.layerId);
-      }
+      return updatedFeature;
     },
-    onError: (error: Error) => {
-      console.error('Erro ao atualizar feature:', error);
+    onSuccess: feature => {
+      invalidateFeatures.invalidateAll();
+      invalidateFeatures.invalidateByLayer(feature.properties.layerId);
+      invalidateFeatures.invalidateDetail(feature.id);
+    },
+  });
+};
+
+// Hook para atualizar múltiplas features
+export const useUpdateManyFeatures = () => {
+  const queryClient = useQueryClient();
+  const { addTransaction } = useUndoRedo();
+  const invalidateFeatures = useInvalidateFeatures();
+
+  return useMutation({
+    mutationFn: async (updates: Array<{ id: string; data: Partial<ExtendedFeature> }>) => {
+      // Buscar estados anteriores para undo
+      const beforeFeatures: ExtendedFeature[] = [];
+      for (const { id } of updates) {
+        const feature = await featureRepository.getById(id);
+        if (feature) beforeFeatures.push(feature);
+      }
+
+      const updatedFeatures = await featureRepository.updateMany(updates);
+
+      // Adicionar transação para undo/redo
+      if (beforeFeatures.length > 0) {
+        addTransaction({
+          type: 'update',
+          description: `Atualizar ${updates.length} features`,
+          before: beforeFeatures,
+          after: updatedFeatures,
+        });
+      }
+
+      return updatedFeatures;
+    },
+    onSuccess: features => {
+      invalidateFeatures.invalidateAll();
+      const layerIds = new Set(features.map(f => f.properties.layerId));
+      layerIds.forEach(layerId => invalidateFeatures.invalidateByLayer(layerId));
+      features.forEach(f => invalidateFeatures.invalidateDetail(f.id));
     },
   });
 };
@@ -171,61 +159,31 @@ export const useUpdateFeature = () => {
 // Hook para deletar feature
 export const useDeleteFeature = () => {
   const queryClient = useQueryClient();
-  const { invalidateAll, invalidateByLayer, invalidateStats } = useInvalidateFeatures();
-  const { createTransaction } = useUndoRedo();
+  const { addTransaction } = useUndoRedo();
+  const invalidateFeatures = useInvalidateFeatures();
 
   return useMutation({
-    mutationFn: async (id: string): Promise<ExtendedFeature> => {
-      // Buscar feature antes de deletar para a transação
-      const featureToDelete = queryClient.getQueryData<ExtendedFeature>(
-        FEATURE_QUERY_KEYS.detail(id)
-      );
-      
-      if (!featureToDelete) {
-        throw new Error(`Feature com ID ${id} não encontrada`);
-      }
+    mutationFn: async (id: string) => {
+      // Buscar feature antes de deletar para undo
+      const beforeFeature = await featureRepository.getById(id);
 
-      // Simular deleção
-      return featureToDelete;
-    },
-    onMutate: async (id: string) => {
-      // Cancelar queries em andamento
-      await queryClient.cancelQueries({ queryKey: FEATURE_QUERY_KEYS.detail(id) });
+      await featureRepository.delete(id);
 
-      // Snapshot do estado anterior
-      const previousFeature = queryClient.getQueryData<ExtendedFeature>(
-        FEATURE_QUERY_KEYS.detail(id)
-      );
-
-      // Atualizar cache otimisticamente
-      queryClient.removeQueries({ queryKey: FEATURE_QUERY_KEYS.detail(id) });
-
-      return { previousFeature };
-    },
-    onSuccess: (deletedFeature: ExtendedFeature) => {
-      // Criar transação para undo/redo
-      try {
-        createTransaction({
+      // Adicionar transação para undo/redo
+      if (beforeFeature) {
+        addTransaction({
           type: 'delete',
-          description: `Deletar ${deletedFeature.geometry.type.toLowerCase()}: ${deletedFeature.properties.name || deletedFeature.id}`,
-          before: deletedFeature,
+          description: `Deletar feature`,
+          before: beforeFeature,
         });
-      } catch (error) {
-        console.warn('Erro ao criar transação para feature deletada:', error);
       }
 
-      // Invalidar queries relacionadas
-      invalidateAll();
-      invalidateByLayer(deletedFeature.properties.layerId);
-      invalidateStats(deletedFeature.properties.layerId);
+      return id;
     },
-    onError: (error: Error, id: string, context) => {
-      console.error('Erro ao deletar feature:', error);
-      
-      // Reverter mudanças otimistas se houve erro
-      if (context?.previousFeature) {
-        queryClient.setQueryData(FEATURE_QUERY_KEYS.detail(id), context.previousFeature);
-      }
+    onSuccess: (id, variables) => {
+      // Remover do cache
+      queryClient.removeQueries({ queryKey: FEATURE_QUERY_KEYS.detail(id) });
+      invalidateFeatures.invalidateAll();
     },
   });
 };
@@ -233,61 +191,37 @@ export const useDeleteFeature = () => {
 // Hook para deletar múltiplas features
 export const useDeleteManyFeatures = () => {
   const queryClient = useQueryClient();
-  const { invalidateAll, invalidateByLayer, invalidateStats } = useInvalidateFeatures();
-  const { createTransaction } = useUndoRedo();
+  const { addTransaction } = useUndoRedo();
+  const invalidateFeatures = useInvalidateFeatures();
 
   return useMutation({
-    mutationFn: async (featureIds: string[]): Promise<ExtendedFeature[]> => {
-      const featuresToDelete: ExtendedFeature[] = [];
-      
-      for (const id of featureIds) {
-        const feature = queryClient.getQueryData<ExtendedFeature>(
-          FEATURE_QUERY_KEYS.detail(id)
-        );
-        if (feature) {
-          featuresToDelete.push(feature);
-        }
+    mutationFn: async (ids: string[]) => {
+      // Buscar features antes de deletar para undo
+      const beforeFeatures: ExtendedFeature[] = [];
+      for (const id of ids) {
+        const feature = await featureRepository.getById(id);
+        if (feature) beforeFeatures.push(feature);
       }
 
-      if (featuresToDelete.length === 0) {
-        throw new Error('Nenhuma feature encontrada para deletar');
-      }
+      await featureRepository.deleteMany(ids);
 
-      return featuresToDelete;
-    },
-    onSuccess: (deletedFeatures: ExtendedFeature[]) => {
-      // Criar transação para undo/redo
-      try {
-        const description = deletedFeatures.length === 1
-          ? `Deletar ${deletedFeatures[0].geometry.type.toLowerCase()}: ${deletedFeatures[0].properties.name || deletedFeatures[0].id}`
-          : `Deletar ${deletedFeatures.length} features`;
-
-        createTransaction({
-          type: 'batch',
-          description,
-          before: deletedFeatures,
+      // Adicionar transação para undo/redo
+      if (beforeFeatures.length > 0) {
+        addTransaction({
+          type: 'delete',
+          description: `Deletar ${ids.length} features`,
+          before: beforeFeatures,
         });
-      } catch (error) {
-        console.warn('Erro ao criar transação para features deletadas:', error);
       }
 
-      // Remover do cache
-      deletedFeatures.forEach(feature => {
-        queryClient.removeQueries({ queryKey: FEATURE_QUERY_KEYS.detail(feature.id) });
-      });
-
-      // Invalidar queries das camadas afetadas
-      const affectedLayers = new Set(deletedFeatures.map(f => f.properties.layerId));
-      
-      affectedLayers.forEach(layerId => {
-        invalidateByLayer(layerId);
-        invalidateStats(layerId);
-      });
-
-      invalidateAll();
+      return ids;
     },
-    onError: (error: Error) => {
-      console.error('Erro ao deletar features:', error);
+    onSuccess: ids => {
+      // Remover do cache
+      ids.forEach(id => {
+        queryClient.removeQueries({ queryKey: FEATURE_QUERY_KEYS.detail(id) });
+      });
+      invalidateFeatures.invalidateAll();
     },
   });
 };
@@ -295,180 +229,43 @@ export const useDeleteManyFeatures = () => {
 // Hook para mover features para outra camada
 export const useMoveFeaturesToLayer = () => {
   const queryClient = useQueryClient();
-  const { invalidateAll, invalidateByLayer, invalidateStats } = useInvalidateFeatures();
-  const { createTransaction } = useUndoRedo();
+  const { addTransaction } = useUndoRedo();
+  const invalidateFeatures = useInvalidateFeatures();
 
   return useMutation({
-    mutationFn: async ({ 
-      featureIds, 
-      targetLayerId 
-    }: { 
-      featureIds: string[]; 
-      targetLayerId: string 
-    }): Promise<{ previous: ExtendedFeature[]; updated: ExtendedFeature[] }> => {
-      const previousFeatures: ExtendedFeature[] = [];
-      const updatedFeatures: ExtendedFeature[] = [];
-
+    mutationFn: async ({
+      featureIds,
+      targetLayerId,
+    }: {
+      featureIds: string[];
+      targetLayerId: string;
+    }) => {
+      // Buscar estados anteriores para undo
+      const beforeFeatures: ExtendedFeature[] = [];
       for (const id of featureIds) {
-        const feature = queryClient.getQueryData<ExtendedFeature>(
-          FEATURE_QUERY_KEYS.detail(id)
-        );
-        
-        if (feature) {
-          previousFeatures.push(feature);
-          updatedFeatures.push({
-            ...feature,
-            properties: {
-              ...feature.properties,
-              layerId: targetLayerId,
-              updatedAt: new Date().toISOString(),
-            },
-          });
-        }
+        const feature = await featureRepository.getById(id);
+        if (feature) beforeFeatures.push(feature);
       }
 
-      return { previous: previousFeatures, updated: updatedFeatures };
-    },
-    onSuccess: ({ previous, updated }, { targetLayerId }) => {
-      // Criar transação para undo/redo
-      try {
-        const description = updated.length === 1
-          ? `Mover ${updated[0].geometry.type.toLowerCase()}: ${updated[0].properties.name || updated[0].id}`
-          : `Mover ${updated.length} features para nova camada`;
+      const movedFeatures = await featureRepository.moveToLayer(featureIds, targetLayerId);
 
-        createTransaction({
-          type: 'batch',
-          description,
-          before: previous,
-          after: updated,
+      // Adicionar transação para undo/redo
+      if (beforeFeatures.length > 0) {
+        addTransaction({
+          type: 'update',
+          description: `Mover ${featureIds.length} features para camada`,
+          before: beforeFeatures,
+          after: movedFeatures,
         });
-      } catch (error) {
-        console.warn('Erro ao criar transação para features movidas:', error);
       }
 
-      // Atualizar cache
-      updated.forEach(feature => {
-        queryClient.setQueryData(FEATURE_QUERY_KEYS.detail(feature.id), feature);
-      });
-
-      // Invalidar queries das camadas afetadas
-      const affectedLayers = new Set([targetLayerId, ...previous.map(f => f.properties.layerId)]);
-
-      affectedLayers.forEach(layerId => {
-        invalidateByLayer(layerId);
-        invalidateStats(layerId);
-      });
-
-      invalidateAll();
+      return movedFeatures;
     },
-    onError: (error: Error) => {
-      console.error('Erro ao mover features:', error);
-    },
-  });
-};
-
-// Hook para duplicar features
-export const useDuplicateFeatures = () => {
-  const queryClient = useQueryClient();
-  const { invalidateAll, invalidateByLayer, invalidateStats } = useInvalidateFeatures();
-  const { createTransaction } = useUndoRedo();
-
-  return useMutation({
-    mutationFn: async ({ 
-      featureIds, 
-      targetLayerId 
-    }: { 
-      featureIds: string[]; 
-      targetLayerId?: string 
-    }): Promise<ExtendedFeature[]> => {
-      const duplicatedFeatures: ExtendedFeature[] = [];
-
-      for (const id of featureIds) {
-        const originalFeature = queryClient.getQueryData<ExtendedFeature>(
-          FEATURE_QUERY_KEYS.detail(id)
-        );
-        
-        if (originalFeature) {
-          const duplicatedFeature: ExtendedFeature = {
-            ...originalFeature,
-            id: `${originalFeature.id}-copy-${Date.now()}`,
-            properties: {
-              ...originalFeature.properties,
-              layerId: targetLayerId || originalFeature.properties.layerId,
-              name: originalFeature.properties.name 
-                ? `${originalFeature.properties.name} (Cópia)`
-                : undefined,
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString(),
-            },
-          };
-          duplicatedFeatures.push(duplicatedFeature);
-        }
-      }
-
-      return duplicatedFeatures;
-    },
-    onSuccess: (duplicatedFeatures: ExtendedFeature[]) => {
-      // Criar transação para undo/redo
-      try {
-        const description = duplicatedFeatures.length === 1
-          ? `Duplicar ${duplicatedFeatures[0].geometry.type.toLowerCase()}: ${duplicatedFeatures[0].properties.name || duplicatedFeatures[0].id}`
-          : `Duplicar ${duplicatedFeatures.length} features`;
-
-        createTransaction({
-          type: 'batch',
-          description,
-          after: duplicatedFeatures,
-        });
-      } catch (error) {
-        console.warn('Erro ao criar transação para features duplicadas:', error);
-      }
-
-      // Atualizar cache para cada feature duplicada
-      duplicatedFeatures.forEach(feature => {
-        queryClient.setQueryData(FEATURE_QUERY_KEYS.detail(feature.id), feature);
-      });
-
-      // Invalidar queries relacionadas
-      invalidateAll();
-      const layerIds = new Set(duplicatedFeatures.map(f => f.properties.layerId));
-      layerIds.forEach(layerId => {
-        invalidateByLayer(layerId);
-        invalidateStats(layerId);
-      });
-    },
-    onError: (error: Error) => {
-      console.error('Erro ao duplicar features:', error);
-    },
-  });
-};
-
-// Hook para validar feature (placeholder)
-export const useValidateFeature = () => {
-  return useMutation({
-    mutationFn: async (feature: ExtendedFeature): Promise<{ valid: boolean; errors: string[] }> => {
-      // Validação básica
-      const errors: string[] = [];
-      
-      if (!feature.id) {
-        errors.push('Feature deve ter um ID');
-      }
-      
-      if (!feature.properties.layerId) {
-        errors.push('Feature deve ter um layerId');
-      }
-      
-      if (!feature.geometry) {
-        errors.push('Feature deve ter geometria');
-      }
-
-      return {
-        valid: errors.length === 0,
-        errors,
-      };
-    },
-    onError: (error: Error) => {
-      console.error('Erro ao validar feature:', error);
+    onSuccess: features => {
+      invalidateFeatures.invalidateAll();
+      const layerIds = new Set(features.map(f => f.properties.layerId));
+      layerIds.forEach(layerId => invalidateFeatures.invalidateByLayer(layerId));
+      features.forEach(f => invalidateFeatures.invalidateDetail(f.id));
     },
   });
 };

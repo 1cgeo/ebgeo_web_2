@@ -180,7 +180,9 @@ export const MainPage: React.FC = () => {
     },
     onVertexMoved: (featureId: string, vertexIndex: number, newPosition: Position) => {
       // Vertex moved - pode ser usado para feedback em tempo real
-      console.log(`Vértice ${vertexIndex} da feature ${featureId} movido para [${newPosition[0]}, ${newPosition[1]}]`);
+      console.log(
+        `Vértice ${vertexIndex} da feature ${featureId} movido para [${newPosition[0]}, ${newPosition[1]}]`
+      );
     },
     onVertexAdded: (featureId: string, vertexIndex: number, position: Position) => {
       console.log(`Vértice adicionado na posição ${vertexIndex} da feature ${featureId}`);
@@ -314,26 +316,29 @@ export const MainPage: React.FC = () => {
   }, []);
 
   // Handler para finalizar drag
-  const handleDragEnd = useCallback(async (featureId: string, feature: ExtendedFeature) => {
-    try {
-      await updateFeature.mutateAsync({
-        id: featureId,
-        updates: feature,
-      });
+  const handleDragEnd = useCallback(
+    async (featureId: string, feature: ExtendedFeature) => {
+      try {
+        await updateFeature.mutateAsync({
+          id: featureId,
+          updates: feature,
+        });
 
-      const duration = dragState.startTime ? Date.now() - dragState.startTime : 0;
-      showNotification(`Feature movida com sucesso em ${duration}ms`, 'success');
+        const duration = dragState.startTime ? Date.now() - dragState.startTime : 0;
+        showNotification(`Feature movida com sucesso em ${duration}ms`, 'success');
 
-      setDragState({
-        isDragging: false,
-        featureId: null,
-        startTime: null,
-      });
-    } catch (error) {
-      showNotification('Erro ao salvar posição da feature', 'error');
-      console.error('Erro ao salvar drag:', error);
-    }
-  }, [dragState.startTime, updateFeature, showNotification]);
+        setDragState({
+          isDragging: false,
+          featureId: null,
+          startTime: null,
+        });
+      } catch (error) {
+        showNotification('Erro ao salvar posição da feature', 'error');
+        console.error('Erro ao salvar drag:', error);
+      }
+    },
+    [dragState.startTime, updateFeature, showNotification]
+  );
 
   // Renderização condicional para estado de carregamento
   if (!isMapLoaded) {
@@ -398,9 +403,7 @@ export const MainPage: React.FC = () => {
               zIndex: 1000,
             }}
           >
-            <Typography variant="caption">
-              Movendo feature: {dragState.featureId}
-            </Typography>
+            <Typography variant="caption">Movendo feature: {dragState.featureId}</Typography>
           </Box>
         )}
 
