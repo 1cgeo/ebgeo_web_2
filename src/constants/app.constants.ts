@@ -68,34 +68,18 @@ export const DRAWING_TOOLS = {
 
 // Atalhos de teclado
 export const KEYBOARD_SHORTCUTS = {
-  // Ferramentas
-  SELECT_TOOL: 'KeyS',
-  POINT_TOOL: 'KeyP',
-  LINE_TOOL: 'KeyL',
-  POLYGON_TOOL: 'KeyO',
-  
-  // Ações
-  DELETE: 'Delete',
-  ESCAPE: 'Escape',
-  ENTER: 'Enter',
-  UNDO: 'KeyZ',
-  REDO: 'KeyY',
-  SAVE: 'KeyS',
-  
-  // Navegação
-  ZOOM_IN: 'Equal',
-  ZOOM_OUT: 'Minus',
-  FIT_VIEW: 'KeyF',
-  
-  // Seleção
-  SELECT_ALL: 'KeyA',
-  COPY: 'KeyC',
-  PASTE: 'KeyV',
-  
-  // Modificadores
-  CTRL: 'ctrlKey',
-  SHIFT: 'shiftKey',
-  ALT: 'altKey',
+  SELECT_TOOL: 's',
+  POINT_TOOL: 'p',
+  LINE_TOOL: 'l',
+  POLYGON_TOOL: 'g',
+  RECTANGLE_TOOL: 'r',
+  CIRCLE_TOOL: 'c',
+  TRASH_TOOL: 't',
+  GROUP_TOOL: 'k',
+  UNGROUP_TOOL: 'u',
+  UNDO_TOOL: 'z',
+  REDO_TOOL: 'y',
+  SAVE_TOOL: 'b',
 } as const;
 
 // Configurações de estilo padrão
